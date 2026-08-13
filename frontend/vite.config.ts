@@ -13,14 +13,15 @@ export default defineConfig({
         name: 'Running Olle',
         short_name: 'RunningOlle',
         description: '러닝과 여행을 연결하는 위치 기반 서비스',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        theme_color: '#ff6530',
+        background_color: '#eef3f0',
         display: 'standalone',
         start_url: '/',
       },
     }),
   ],
   server: {
+    host: true,
     port: 5173,
   },
 })

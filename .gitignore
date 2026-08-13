@@ -16,6 +16,7 @@ backend/src/main/resources/application-secret.yml
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 
 # Environment
 frontend/.env
