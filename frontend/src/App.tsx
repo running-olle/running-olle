@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import RunningMap from './components/RunningMap'
-import { DEMO_COURSE } from './data/demoCourse'
+import { DEMO_COURSES, GANGNAM_HOLLYS_COURSE } from './data/demoCourse'
 import type { GeoPoint, RunPhase } from './models/running'
 import { calculateRouteProgress, distanceBetween, formatDistance, formatDuration, formatPace } from './utils/geo'
 
@@ -30,6 +30,7 @@ function getLocationErrorMessage(error: GeolocationPositionError) {
 }
 
 function App() {
+  const [selectedCourse, setSelectedCourse] = useState(GANGNAM_HOLLYS_COURSE)
   const [phase, setPhase] = useState<RunPhase>('ready')
   const [currentPosition, setCurrentPosition] = useState<GeoPoint | null>(null)
   const [recordedPath, setRecordedPath] = useState<GeoPoint[]>([])
@@ -83,8 +84,8 @@ function App() {
   }, [phase])
 
   const routeProgress = useMemo(
-    () => calculateRouteProgress(DEMO_COURSE.path, currentPosition),
-    [currentPosition],
+    () => calculateRouteProgress(selectedCourse.path, currentPosition),
+    [currentPosition, selectedCourse],
   )
   const averagePace = distanceMeters > 10 ? elapsedSeconds / 60 / (distanceMeters / 1_000) : null
 
@@ -131,7 +132,7 @@ function App() {
         <section className="summary-screen">
           <div className="summary-check" aria-hidden="true">✓</div>
           <p className="eyebrow">러닝 완료</p>
-          <h1>오늘의 등촌 한 바퀴</h1>
+          <h1>{selectedCourse.name} 완료</h1>
           <p className="summary-message">수고했어요! 기록은 현재 기기에 저장하지 않는 데모입니다.</p>
           <div className="summary-stats">
             <Stat label="거리" value={formatDistance(distanceMeters)} />
@@ -139,7 +140,7 @@ function App() {
             <Stat label="평균 페이스" value={formatPace(averagePace)} />
           </div>
           <div className="summary-map">
-            <RunningMap course={DEMO_COURSE} currentPosition={currentPosition} recordedPath={recordedPath} progress={routeProgress} followPosition={false} />
+            <RunningMap key={selectedCourse.id} course={selectedCourse} currentPosition={currentPosition} recordedPath={recordedPath} progress={routeProgress} followPosition={false} />
           </div>
           <div className="summary-detail">
             <span>코스 진행률</span>
@@ -166,21 +167,44 @@ function App() {
         <header className="app-header">
           <div>
             <p className="brand">RUNNING OLLE</p>
-            <h1>{DEMO_COURSE.name}</h1>
+            <h1>{selectedCourse.name}</h1>
           </div>
           <span className={`status-pill status-${phase}`}>
             {phase === 'ready' ? '준비' : phase === 'paused' ? '일시정지' : '기록 중'}
           </span>
         </header>
 
+        {phase === 'ready' && (
+          <section className="course-selector" aria-label="러닝 코스 선택">
+            <p>코스 선택</p>
+            <div className="course-options">
+              {DEMO_COURSES.map((course) => (
+                <button
+                  key={course.id}
+                  className={`course-option ${selectedCourse.id === course.id ? 'course-option-selected' : ''}`}
+                  type="button"
+                  aria-pressed={selectedCourse.id === course.id}
+                  onClick={() => {
+                    setSelectedCourse(course)
+                    setFollowPosition(false)
+                  }}
+                >
+                  <strong>{course.name}</strong>
+                  <span>{course.distanceLabel} · {course.estimatedTime}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="course-meta" aria-label="코스 정보">
-          <span>{DEMO_COURSE.distanceLabel}</span>
-          <span>{DEMO_COURSE.estimatedTime}</span>
-          <span>{DEMO_COURSE.difficulty}</span>
+          <span>{selectedCourse.distanceLabel}</span>
+          <span>{selectedCourse.estimatedTime}</span>
+          <span>{selectedCourse.difficulty}</span>
         </div>
 
         <section className="map-card">
-          <RunningMap course={DEMO_COURSE} currentPosition={currentPosition} recordedPath={recordedPath} progress={routeProgress} followPosition={followPosition} />
+          <RunningMap key={selectedCourse.id} course={selectedCourse} currentPosition={currentPosition} recordedPath={recordedPath} progress={routeProgress} followPosition={followPosition} />
           <button
             className="location-button"
             type="button"
