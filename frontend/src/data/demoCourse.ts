@@ -21,19 +21,20 @@ export const DEUNGCHON_COURSE: Course = {
 }
 
 export const GANGNAM_HOLLYS_COURSE: Course = {
-  id: 'gangnam-hollys-demo-loop',
+  id: 'gangnam-hollys-demo-straight',
   name: '할리스 강남역점 미니 러닝',
-  description: '할리스 강남역점에서 시작하는 짧은 GPS 테스트용 코스',
-  distanceLabel: '약 0.4 km',
-  estimatedTime: '5~7분',
+  description: '할리스 강남역점에서 강남대로 보도를 따라 이동하는 짧은 GPS 테스트용 코스',
+  distanceLabel: '약 0.15 km',
+  estimatedTime: '2~3분',
   difficulty: '쉬움',
   path: [
     { latitude: 37.49862, longitude: 127.02763 },
-    { latitude: 37.49925, longitude: 127.02765 },
-    { latitude: 37.49925, longitude: 127.02875 },
-    { latitude: 37.49835, longitude: 127.02872 },
-    { latitude: 37.49835, longitude: 127.02765 },
-    { latitude: 37.49862, longitude: 127.02763 },
+    { latitude: 37.49882, longitude: 127.02755 },
+    { latitude: 37.49902, longitude: 127.02747 },
+    { latitude: 37.49922, longitude: 127.02739 },
+    { latitude: 37.49942, longitude: 127.02731 },
+    { latitude: 37.49962, longitude: 127.02723 },
+    { latitude: 37.49982, longitude: 127.02715 },
   ],
 }
 
