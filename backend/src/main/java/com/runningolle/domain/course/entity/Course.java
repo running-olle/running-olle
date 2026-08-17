@@ -19,6 +19,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -108,4 +109,9 @@ public class Course extends BaseTimeEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public void updateRatingAvg(BigDecimal ratingAvg) {
+        BigDecimal normalized = ratingAvg == null ? BigDecimal.ZERO : ratingAvg;
+        this.ratingAvg = normalized.setScale(2, RoundingMode.HALF_UP);
+    }
 }
