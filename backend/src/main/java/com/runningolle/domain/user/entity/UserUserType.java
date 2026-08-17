@@ -45,4 +45,11 @@ public class UserUserType {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_type_id", nullable = false)
     private UserType userType;
+
+    public static UserUserType of(User user, UserType userType) {
+        UserUserType link = new UserUserType();
+        link.user = user;
+        link.userType = userType;
+        return link;
+    }
 }

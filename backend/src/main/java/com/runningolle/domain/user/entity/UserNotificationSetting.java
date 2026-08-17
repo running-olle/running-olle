@@ -73,4 +73,22 @@ public class UserNotificationSetting {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public static UserNotificationSetting create(
+            User user,
+            boolean marketingAgreed,
+            boolean recommendedCourse,
+            boolean weather,
+            boolean meetupInvite,
+            boolean commentLike
+    ) {
+        UserNotificationSetting setting = new UserNotificationSetting();
+        setting.user = user;
+        setting.marketingAgreed = marketingAgreed;
+        setting.recommendedCourse = recommendedCourse;
+        setting.weather = weather;
+        setting.meetupInvite = meetupInvite;
+        setting.commentLike = commentLike;
+        return setting;
+    }
 }

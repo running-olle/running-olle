@@ -40,10 +40,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "kakao_id", nullable = false, unique = true, length = 255)
     private String kakaoId;
 
-    @Column(name = "email", nullable = false, length = 255)
-    private String email;
-
-    @Column(name = "nickname", nullable = false, length = 100)
+    @Column(name = "nickname", length = 100)
     private String nickname;
 
     @Column(name = "profile_image_url", columnDefinition = "text")
@@ -53,11 +50,11 @@ public class User extends BaseTimeEntity {
     private String bio;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "preferred_distance", nullable = false, length = 20)
+    @Column(name = "preferred_distance", length = 20)
     private PreferredDistance preferredDistance;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "preferred_difficulty", nullable = false, length = 20)
+    @Column(name = "preferred_difficulty", length = 20)
     private PreferredDifficulty preferredDifficulty;
 
     @Column(name = "terms_service_agreed", nullable = false)
@@ -94,4 +91,42 @@ public class User extends BaseTimeEntity {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Column(name = "onboarding_completed", nullable = false)
+    @ColumnDefault("false")
+    private Boolean onboardingCompleted = false;
+
+    public static User createKakaoUser(String kakaoId) {
+        User user = new User();
+        user.kakaoId = kakaoId;
+        return user;
+    }
+
+    public void completeOnboarding(
+            String nickname,
+            String profileImageUrl,
+            String bio,
+            PreferredDistance preferredDistance,
+            PreferredDifficulty preferredDifficulty,
+            boolean termsServiceAgreed,
+            boolean termsPrivacyAgreed,
+            boolean termsLocationAgreed,
+            boolean termsMarketingAgreed
+    ) {
+        this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
+        this.bio = bio;
+        this.preferredDistance = preferredDistance;
+        this.preferredDifficulty = preferredDifficulty;
+        this.termsServiceAgreed = termsServiceAgreed;
+        this.termsPrivacyAgreed = termsPrivacyAgreed;
+        this.termsLocationAgreed = termsLocationAgreed;
+        this.termsMarketingAgreedAt = termsMarketingAgreed ? LocalDateTime.now() : null;
+        this.onboardingCompleted = true;
+    }
+
+    public void withdraw() {
+        this.accountStatus = AccountStatus.WITHDRAWN;
+        this.withdrawnAt = LocalDateTime.now();
+    }
 }

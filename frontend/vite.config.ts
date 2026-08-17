@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Running Olle',
         short_name: 'RunningOlle',
-        description: '러닝과 여행을 연결하는 위치 기반 서비스',
+        description: '제주를 달리며 여행하는 러닝 플랫폼',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
@@ -20,7 +20,5 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    port: 5173,
-  },
+  server: { port: 5173 },
 })

@@ -33,4 +33,11 @@ public class UserType {
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+    public static UserType of(String code, String name) {
+        UserType userType = new UserType();
+        userType.code = code;
+        userType.name = name;
+        return userType;
+    }
 }

@@ -3,6 +3,7 @@ package com.runningolle.global.config;
 import com.runningolle.global.security.jwt.JwtAuthenticationFilter;
 import com.runningolle.global.security.oauth.CustomOAuth2UserService;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationSuccessHandler;
+import com.runningolle.global.security.oauth.OAuth2AuthenticationFailureHandler;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -47,8 +49,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/favicon.ico",
                                 "/h2-console/**",
-                                "/login/**",
-                                "/oauth2/**",
+                                "/api/login/**",
+                                "/api/oauth2/**",
                                 "/actuator/health"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
@@ -56,8 +58,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization.baseUri("/api/oauth2/authorization"))
+                        .redirectionEndpoint(redirection -> redirection.baseUri("/api/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
