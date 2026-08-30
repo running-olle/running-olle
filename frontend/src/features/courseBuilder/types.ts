@@ -17,6 +17,8 @@ export type PlaceSearchResult = {
   isTourismCandidate: boolean
 }
 
+export type NearbyCategoryGroupCode = 'AT4' | 'CE7' | 'FD6' | 'CS2' | 'AD5'
+
 export type PlaceDetail = {
   kakaoPlaceId: string
   name: string

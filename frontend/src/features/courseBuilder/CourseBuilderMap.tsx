@@ -9,9 +9,11 @@ type Props = {
   waypoints: CourseWaypointDraft[]
   draftRoute: DraftRoute | null
   selectedPlace: PlaceSearchResult | null
+  candidatePlaces?: PlaceSearchResult[]
   className?: string
   onMapPress?: () => void
   onSelectedPlaceMarkerClick?: () => void
+  onCandidatePlaceClick?: (place: PlaceSearchResult) => void
 }
 
 function markerContent(index: number) {
@@ -34,19 +36,60 @@ function currentMarkerContent() {
   return '<div class="course-builder-current-marker"><span></span></div>'
 }
 
+function candidateMarkerClass(categoryGroupCode: string | null) {
+  if (categoryGroupCode === 'AT4') return 'is-tourism'
+  if (categoryGroupCode === 'CE7') return 'is-cafe'
+  if (categoryGroupCode === 'FD6') return 'is-food'
+  if (categoryGroupCode === 'CS2') return 'is-store'
+  if (categoryGroupCode === 'AD5') return 'is-stay'
+  return 'is-place'
+}
+
+function candidateMarkerIcon(categoryGroupCode: string | null) {
+  if (categoryGroupCode === 'CE7') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h11v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Zm11 2h2.3a2.7 2.7 0 1 1 0 5.4H16" /></svg>'
+  }
+  if (categoryGroupCode === 'FD6') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8M10 3v8M5 11h7M8.5 11v10M17 3v18M15 3c3 2.5 3 5.5 0 8" /></svg>'
+  }
+  if (categoryGroupCode === 'CS2') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1-5H5L4 9Zm1 0v11h14V9M8 20v-7h8v7" /></svg>'
+  }
+  if (categoryGroupCode === 'AD5') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v8M4 19V7M20 19v-5a3 3 0 0 0-3-3H4M8 11V8h4a2 2 0 0 1 2 2v1" /></svg>'
+  }
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h10v14H7V5Zm2 4h6M9 13h6" /></svg>'
+}
+
+function candidateMarkerContent(place: PlaceSearchResult, onClick?: (place: PlaceSearchResult) => void) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = `course-builder-candidate-marker ${candidateMarkerClass(place.categoryGroupCode)}`
+  button.setAttribute('aria-label', `${place.name} 상세 보기`)
+  button.innerHTML = candidateMarkerIcon(place.categoryGroupCode)
+  button.addEventListener('click', (event) => {
+    event.stopPropagation()
+    onClick?.(place)
+  })
+  return button
+}
+
 export function CourseBuilderMap({
   currentPosition,
   waypoints,
   draftRoute,
   selectedPlace,
+  candidatePlaces = [],
   className = '',
   onMapPress,
   onSelectedPlaceMarkerClick,
+  onCandidatePlaceClick,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<KakaoMap | null>(null)
   const routeRef = useRef<KakaoPolyline | null>(null)
   const waypointOverlayRefs = useRef<KakaoCustomOverlay[]>([])
+  const candidateOverlayRefs = useRef<KakaoCustomOverlay[]>([])
   const selectedOverlayRef = useRef<KakaoCustomOverlay | null>(null)
   const currentOverlayRef = useRef<KakaoCustomOverlay | null>(null)
   const onMapPressRef = useRef(onMapPress)
@@ -126,6 +169,20 @@ export function CourseBuilderMap({
       })
     ))
   }, [ready, waypoints])
+
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.kakao) return
+    candidateOverlayRefs.current.forEach((overlay) => overlay.setMap(null))
+    candidateOverlayRefs.current = candidatePlaces.map((place) => (
+      new window.kakao!.maps.CustomOverlay({
+        map: mapRef.current!,
+        position: new window.kakao!.maps.LatLng(place.lat, place.lng),
+        content: candidateMarkerContent(place, onCandidatePlaceClick),
+        zIndex: 9,
+        yAnchor: 1,
+      })
+    ))
+  }, [candidatePlaces, onCandidatePlaceClick, ready])
 
   useEffect(() => {
     if (!ready || !mapRef.current || !window.kakao) return

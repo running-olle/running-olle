@@ -200,7 +200,19 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .course-builder-search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; color: #111827; background: transparent; font-size: 14px; }
 .course-builder-search input::placeholder { color: #777; }
 .course-builder-search button { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #7a6d67; background: #f3f4f6; font-size: 18px; }
+.course-nearby-panel { margin-top: 10px; padding: 12px; border-radius: 22px; background: rgba(255,255,255,.96); box-shadow: 0 10px 24px rgba(31,41,55,.14); backdrop-filter: blur(8px); }
+.course-nearby-copy { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 0 3px 10px; }
+.course-nearby-copy strong { min-width: 0; overflow: hidden; color: #111827; font-size: 13px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.course-nearby-copy span { min-width: 0; overflow: hidden; color: #6b7280; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.course-nearby-categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 1px; scrollbar-width: none; }
+.course-nearby-categories::-webkit-scrollbar { display: none; }
+.course-nearby-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; border: 1px solid #f1e5dd; border-radius: 999px; color: #594136; background: #fffaf7; font-size: 12px; font-weight: 900; }
+.course-nearby-chip[data-active="true"] { border-color: #ff6f0f; color: #fff; background: #ff6f0f; box-shadow: 0 6px 14px rgba(255,111,15,.22); }
+.course-nearby-chip svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.course-nearby-chip small { display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; color: #6b4a3c; background: #f7eee9; font-size: 10px; font-weight: 900; }
+.course-nearby-chip[data-active="true"] small { color: #ff6f0f; background: #fff; }
 .course-search-results { max-height: min(420px, calc(100dvh - 170px)); margin-top: 10px; overflow-y: auto; border-radius: 22px; background: rgba(255,255,255,.98); box-shadow: 0 10px 24px rgba(31,41,55,.16); }
+.course-search-title { margin: 0; padding: 13px 17px 6px; color: #6b4a3c; font-size: 12px; font-weight: 900; }
 .course-search-state { margin: 0; padding: 18px; color: #6b7280; font-size: 13px; text-align: center; }
 .course-search-result-item { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; width: 100%; padding: 15px 17px; border-bottom: 1px solid #f3f4f6; background: transparent; text-align: left; }
 .course-search-result-item:last-child { border-bottom: 0; }
@@ -214,6 +226,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .course-builder-zoom-controls button + button { border-top: 1px solid #f3f4f6; }
 .course-builder-marker { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: #050505; box-shadow: 0 4px 8px rgba(0,0,0,.18); font-size: 13px; font-weight: 900; }
 .course-builder-selected-marker { display: block; width: 24px; height: 24px; padding: 0; border: 4px solid #fff; border-radius: 50% 50% 50% 0; background: #ff6f0f; box-shadow: 0 4px 10px rgba(0,0,0,.18); transform: rotate(-45deg); }
+.course-builder-candidate-marker { display: grid; place-items: center; width: 31px; height: 31px; padding: 0; border: 3px solid #fff; border-radius: 50%; color: #fff; background: #64748b; box-shadow: 0 4px 10px rgba(15,23,42,.2); }
+.course-builder-candidate-marker svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.course-builder-candidate-marker.is-tourism { background: #16833a; }
+.course-builder-candidate-marker.is-cafe { background: #8a5431; }
+.course-builder-candidate-marker.is-food { background: #f97316; }
+.course-builder-candidate-marker.is-store { background: #2563eb; }
+.course-builder-candidate-marker.is-stay { background: #6d5bd0; }
 .course-builder-current-marker { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: rgba(59,130,246,.22); }
 .course-builder-current-marker span { width: 20px; height: 20px; border: 4px solid white; border-radius: 50%; background: #3b82f6; box-shadow: 0 2px 7px rgba(0,0,0,.2); }
 .course-sheet-handle { display: block; width: 48px; height: 22px; margin: 5px auto 2px; border-radius: 99px; background: transparent; touch-action: none; cursor: grab; }

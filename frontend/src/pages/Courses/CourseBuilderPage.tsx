@@ -6,11 +6,39 @@ import { courseBuilderService } from '../../features/courseBuilder/courseBuilder
 import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftStore'
 import { JEJU_CENTER, approximateWalkingMinutes, cleanDisplayText, difficultyLabel, formatDistanceKm, isInJejuBounds, kakaoSearchUrl } from '../../features/courseBuilder/courseBuilderUtils'
 import { useRouteCalculation } from '../../features/courseBuilder/useRouteCalculation'
-import type { CourseWaypointDraft, DraftRoute, LatLng, PlaceDetail, PlaceSearchResult } from '../../features/courseBuilder/types'
+import type { CourseWaypointDraft, DraftRoute, LatLng, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult } from '../../features/courseBuilder/types'
 import { RunningIcon } from '../../features/running/RunningIcon'
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error'
 type SheetSnap = 'peek' | 'full'
+
+type NearbyCategory = {
+  code: NearbyCategoryGroupCode
+  label: string
+  icon: 'camera' | 'coffee' | 'food' | 'store' | 'stay'
+}
+
+type NearbyResultsByCategory = Record<NearbyCategoryGroupCode, PlaceSearchResult[]>
+
+const NEARBY_SEARCH_RADIUS_METERS = 1_500
+
+const nearbyCategories: NearbyCategory[] = [
+  { code: 'AT4', label: '관광지', icon: 'camera' },
+  { code: 'CE7', label: '카페', icon: 'coffee' },
+  { code: 'FD6', label: '맛집', icon: 'food' },
+  { code: 'CS2', label: '편의점', icon: 'store' },
+  { code: 'AD5', label: '숙소', icon: 'stay' },
+]
+
+function emptyNearbyResults(): NearbyResultsByCategory {
+  return {
+    AT4: [],
+    CE7: [],
+    FD6: [],
+    CS2: [],
+    AD5: [],
+  }
+}
 
 type SheetControls = {
   snap: SheetSnap
@@ -45,6 +73,41 @@ function referencePoint(waypoints: ReturnType<typeof useCourseDraftStore.getStat
 
 function walkingMinuteText(minutes: number | null) {
   return minutes === null ? '거리 계산 전' : `약 ${minutes}분`
+}
+
+function normalizeSearchText(value: string | null | undefined) {
+  return (value ?? '').replace(/[^0-9A-Za-z가-힣]/g, '').toLowerCase()
+}
+
+function findBestSearchAnchor(keyword: string, places: PlaceSearchResult[]) {
+  const normalizedKeyword = normalizeSearchText(keyword)
+  if (!normalizedKeyword) return null
+
+  const exactMatch = places.find((place) => normalizeSearchText(place.name) === normalizedKeyword)
+  if (exactMatch) return exactMatch
+
+  const tourismPrefixMatch = places.find((place) => (
+    place.categoryGroupCode === 'AT4'
+    && normalizeSearchText(place.name).startsWith(normalizedKeyword)
+  ))
+  if (tourismPrefixMatch) return tourismPrefixMatch
+
+  const tourismContainMatch = places.find((place) => (
+    place.categoryGroupCode === 'AT4'
+    && normalizeSearchText(place.name).includes(normalizedKeyword)
+  ))
+  if (tourismContainMatch) return tourismContainMatch
+
+  return places[0] ?? null
+}
+
+function isStrongSearchAnchor(keyword: string, place: PlaceSearchResult) {
+  const normalizedKeyword = normalizeSearchText(keyword)
+  const normalizedName = normalizeSearchText(place.name)
+  return normalizedName === normalizedKeyword || (
+    place.categoryGroupCode === 'AT4'
+    && normalizedName.startsWith(normalizedKeyword)
+  )
 }
 
 function useSheetControls(initialSnap: SheetSnap): SheetControls {
@@ -103,9 +166,15 @@ export function CourseBuilderPage() {
   const [searchResults, setSearchResults] = useState<PlaceSearchResult[]>([])
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle')
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [committedSearchAnchor, setCommittedSearchAnchor] = useState<PlaceSearchResult | null>(null)
+  const [nearbyResults, setNearbyResults] = useState<NearbyResultsByCategory>(() => emptyNearbyResults())
+  const [nearbyStatus, setNearbyStatus] = useState<SearchStatus>('idle')
+  const [nearbyError, setNearbyError] = useState<string | null>(null)
+  const [activeNearbyCategory, setActiveNearbyCategory] = useState<NearbyCategoryGroupCode | null>(null)
   const [detailStatus, setDetailStatus] = useState<SearchStatus>('idle')
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false)
   const searchRequestIdRef = useRef(0)
+  const nearbyRequestIdRef = useRef(0)
   const detailSheetControls = useSheetControls('peek')
   const draftSheetControls = useSheetControls('peek')
   const setDetailSheetSnap = detailSheetControls.setSnap
@@ -141,56 +210,84 @@ export function CourseBuilderPage() {
 
   const previousPoint = useMemo(() => referencePoint(waypoints, jejuCurrentPosition), [jejuCurrentPosition, waypoints])
 
-  const executeSearch = useCallback((trimmedKeyword: string) => {
-    if (!trimmedKeyword) return
+  const resetNearbySearch = useCallback(() => {
+    nearbyRequestIdRef.current += 1
+    setCommittedSearchAnchor(null)
+    setNearbyResults(emptyNearbyResults())
+    setNearbyStatus('idle')
+    setNearbyError(null)
+    setActiveNearbyCategory(null)
+  }, [])
+
+  const executeSearch = useCallback(async (trimmedKeyword: string) => {
+    if (!trimmedKeyword) return []
 
     const requestId = searchRequestIdRef.current + 1
     searchRequestIdRef.current = requestId
     setSearchStatus('loading')
     setSearchError(null)
-    setSelectedPlace(null)
-    setSelectedPlaceDetail(null)
-    courseBuilderService.searchPlaces(trimmedKeyword, searchCenter.lat, searchCenter.lng, 5_000)
-      .then((places) => {
-        if (searchRequestIdRef.current !== requestId) return
-        setSearchResults(places)
-        setSearchStatus('success')
-      })
-      .catch(() => {
-        if (searchRequestIdRef.current !== requestId) return
-        setSearchResults([])
-        setSearchStatus('error')
-        setSearchError('장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.')
-      })
-  }, [searchCenter.lat, searchCenter.lng, setSelectedPlace, setSelectedPlaceDetail])
-
-  useEffect(() => {
-    const trimmedKeyword = keyword.trim()
-    if (trimmedKeyword.length < 2) {
-      searchRequestIdRef.current += 1
+    try {
+      const places = await courseBuilderService.searchPlaces(trimmedKeyword, searchCenter.lat, searchCenter.lng, 5_000)
+      if (searchRequestIdRef.current !== requestId) return []
+      setSearchResults(places)
+      setSearchStatus('success')
+      return places
+    } catch {
+      if (searchRequestIdRef.current !== requestId) return []
       setSearchResults([])
-      setSearchStatus('idle')
-      setSearchError(null)
-      return
+      setSearchStatus('error')
+      setSearchError('장소 검색에 실패했어요. 잠시 후 다시 시도해 주세요.')
+      return []
     }
+  }, [searchCenter.lat, searchCenter.lng])
 
-    const timerId = window.setTimeout(() => executeSearch(trimmedKeyword), 350)
-    return () => window.clearTimeout(timerId)
-  }, [executeSearch, keyword])
+  const loadNearbyResults = useCallback(async (anchor: PlaceSearchResult) => {
+    const requestId = nearbyRequestIdRef.current + 1
+    nearbyRequestIdRef.current = requestId
+    setNearbyStatus('loading')
+    setNearbyError(null)
+    setNearbyResults(emptyNearbyResults())
+    setActiveNearbyCategory(null)
 
-  const handleSearch = useCallback((event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault()
-    const trimmedKeyword = keyword.trim()
-    if (!trimmedKeyword) return
-    executeSearch(trimmedKeyword)
-  }, [executeSearch, keyword])
+    const entries = await Promise.all(nearbyCategories.map(async (category) => {
+      try {
+        const places = await courseBuilderService.searchNearbyPlaces(
+          anchor.lat,
+          anchor.lng,
+          NEARBY_SEARCH_RADIUS_METERS,
+          category.code,
+        )
+        return [category.code, places] as const
+      } catch {
+        return [category.code, []] as const
+      }
+    }))
 
-  const handleSelectPlace = useCallback((place: PlaceSearchResult) => {
+    if (nearbyRequestIdRef.current !== requestId) return
+
+    const nextResults = emptyNearbyResults()
+    entries.forEach(([categoryCode, places]) => {
+      nextResults[categoryCode] = places.filter((place) => place.kakaoPlaceId !== anchor.kakaoPlaceId)
+    })
+    setNearbyResults(nextResults)
+    setNearbyStatus('success')
+    if (entries.every(([, places]) => places.length === 0)) {
+      setNearbyError('주변 장소를 찾지 못했어요.')
+    }
+  }, [])
+
+  const handleSelectPlace = useCallback((
+    place: PlaceSearchResult,
+    options: { sheetSnap?: SheetSnap; keepNearbySearch?: boolean } = {},
+  ) => {
+    if (!options.keepNearbySearch) {
+      resetNearbySearch()
+    }
     setSelectedPlace(place)
     setSelectedPlaceDetail(null)
     setDetailStatus('loading')
     setIsOverviewExpanded(false)
-    setDetailSheetSnap('peek')
+    setDetailSheetSnap(options.sheetSnap ?? 'peek')
     setSearchStatus('idle')
     setSearchResults([])
     courseBuilderService.getPlaceDetail(place)
@@ -218,7 +315,51 @@ export function CourseBuilderPage() {
         })
         setDetailStatus('error')
       })
-  }, [setDetailSheetSnap, setSelectedPlace, setSelectedPlaceDetail])
+  }, [resetNearbySearch, setDetailSheetSnap, setSelectedPlace, setSelectedPlaceDetail])
+
+  useEffect(() => {
+    const trimmedKeyword = keyword.trim()
+    if (trimmedKeyword.length < 2) {
+      searchRequestIdRef.current += 1
+      setSearchResults([])
+      setSearchStatus('idle')
+      setSearchError(null)
+      return
+    }
+
+    const timerId = window.setTimeout(() => {
+      if (committedSearchAnchor) return
+      void executeSearch(trimmedKeyword)
+    }, 350)
+    return () => window.clearTimeout(timerId)
+  }, [committedSearchAnchor, executeSearch, keyword])
+
+  const handleKeywordChange = useCallback((value: string) => {
+    setKeyword(value)
+    setSelectedPlace(null)
+    setSelectedPlaceDetail(null)
+    resetNearbySearch()
+  }, [resetNearbySearch, setSelectedPlace, setSelectedPlaceDetail])
+
+  const handleSearch = useCallback(async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    const trimmedKeyword = keyword.trim()
+    if (!trimmedKeyword) return
+
+    const places = await executeSearch(trimmedKeyword)
+    const anchor = findBestSearchAnchor(trimmedKeyword, places)
+    if (!anchor) return
+
+    setCommittedSearchAnchor(anchor)
+    setSearchStatus('idle')
+    setSearchResults([])
+    setActiveNearbyCategory(null)
+    handleSelectPlace(anchor, {
+      sheetSnap: isStrongSearchAnchor(trimmedKeyword, anchor) ? 'full' : 'peek',
+      keepNearbySearch: true,
+    })
+    void loadNearbyResults(anchor)
+  }, [executeSearch, handleSelectPlace, keyword, loadNearbyResults])
 
   const handleAddWaypoint = useCallback(() => {
     if (!selectedPlace || !selectedPlaceDetail) return
@@ -228,8 +369,9 @@ export function CourseBuilderPage() {
     setSearchResults([])
     setSelectedPlace(null)
     setSelectedPlaceDetail(null)
+    resetNearbySearch()
     setDraftSheetSnap('full')
-  }, [addWaypoint, selectedPlace, selectedPlaceDetail, setDraftSheetSnap, setSelectedPlace, setSelectedPlaceDetail])
+  }, [addWaypoint, resetNearbySearch, selectedPlace, selectedPlaceDetail, setDraftSheetSnap, setSelectedPlace, setSelectedPlaceDetail])
 
   const handleClearSearch = useCallback(() => {
     searchRequestIdRef.current += 1
@@ -239,12 +381,14 @@ export function CourseBuilderPage() {
     setSearchError(null)
     setSelectedPlace(null)
     setSelectedPlaceDetail(null)
-  }, [setSelectedPlace, setSelectedPlaceDetail])
+    resetNearbySearch()
+  }, [resetNearbySearch, setSelectedPlace, setSelectedPlaceDetail])
 
   const handleMapPress = useCallback(() => {
     setSearchStatus('idle')
     setSearchResults([])
     setSearchError(null)
+    setActiveNearbyCategory(null)
     if (selectedPlace) {
       setDetailSheetSnap('peek')
     }
@@ -253,6 +397,31 @@ export function CourseBuilderPage() {
   const handleSelectedPlaceMarkerClick = useCallback(() => {
     setDetailSheetSnap('full')
   }, [setDetailSheetSnap])
+
+  const handleNearbyCategorySelect = useCallback((categoryCode: NearbyCategoryGroupCode) => {
+    setActiveNearbyCategory((currentCategoryCode) => currentCategoryCode === categoryCode ? null : categoryCode)
+    setSearchStatus('idle')
+    setSearchResults([])
+    setSearchError(null)
+    setDetailSheetSnap('peek')
+  }, [setDetailSheetSnap])
+
+  const handleCandidatePlaceClick = useCallback((place: PlaceSearchResult) => {
+    handleSelectPlace(place, { sheetSnap: 'peek', keepNearbySearch: true })
+  }, [handleSelectPlace])
+
+  const activeNearbyPlaces = useMemo(() => (
+    activeNearbyCategory ? nearbyResults[activeNearbyCategory] : []
+  ), [activeNearbyCategory, nearbyResults])
+
+  const activeNearbyCategoryLabel = useMemo(() => (
+    nearbyCategories.find((category) => category.code === activeNearbyCategory)?.label ?? null
+  ), [activeNearbyCategory])
+
+  const isNearbyResultMode = Boolean(committedSearchAnchor && activeNearbyCategory)
+  const displayedSearchPlaces = isNearbyResultMode ? activeNearbyPlaces : searchResults
+  const displayedSearchStatus = isNearbyResultMode ? nearbyStatus : searchStatus
+  const displayedSearchError = isNearbyResultMode ? nearbyError : searchError
 
   function handleSave() {
     if (waypoints.length < 2) {
@@ -273,8 +442,10 @@ export function CourseBuilderPage() {
         waypoints={waypoints}
         draftRoute={draftRoute}
         selectedPlace={selectedPlace}
+        candidatePlaces={activeNearbyPlaces}
         onMapPress={handleMapPress}
         onSelectedPlaceMarkerClick={handleSelectedPlaceMarkerClick}
+        onCandidatePlaceClick={handleCandidatePlaceClick}
       />
 
       <header className="course-builder-header">
@@ -290,18 +461,29 @@ export function CourseBuilderPage() {
           <span aria-hidden="true">⌕</span>
           <input
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => handleKeywordChange(event.target.value)}
             placeholder="관광지/맛집/숙소 검색"
             aria-label="관광지/맛집/숙소 검색"
           />
           {keyword && <button type="button" aria-label="검색어 지우기" onClick={handleClearSearch}>×</button>}
         </form>
+        {committedSearchAnchor && (
+          <NearbyCategoryRail
+            categories={nearbyCategories}
+            results={nearbyResults}
+            status={nearbyStatus}
+            activeCategory={activeNearbyCategory}
+            anchor={committedSearchAnchor}
+            onSelect={handleNearbyCategorySelect}
+          />
+        )}
         <SearchResultSheet
           currentPosition={previousPoint}
-          places={searchResults}
-          status={searchStatus}
-          error={searchError}
-          onSelect={handleSelectPlace}
+          places={displayedSearchPlaces}
+          status={displayedSearchStatus}
+          error={displayedSearchError}
+          title={isNearbyResultMode && activeNearbyCategoryLabel ? `${activeNearbyCategoryLabel} 주변 장소` : undefined}
+          onSelect={isNearbyResultMode ? handleCandidatePlaceClick : handleSelectPlace}
         />
       </section>
 
@@ -345,14 +527,98 @@ type SearchResultSheetProps = {
   places: PlaceSearchResult[]
   status: SearchStatus
   error: string | null
+  title?: string
   onSelect: (place: PlaceSearchResult) => void
 }
 
-function SearchResultSheet({ currentPosition, places, status, error, onSelect }: SearchResultSheetProps) {
+type NearbyCategoryRailProps = {
+  categories: NearbyCategory[]
+  results: NearbyResultsByCategory
+  status: SearchStatus
+  activeCategory: NearbyCategoryGroupCode | null
+  anchor: PlaceSearchResult
+  onSelect: (categoryCode: NearbyCategoryGroupCode) => void
+}
+
+function NearbyCategoryRail({
+  categories,
+  results,
+  status,
+  activeCategory,
+  anchor,
+  onSelect,
+}: NearbyCategoryRailProps) {
+  return (
+    <div className="course-nearby-panel" aria-label={`${anchor.name} 주변 장소`}>
+      <div className="course-nearby-copy">
+        <strong>{anchor.name} 주변</strong>
+        <span>러닝 중 들르기 좋은 거점을 골라보세요.</span>
+      </div>
+      <div className="course-nearby-categories" role="list">
+        {categories.map((category) => {
+          const count = results[category.code].length
+          const isActive = activeCategory === category.code
+          return (
+            <button
+              key={category.code}
+              type="button"
+              className="course-nearby-chip"
+              data-active={isActive}
+              onClick={() => onSelect(category.code)}
+            >
+              <CategoryIcon name={category.icon} />
+              <span>{category.label}</span>
+              <small>{status === 'loading' ? '...' : count}</small>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function CategoryIcon({ name }: { name: NearbyCategory['icon'] }) {
+  if (name === 'coffee') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 8h11v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Zm11 2h2.3a2.7 2.7 0 1 1 0 5.4H16" />
+      </svg>
+    )
+  }
+  if (name === 'food') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 3v8M10 3v8M5 11h7M8.5 11v10M17 3v18M15 3c3 2.5 3 5.5 0 8" />
+      </svg>
+    )
+  }
+  if (name === 'store') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9h16l-1-5H5L4 9Zm1 0v11h14V9M8 20v-7h8v7" />
+      </svg>
+    )
+  }
+  if (name === 'stay') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 11h16v8M4 19V7M20 19v-5a3 3 0 0 0-3-3H4M8 11V8h4a2 2 0 0 1 2 2v1" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 5h10v14H7V5Zm2 4h6M9 13h6" />
+    </svg>
+  )
+}
+
+function SearchResultSheet({ currentPosition, places, status, error, title, onSelect }: SearchResultSheetProps) {
   if (status === 'idle') return null
 
   return (
     <div className="course-search-results">
+      {title && status === 'success' && <p className="course-search-title">{title}</p>}
       {status === 'loading' && <p className="course-search-state">검색 중이에요…</p>}
       {status === 'error' && <p className="course-search-state">{error}</p>}
       {status === 'success' && places.length === 0 && <p className="course-search-state">검색 결과가 없어요.</p>}
