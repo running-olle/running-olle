@@ -7,6 +7,7 @@ import com.runningolle.domain.place.dto.PlaceDetailResponse;
 import com.runningolle.domain.place.dto.PlaceSearchResultResponse;
 import com.runningolle.domain.tourism.entity.TourismPlace;
 import com.runningolle.domain.tourism.repository.TourismPlaceRepository;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,15 +28,26 @@ public class PlaceService {
     private static final String TOURISM_CATEGORY_GROUP_CODE = "AT4";
     private static final String TOUR_API_PLACE_ID_PREFIX = "tourapi:";
     private static final int DEFAULT_SEARCH_RADIUS_METERS = 5_000;
+    private static final int DEFAULT_NEARBY_RADIUS_METERS = 1_500;
     private static final int MAX_SEARCH_RADIUS_METERS = 20_000;
     private static final int DETAIL_SEARCH_RADIUS_METERS = 1_000;
     private static final int TOURISM_SEARCH_LIMIT = 10;
+    private static final int PLACE_SEARCH_RESULT_LIMIT = 15;
+    private static final int NEARBY_SEARCH_RESULT_LIMIT = 12;
     private static final double TOURISM_MATCH_RADIUS_METERS = 500.0;
     private static final double TOURISM_SEARCH_DEDUPLICATE_RADIUS_METERS = 250.0;
     private static final int TOURISM_MATCH_LIMIT = 20;
     private static final double MIN_TOURISM_NAME_SCORE = 0.55;
     private static final double MIN_TOURISM_DUPLICATE_NAME_SCORE = 0.70;
     private static final double EARTH_RADIUS_METERS = 6_371_000.0;
+    private static final List<String> CATEGORY_ALIASES = List.of(
+            "게스트하우스", "관광지", "음식점", "베이커리", "편의점",
+            "해산물", "디저트", "전망대", "숙박", "호텔",
+            "펜션", "리조트", "관광", "명소", "여행",
+            "오름", "해변", "숲길", "맛집", "식당",
+            "밥집", "고기", "카페", "커피", "마트",
+            "상점", "숙소"
+    );
 
     private final KakaoPlaceClient kakaoPlaceClient;
     private final TourismPlaceRepository tourismPlaceRepository;
@@ -60,7 +72,51 @@ public class PlaceService {
                 .map(PlaceSearchResultResponse::fromOfficialTourism)
                 .toList();
 
-        return concat(kakaoResults, officialTourismResults);
+        return rankedSearchResults(keyword, lat, lng, kakaoResults, officialTourismResults);
+    }
+
+    public List<PlaceSearchResultResponse> searchNearbyPlaces(
+            double lat,
+            double lng,
+            Integer radiusMeters,
+            String categoryGroupCode
+    ) {
+        validateCoordinate(lat, lng);
+        String normalizedCategoryGroupCode = normalizeCategoryGroupCode(categoryGroupCode);
+        int radius = radiusMeters == null ? DEFAULT_NEARBY_RADIUS_METERS : normalizeRadius(radiusMeters);
+        String categoryKeyword = categoryKeyword(normalizedCategoryGroupCode);
+
+        List<KakaoPlace> kakaoPlaces = kakaoPlaceClient.searchKeyword(
+                categoryKeyword,
+                lat,
+                lng,
+                radius,
+                normalizedCategoryGroupCode
+        );
+        List<PlaceSearchResultResponse> kakaoResults = kakaoPlaces.stream()
+                .map(place -> PlaceSearchResultResponse.from(place, isTourismCandidate(place.categoryGroupCode())))
+                .toList();
+
+        List<PlaceSearchResultResponse> officialTourismResults = List.of();
+        if (isTourismCandidate(normalizedCategoryGroupCode)) {
+            officialTourismResults = tourismPlaceRepository.findNearbyOfficialTourismPlaces(
+                            lat,
+                            lng,
+                            radius,
+                            NEARBY_SEARCH_RESULT_LIMIT
+                    ).stream()
+                    .filter(place -> !hasDuplicateKakaoPlace(place, kakaoPlaces))
+                    .map(PlaceSearchResultResponse::fromOfficialTourism)
+                    .toList();
+        }
+
+        return deduplicated(
+                java.util.stream.Stream.concat(officialTourismResults.stream(), kakaoResults.stream())
+                        .sorted(Comparator.comparingDouble(place -> distanceMeters(lat, lng, place)))
+                        .toList()
+        ).stream()
+                .limit(NEARBY_SEARCH_RESULT_LIMIT)
+                .toList();
     }
 
     public PlaceDetailResponse getPlaceDetail(
@@ -113,17 +169,127 @@ public class PlaceService {
         return List.copyOf(places.values());
     }
 
-    private static List<KakaoPlace> relevantKakaoPlaces(String keyword, List<KakaoPlace> places) {
-        return places.stream()
-                .filter(place -> isRelevantKakaoPlace(keyword, place))
-                .toList();
-    }
-
-    private static List<PlaceSearchResultResponse> concat(
+    private static List<PlaceSearchResultResponse> rankedSearchResults(
+            String keyword,
+            double lat,
+            double lng,
             List<PlaceSearchResultResponse> kakaoResults,
             List<PlaceSearchResultResponse> officialTourismResults
     ) {
-        return java.util.stream.Stream.concat(kakaoResults.stream(), officialTourismResults.stream()).toList();
+        SearchIntent intent = SearchIntent.from(keyword);
+        return deduplicated(java.util.stream.Stream.concat(kakaoResults.stream(), officialTourismResults.stream())
+                .sorted(Comparator.comparing((PlaceSearchResultResponse place) -> rank(keyword, intent, lat, lng, place)))
+                .toList()).stream()
+                .limit(PLACE_SEARCH_RESULT_LIMIT)
+                .toList();
+    }
+
+    private static PlaceSearchRank rank(
+            String keyword,
+            SearchIntent intent,
+            double lat,
+            double lng,
+            PlaceSearchResultResponse place
+    ) {
+        return new PlaceSearchRank(
+                nameMatchRank(keyword, intent.searchKeywordCore(), place),
+                categoryRank(intent, place),
+                sourceRank(intent, place),
+                distanceMeters(lat, lng, place),
+                normalizeName(place.name())
+        );
+    }
+
+    private static int nameMatchRank(String rawKeyword, String keywordCore, PlaceSearchResultResponse place) {
+        String normalizedName = normalizeName(place.name());
+        String normalizedAddress = normalizeName(place.address());
+        String normalizedCategory = normalizeName(place.categoryName());
+        String normalizedRawKeyword = normalizeName(rawKeyword);
+        String normalizedKeyword = StringUtils.hasText(keywordCore) ? keywordCore : normalizedRawKeyword;
+        boolean hasPlaceNameKeyword = StringUtils.hasText(keywordCore)
+                || keywordTokens(rawKeyword).stream().anyMatch(token -> !isCategoryAlias(token));
+
+        if (!StringUtils.hasText(normalizedKeyword) || !hasPlaceNameKeyword) {
+            return 4;
+        }
+        if (normalizedName.equals(normalizedKeyword)) {
+            return 0;
+        }
+        if (normalizedName.startsWith(normalizedKeyword)) {
+            return 1;
+        }
+        if (normalizedName.contains(normalizedKeyword)) {
+            return 2;
+        }
+
+        List<String> tokens = keywordTokens(rawKeyword).stream()
+                .filter(token -> !isCategoryAlias(token))
+                .toList();
+        if (!tokens.isEmpty() && tokens.stream().allMatch(normalizedName::contains)) {
+            return 3;
+        }
+        if (normalizedAddress.contains(normalizedKeyword)) {
+            return 5;
+        }
+        if (normalizedCategory.contains(normalizedKeyword)) {
+            return 6;
+        }
+        return 9;
+    }
+
+    private static int categoryRank(SearchIntent intent, PlaceSearchResultResponse place) {
+        String categoryGroupCode = place.categoryGroupCode();
+        if (intent.hasExplicitCategory()) {
+            return intent.matches(categoryGroupCode) ? 0 : 6;
+        }
+        return switch (categoryGroupCode == null ? "" : categoryGroupCode) {
+            case "AT4" -> 0;
+            case "CE7" -> 3;
+            case "FD6" -> 4;
+            case "CS2" -> 5;
+            case "AD5" -> 6;
+            case "PK6" -> 8;
+            case "BK9" -> 9;
+            default -> 7;
+        };
+    }
+
+    private static int sourceRank(SearchIntent intent, PlaceSearchResultResponse place) {
+        if (isTourApiPlaceId(place.kakaoPlaceId()) && (!intent.hasExplicitCategory() || intent.matches("AT4"))) {
+            return -1;
+        }
+        return 0;
+    }
+
+    private static List<PlaceSearchResultResponse> deduplicated(List<PlaceSearchResultResponse> places) {
+        List<PlaceSearchResultResponse> results = new ArrayList<>();
+        for (PlaceSearchResultResponse place : places) {
+            boolean duplicate = results.stream().anyMatch(existing -> isLikelySamePlace(existing, place));
+            if (!duplicate) {
+                results.add(place);
+            }
+        }
+        return results;
+    }
+
+    private static boolean isLikelySamePlace(PlaceSearchResultResponse left, PlaceSearchResultResponse right) {
+        if (left.kakaoPlaceId().equals(right.kakaoPlaceId())) {
+            return true;
+        }
+        if (!java.util.Objects.equals(left.categoryGroupCode(), right.categoryGroupCode())) {
+            return false;
+        }
+        double nameScore = normalizedNameScore(left.name(), right.name());
+        double distanceMeters = distanceMeters(left.lat(), left.lng(), right.lat(), right.lng());
+        return nameScore >= MIN_TOURISM_DUPLICATE_NAME_SCORE
+                && distanceMeters <= TOURISM_SEARCH_DEDUPLICATE_RADIUS_METERS;
+    }
+
+    private static List<KakaoPlace> relevantKakaoPlaces(String keyword, List<KakaoPlace> places) {
+        SearchIntent intent = SearchIntent.from(keyword);
+        return places.stream()
+                .filter(place -> isRelevantKakaoPlace(keyword, intent, place))
+                .toList();
     }
 
     private static boolean isTourApiPlaceId(String placeId) {
@@ -321,9 +487,12 @@ public class PlaceService {
         return firstNonBlank(kakaoPlace.roadAddress(), kakaoPlace.address());
     }
 
-    private static boolean isRelevantKakaoPlace(String keyword, KakaoPlace place) {
+    private static boolean isRelevantKakaoPlace(String keyword, SearchIntent intent, KakaoPlace place) {
         String normalizedKeyword = normalizeName(keyword);
         if (!StringUtils.hasText(normalizedKeyword)) {
+            return true;
+        }
+        if (intent.hasExplicitCategory() && intent.matches(place.categoryGroupCode())) {
             return true;
         }
 
@@ -358,12 +527,50 @@ public class PlaceService {
                 nullToEmpty(place.categoryGroupName()),
                 nullToEmpty(place.categoryName())
         ));
-        return switch (token) {
-            case "맛집", "식당", "음식점" -> categoryText.contains("음식점");
-            case "카페", "커피" -> categoryText.contains("카페");
-            case "편의점" -> categoryText.contains("편의점");
-            case "숙소", "호텔", "펜션", "게스트하우스" -> categoryText.contains("숙박");
+        return switch (categoryGroupForAlias(token)) {
+            case "FD6" -> categoryText.contains("음식점");
+            case "CE7" -> categoryText.contains("카페");
+            case "CS2" -> categoryText.contains("편의점");
+            case "AD5" -> categoryText.contains("숙박");
+            case "AT4" -> categoryText.contains("관광") || categoryText.contains("명소") || categoryText.contains("여행");
             default -> false;
+        };
+    }
+
+    private static String normalizeCategoryGroupCode(String categoryGroupCode) {
+        if (!StringUtils.hasText(categoryGroupCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리 코드가 필요합니다.");
+        }
+        String normalized = categoryGroupCode.trim().toUpperCase();
+        return switch (normalized) {
+            case "AT4", "CE7", "FD6", "CS2", "AD5" -> normalized;
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "지원하지 않는 장소 카테고리입니다.");
+        };
+    }
+
+    private static String categoryKeyword(String categoryGroupCode) {
+        return switch (categoryGroupCode) {
+            case "AT4" -> "관광지";
+            case "CE7" -> "카페";
+            case "FD6" -> "맛집";
+            case "CS2" -> "편의점";
+            case "AD5" -> "숙소";
+            default -> "장소";
+        };
+    }
+
+    private static boolean isCategoryAlias(String token) {
+        return StringUtils.hasText(categoryGroupForAlias(token));
+    }
+
+    private static String categoryGroupForAlias(String token) {
+        return switch (normalizeName(token)) {
+            case "맛집", "식당", "음식점", "밥집", "고기", "해산물" -> "FD6";
+            case "카페", "커피", "디저트", "베이커리" -> "CE7";
+            case "편의점", "마트", "상점" -> "CS2";
+            case "숙소", "숙박", "호텔", "펜션", "게스트하우스", "리조트" -> "AD5";
+            case "관광", "관광지", "명소", "여행", "오름", "해변", "숲길", "전망대" -> "AT4";
+            default -> "";
         };
     }
 
@@ -462,8 +669,14 @@ public class PlaceService {
     }
 
     private static double distanceMeters(double lat, double lng, Point point) {
-        double targetLat = point.getY();
-        double targetLng = point.getX();
+        return distanceMeters(lat, lng, point.getY(), point.getX());
+    }
+
+    private static double distanceMeters(double lat, double lng, PlaceSearchResultResponse place) {
+        return distanceMeters(lat, lng, place.lat(), place.lng());
+    }
+
+    private static double distanceMeters(double lat, double lng, double targetLat, double targetLng) {
         double latRadians = Math.toRadians(targetLat - lat);
         double lngRadians = Math.toRadians(targetLng - lng);
         double haversine = Math.sin(latRadians / 2) * Math.sin(latRadians / 2)
@@ -477,5 +690,72 @@ public class PlaceService {
             double nameScore,
             double distanceMeters
     ) {
+    }
+
+    private record SearchIntent(
+            List<String> categoryGroupCodes,
+            boolean hasExplicitCategory,
+            String searchKeywordCore
+    ) {
+
+        private static SearchIntent from(String keyword) {
+            String normalizedKeyword = normalizeName(keyword)
+                    .replace("제주특별자치도", "")
+                    .replace("제주도", "")
+                    .replace("제주", "");
+            List<String> categoryGroupCodes = new ArrayList<>();
+            String searchKeywordCore = normalizedKeyword;
+
+            for (String alias : CATEGORY_ALIASES) {
+                String normalizedAlias = normalizeName(alias);
+                if (normalizedKeyword.contains(normalizedAlias)) {
+                    String categoryGroupCode = categoryGroupForAlias(normalizedAlias);
+                    if (StringUtils.hasText(categoryGroupCode) && !categoryGroupCodes.contains(categoryGroupCode)) {
+                        categoryGroupCodes.add(categoryGroupCode);
+                    }
+                    searchKeywordCore = searchKeywordCore.replace(normalizedAlias, "");
+                }
+            }
+
+            return new SearchIntent(
+                    List.copyOf(categoryGroupCodes),
+                    !categoryGroupCodes.isEmpty(),
+                    searchKeywordCore
+            );
+        }
+
+        private boolean matches(String categoryGroupCode) {
+            return StringUtils.hasText(categoryGroupCode) && categoryGroupCodes.contains(categoryGroupCode);
+        }
+    }
+
+    private record PlaceSearchRank(
+            int nameMatchRank,
+            int categoryRank,
+            int sourceRank,
+            double distanceMeters,
+            String normalizedName
+    ) implements Comparable<PlaceSearchRank> {
+
+        @Override
+        public int compareTo(PlaceSearchRank other) {
+            int compared = Integer.compare(nameMatchRank, other.nameMatchRank);
+            if (compared != 0) {
+                return compared;
+            }
+            compared = Integer.compare(categoryRank, other.categoryRank);
+            if (compared != 0) {
+                return compared;
+            }
+            compared = Integer.compare(sourceRank, other.sourceRank);
+            if (compared != 0) {
+                return compared;
+            }
+            compared = Double.compare(distanceMeters, other.distanceMeters);
+            if (compared != 0) {
+                return compared;
+            }
+            return normalizedName.compareTo(other.normalizedName);
+        }
     }
 }

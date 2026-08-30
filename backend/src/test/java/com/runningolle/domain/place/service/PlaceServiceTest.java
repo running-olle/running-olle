@@ -125,6 +125,38 @@ class PlaceServiceTest {
     }
 
     @Test
+    void ranksExactTourismPlaceBeforeKeywordContainingAmenities() {
+        given(kakaoPlaceClient.searchKeyword("성산일출봉", 33.462147, 126.936424, 5_000))
+                .willReturn(List.of(
+                        kakaoPlace("kakao-parking", "성산일출봉 주차장", "PK6", "주차장", 33.4620, 126.9355),
+                        kakaoPlace("kakao-market", "성산일출봉농협 하나로마트", "CS2", "대형마트", 33.4630, 126.9340),
+                        kakaoPlace("kakao-tour", "성산일출봉", "AT4", "관광명소", 33.462147, 126.936424)
+                ));
+        given(tourismPlaceRepository.searchNearbyOfficialTourismPlaces("성산일출봉", 33.462147, 126.936424, 5_000, 10))
+                .willReturn(List.of());
+        given(tourismPlaceRepository.searchOfficialTourismPlacesByKeyword("성산일출봉", 10))
+                .willReturn(List.of());
+
+        var response = placeService.searchPlaces("성산일출봉", 33.462147, 126.936424, null);
+
+        assertThat(response).extracting("name")
+                .containsExactly("성산일출봉", "성산일출봉농협 하나로마트", "성산일출봉 주차장");
+    }
+
+    @Test
+    void nearbyCategorySearchUsesCategoryAroundAnchor() {
+        KakaoPlace cafe = kakaoPlace("kakao-cafe", "성산 카페", "CE7", "카페", 33.463, 126.935);
+        given(kakaoPlaceClient.searchKeyword("카페", 33.462147, 126.936424, 1_500, "CE7"))
+                .willReturn(List.of(cafe));
+
+        var response = placeService.searchNearbyPlaces(33.462147, 126.936424, null, "CE7");
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).kakaoPlaceId()).isEqualTo("kakao-cafe");
+        assertThat(response.get(0).categoryGroupCode()).isEqualTo("CE7");
+    }
+
+    @Test
     void fallsBackToJejuScopedKakaoSearchWhenNearbyKakaoSearchHasNoResult() {
         KakaoPlace kakaoPlace = kakaoPlace("kakao-cafe", "성산 카페", "CE7", "카페", 33.462, 126.936);
         given(kakaoPlaceClient.searchKeyword("성산 카페", 37.497952, 127.027619, 5_000))
