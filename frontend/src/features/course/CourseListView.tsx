@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CourseRouteThumbnail } from './CourseRouteThumbnail'
+import { CourseRouteMap } from './CourseRouteMap'
 import { courseService } from './courseService'
 import type { CourseDifficulty, CourseListFilter, CourseListItem, CourseListScope, CourseType } from './types'
 
@@ -190,7 +190,14 @@ function CourseListCard({
   return (
     <article className="course-library-card">
       <div className="course-library-card-image">
-        <CourseRouteThumbnail routeCoordinates={course.previewRouteCoordinates} waypoints={course.waypoints} />
+        <CourseRouteMap
+          routeCoordinates={course.previewRouteCoordinates}
+          waypoints={course.waypoints}
+          className="course-library-card-map"
+          fitTarget="planned"
+          showCurrentPositionMarker={false}
+          plannedRouteStyle={{ strokeWeight: 5 }}
+        />
         <em>{courseTypeLabel[course.courseType]}</em>
       </div>
       <div className="course-library-card-body">
