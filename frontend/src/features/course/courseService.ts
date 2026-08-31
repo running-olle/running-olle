@@ -20,4 +20,8 @@ export const courseService = {
   bookmarkCourse(courseId: string) {
     return axiosInstance.post<CourseBookmarkResponse>(`/courses/${courseId}/bookmark`).then(({ data }) => data)
   },
+
+  deleteCourse(courseId: string) {
+    return axiosInstance.delete(`/courses/${courseId}`)
+  },
 }

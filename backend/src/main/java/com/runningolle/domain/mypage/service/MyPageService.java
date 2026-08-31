@@ -122,11 +122,21 @@ public class MyPageService {
     @Transactional(readOnly = true)
     public List<MyPageDtos.Bookmark> bookmarks(UUID userId) {
         activeUser(userId);
-        return bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(bookmark -> {
-            Course c = bookmark.getCourse();
-            return new MyPageDtos.Bookmark(bookmark.getId(), c.getId(), c.getName(), c.getCourseType(), c.getDistanceKm(),
-                    c.getDifficulty(), c.getThumbnailImageUrl(), c.getCreator().getId().equals(userId));
-        }).toList();
+        return bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(bookmark -> !Boolean.TRUE.equals(bookmark.getCourse().getIsDeleted()))
+                .map(bookmark -> {
+                    Course c = bookmark.getCourse();
+                    return new MyPageDtos.Bookmark(
+                            bookmark.getId(),
+                            c.getId(),
+                            c.getName(),
+                            c.getCourseType(),
+                            c.getDistanceKm(),
+                            c.getDifficulty(),
+                            c.getThumbnailImageUrl(),
+                            c.getCreator().getId().equals(userId)
+                    );
+                }).toList();
     }
 
     @Transactional
