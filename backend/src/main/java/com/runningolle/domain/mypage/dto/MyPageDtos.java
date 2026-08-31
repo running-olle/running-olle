@@ -7,6 +7,8 @@ import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.running.enums.RunningMode;
 import com.runningolle.domain.user.enums.PreferredDifficulty;
 import com.runningolle.domain.user.enums.PreferredDistance;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,7 +41,10 @@ public final class MyPageDtos {
                                String thumbnailImageUrl, long completedCourses, BigDecimal totalDistanceKm,
                                long visitedPlaces, long totalDurationSeconds) {}
     public record CreateTripRequest(String name, String region, LocalDate startDate, LocalDate endDate, String thumbnailImageUrl) {}
-    public record UpdateProfileRequest(String nickname, String profileImageUrl, String bio, List<String> userTypes,
+    public record UpdateProfileRequest(@NotBlank @Size(min = 2, max = 100) String nickname,
+                                       @Size(max = 4_200_000) String profileImageUrl,
+                                       @Size(max = 300) String bio,
+                                       @Size(max = 3) List<String> userTypes,
                                        PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty) {}
     public record NotificationSettings(boolean recommendedCourse, boolean weather, boolean savedCourseUpdate,
                                        boolean meetupInvite, boolean commentLike, boolean tierChange, boolean eventChallenge) {}

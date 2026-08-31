@@ -5,7 +5,11 @@ import com.runningolle.domain.user.dto.OnboardingRequest;
 import com.runningolle.domain.user.service.UserService;
 import com.runningolle.domain.mypage.dto.MyPageDtos;
 import com.runningolle.domain.mypage.service.MyPageService;
+import com.runningolle.domain.community.dto.ImageUploadResponse;
+import com.runningolle.domain.community.storage.FileStorageService;
 import jakarta.validation.Valid;
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/users")
@@ -27,6 +35,7 @@ public class UserController {
 
     private final UserService userService;
     private final MyPageService myPageService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping("/nickname-availability")
     public Map<String, Boolean> nicknameAvailability(@RequestParam String nickname) {
@@ -47,8 +56,20 @@ public class UserController {
     }
 
     @PutMapping("/me/profile")
-    public MyPageDtos.Profile updateProfile(Authentication authentication, @RequestBody MyPageDtos.UpdateProfileRequest request) {
+    public MyPageDtos.Profile updateProfile(Authentication authentication, @Valid @RequestBody MyPageDtos.UpdateProfileRequest request) {
         return myPageService.updateProfile(UUID.fromString(authentication.getName()), request);
+    }
+
+    @PostMapping("/me/profile/image")
+    public ImageUploadResponse uploadProfileImage(@RequestPart("file") MultipartFile file) {
+        if (file == null || file.isEmpty() || file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미지 파일을 선택해주세요.");
+        }
+        try {
+            return new ImageUploadResponse(fileStorageService.store(List.of(file)));
+        } catch (IOException exception) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "프로필 사진 업로드에 실패했습니다.");
+        }
     }
 
     @GetMapping("/me/notifications")
