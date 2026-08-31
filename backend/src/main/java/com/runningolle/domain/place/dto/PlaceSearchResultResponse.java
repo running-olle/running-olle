@@ -15,15 +15,16 @@ public record PlaceSearchResultResponse(
 ) {
 
     public static PlaceSearchResultResponse from(KakaoPlace place, boolean isTourismCandidate) {
+        String categoryGroupCode = firstNonBlank(place.categoryGroupCode(), inferredCategoryGroupCode(place.categoryName()));
         return new PlaceSearchResultResponse(
                 place.kakaoPlaceId(),
                 place.name(),
-                place.categoryGroupCode(),
+                categoryGroupCode,
                 place.categoryName(),
                 firstNonBlank(place.roadAddress(), place.address()),
                 place.lat(),
                 place.lng(),
-                isTourismCandidate
+                isTourismCandidate || "AT4".equals(categoryGroupCode)
         );
     }
 
@@ -60,5 +61,32 @@ public record PlaceSearchResultResponse(
 
     private static String firstNonBlank(String primary, String fallback) {
         return primary == null || primary.isBlank() ? fallback : primary;
+    }
+
+    private static String inferredCategoryGroupCode(String categoryName) {
+        if (categoryName == null || categoryName.isBlank()) {
+            return null;
+        }
+        if (categoryName.contains("관광")
+                || categoryName.contains("명소")
+                || categoryName.contains("여행")
+                || categoryName.contains("산봉우리")
+                || categoryName.contains("오름")
+                || categoryName.contains("해수욕장")) {
+            return "AT4";
+        }
+        if (categoryName.contains("카페") || categoryName.contains("커피")) {
+            return "CE7";
+        }
+        if (categoryName.contains("음식점")) {
+            return "FD6";
+        }
+        if (categoryName.contains("편의점")) {
+            return "CS2";
+        }
+        if (categoryName.contains("숙박")) {
+            return "AD5";
+        }
+        return null;
     }
 }

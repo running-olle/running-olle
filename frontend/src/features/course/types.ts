@@ -34,6 +34,8 @@ export type CourseListItem = {
   isPublic: boolean
   ratingAvg: number
   completionCount: number
+  creatorId: string
+  creatorNickname: string | null
   createdByMe: boolean
   bookmarkedByMe: boolean
   bookmarkId: string | null
@@ -48,4 +50,8 @@ export type CourseDetail = Omit<CourseListItem, 'previewRouteCoordinates' | 'way
   surfaceDirtPct: number
   surfaceStairsPct: number
   routeCoordinates: CourseRouteCoordinate[]
+}
+
+export type CourseBookmarkResponse = {
+  bookmarkId: string
 }

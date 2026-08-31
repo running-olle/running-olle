@@ -6,7 +6,7 @@ const options = [
     title: '코스 선택 달리기',
     description: <>저장된 코스 중<br />선택해서 달려요</>,
     icon: 'route' as const,
-    action: '/courses',
+    action: '/running/courses',
   },
   {
     title: '코스 만들고 달리기',

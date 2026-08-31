@@ -19,7 +19,7 @@ type CourseDraftState = {
 
 function toWaypoint(place: PlaceSearchResult, detail: PlaceDetail, orderIndex: number): CourseWaypointDraft {
   return {
-    kakaoPlaceId: place.kakaoPlaceId,
+    kakaoPlaceId: detail.kakaoPlaceId || place.kakaoPlaceId,
     name: detail.name || place.name,
     categoryGroupCode: place.categoryGroupCode,
     categoryName: detail.categoryName || place.categoryName,

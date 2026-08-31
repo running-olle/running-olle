@@ -47,4 +47,11 @@ public class CourseBookmark extends BaseCreatedAtEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
+
+    public static CourseBookmark create(User user, Course course) {
+        CourseBookmark bookmark = new CourseBookmark();
+        bookmark.user = user;
+        bookmark.course = course;
+        return bookmark;
+    }
 }

@@ -6,6 +6,7 @@ import { createInquiryRoom, deleteChatMessage, getChatRoom, getChatRooms, sendCh
 import { connectChatListRealtime } from '../../features/community/chatRealtime'
 import { getCommunityErrorMessage } from '../../features/community/communityError'
 import type { ChatRoom, CommunityTab, Meetup, MeetupFilter } from '../../features/community/communityTypes'
+import { CoursePreviewModal } from '../../features/community/CoursePreviewModal'
 import { FeedComposer } from '../../features/community/FeedComposer'
 import { FeedDetailModal } from '../../features/community/FeedDetailModal'
 import { FeedPostCard } from '../../features/community/FeedPostCard'
@@ -57,6 +58,7 @@ export function CommunityPage() {
   const [composerOpen, setComposerOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<FeedPost | null>(null)
   const [detailPost, setDetailPost] = useState<FeedPost | null>(null)
+  const [previewCourseId, setPreviewCourseId] = useState<string | null>(null)
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [selectedMeetup, setSelectedMeetup] = useState<Meetup | null>(null)
@@ -490,6 +492,7 @@ export function CommunityPage() {
                       setComposerOpen(true)
                     }}
                     onOpenDetail={(target) => setDetailPost(target)}
+                    onOpenCourse={setPreviewCourseId}
                   />
                 ))
               : null}
@@ -558,6 +561,14 @@ export function CommunityPage() {
             setEditingPost(target)
             setComposerOpen(true)
           }}
+          onOpenCourse={setPreviewCourseId}
+        />
+      ) : null}
+
+      {previewCourseId ? (
+        <CoursePreviewModal
+          courseId={previewCourseId}
+          onClose={() => setPreviewCourseId(null)}
         />
       ) : null}
 
@@ -595,6 +606,7 @@ export function CommunityPage() {
           }}
           onDelete={handleDeleteMeetup}
           onShare={(meetup) => handleShare('번개', `https://runningolle.app/community/meetups/${meetup.id}`)}
+          onOpenCourse={setPreviewCourseId}
         />
       ) : null}
 

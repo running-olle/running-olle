@@ -28,6 +28,16 @@ public class PlaceController {
         return placeService.searchPlaces(keyword, lat, lng, radius);
     }
 
+    @GetMapping("/nearby")
+    public List<PlaceSearchResultResponse> searchNearbyPlaces(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(required = false) Integer radius,
+            @RequestParam String categoryGroupCode
+    ) {
+        return placeService.searchNearbyPlaces(lat, lng, radius, categoryGroupCode);
+    }
+
     @GetMapping("/{kakaoPlaceId}/detail")
     public PlaceDetailResponse getPlaceDetail(
             @PathVariable String kakaoPlaceId,

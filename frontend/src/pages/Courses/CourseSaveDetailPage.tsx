@@ -116,7 +116,7 @@ export function CourseSaveDetailPage() {
 
   function finishAndGoCourses() {
     resetDraft()
-    navigate('/courses', { replace: true })
+    navigate('/running/courses', { replace: true })
   }
 
   function finishAndCreateAnother() {
@@ -262,7 +262,7 @@ export function CourseSaveDetailPage() {
             <div>
               <button type="button" onClick={finishAndStartRun}>이 코스로 달리기</button>
               <button type="button" onClick={finishAndCreateAnother}>새 코스 만들기</button>
-              <button type="button" onClick={finishAndGoCourses}>코스 목록으로</button>
+              <button type="button" onClick={finishAndGoCourses}>코스 선택으로</button>
             </div>
           </div>
         </div>

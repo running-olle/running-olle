@@ -15,6 +15,7 @@ import { HomePage } from './pages/Home/HomePage'
 import { AccountPage, BookmarksPage, CompletedRunsPage, MyPage, NotificationPage, ProfileEditPage, ReportsPage, RunningHistoryPage, SettingsPage, TripCreatePage, TripsPage, VisitedPlacesPage } from './pages/MyPage/MyPage'
 import { FreeRunReadyPage } from './pages/Running/FreeRunReadyPage'
 import { LiveRunningPage } from './pages/Running/LiveRunningPage'
+import { RunningCourseSelectPage } from './pages/Running/RunningCourseSelectPage'
 import { RunningCompletePage } from './pages/Running/RunningCompletePage'
 import { RunningSelectPage } from './pages/Running/RunningSelectPage'
 import { RunningRecordDetailPage } from './pages/MyPage/RunningRecordDetailPage'
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/mypage/settings/profile" element={<ProfileEditPage />} />
           <Route path="/mypage/settings/notifications" element={<NotificationPage />} />
           <Route path="/running" element={<RunningSelectPage />} />
+          <Route path="/running/courses" element={<RunningCourseSelectPage />} />
         </Route>
         <Route path="/courses/create" element={<CourseBuilderPage />} />
         <Route path="/courses/create/save" element={<CourseSaveDetailPage />} />
