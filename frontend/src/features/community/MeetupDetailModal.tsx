@@ -13,6 +13,7 @@ export function MeetupDetailModal({
   onEdit,
   onDelete,
   onShare,
+  onOpenCourse,
 }: {
   meetup: Meetup
   myParticipation: ParticipationStatus
@@ -24,6 +25,7 @@ export function MeetupDetailModal({
   onEdit: (meetup: Meetup) => void
   onDelete: (meetup: Meetup) => void
   onShare: (meetup: Meetup) => void
+  onOpenCourse: (courseId: string) => void
 }) {
   const acceptedCount = meetup.participantIds.length
   const isOrganizer = meetup.isOrganizer
@@ -122,7 +124,11 @@ export function MeetupDetailModal({
           </div>
 
           {meetup.course ? (
-            <div className="mx-5 mt-4 flex items-center gap-3 rounded-[16px] bg-[#FFF5EE] px-4 py-4">
+            <button
+              type="button"
+              onClick={() => onOpenCourse(meetup.course!.id)}
+              className="mx-5 mt-4 flex items-center gap-3 rounded-[16px] bg-[#FFF5EE] px-4 py-4 text-left"
+            >
               <div className="flex h-[42px] w-[42px] items-center justify-center rounded-[11px] bg-[#FF6F0F] text-[18px] text-white">
                 {meetup.course.icon}
               </div>
@@ -134,8 +140,8 @@ export function MeetupDetailModal({
                   <span>{meetup.course.difficultyLabel}</span>
                 </div>
               </div>
-              <span className="text-[12px] font-bold text-[#FF6F0F]">코스</span>
-            </div>
+              <span className="text-[12px] font-bold text-[#FF6F0F]">코스 보기</span>
+            </button>
           ) : null}
 
           {meetup.joinMethod === 'approval' && !isCompleted && !isCancelled ? (

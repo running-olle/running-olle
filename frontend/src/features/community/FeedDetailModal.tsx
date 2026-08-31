@@ -14,12 +14,14 @@ export function FeedDetailModal({
   onClose,
   onChange,
   onEdit,
+  onOpenCourse,
 }: {
   feedPostId: string
   initialPost: FeedPost
   onClose: () => void
   onChange: (post: FeedPost | null) => void
   onEdit: (post: FeedPost) => void
+  onOpenCourse: (courseId: string) => void
 }) {
   const [post, setPost] = useState<FeedPost>(initialPost)
   const [comment, setComment] = useState('')
@@ -171,8 +173,15 @@ export function FeedDetailModal({
             </div>
 
             {post.runningRecord ? (
-              <div
-                className={`mt-4 flex items-center gap-3 rounded-[12px] px-3 py-3 ${
+              <button
+                type="button"
+                onClick={() => {
+                  if (post.course) {
+                    onOpenCourse(post.course.id)
+                  }
+                }}
+                disabled={!post.course}
+                className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 ${
                   post.course?.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
                 }`}
               >
@@ -184,15 +193,42 @@ export function FeedDetailModal({
                 >
                   {post.course?.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
                 </div>
-                <div>
-                  <div className="text-[13px] font-bold text-[#261912]">{post.course?.name ?? '러닝 기록'}</div>
+                <div className="min-w-0 text-left">
+                  <div className="truncate text-[13px] font-bold text-[#261912]">{post.course?.name ?? '러닝 기록'}</div>
                   <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#594136]">
                     <span>거리 {post.runningRecord.distanceKm.toFixed(2)}km</span>
                     <span>시간 {formatDuration(post.runningRecord.durationSeconds)}</span>
                     <span>{formatPace(post.runningRecord.distanceKm, post.runningRecord.durationSeconds)}</span>
                   </div>
                 </div>
-              </div>
+                {post.course ? <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span> : null}
+              </button>
+            ) : null}
+
+            {!post.runningRecord && post.course ? (
+              <button
+                type="button"
+                onClick={() => onOpenCourse(post.course!.id)}
+                className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
+                  post.course.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+                }`}
+              >
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+                  style={{
+                    background: post.course.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+                  }}
+                >
+                  {post.course.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-bold text-[#261912]">{post.course.name}</div>
+                  <div className="mt-1 text-[11px] font-bold text-[#594136]">
+                    {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
+                  </div>
+                </div>
+                <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span>
+              </button>
             ) : null}
 
             <div className="mt-4 whitespace-pre-wrap text-[14px] leading-[1.7] text-[#261912]">{post.content}</div>
@@ -220,9 +256,13 @@ export function FeedDetailModal({
               </button>
               <span>댓글 {post.commentCount}</span>
               {post.course ? (
-                <span className="ml-auto text-[12px] font-bold text-[#FF6F0F]">
+                <button
+                  type="button"
+                  onClick={() => onOpenCourse(post.course!.id)}
+                  className="ml-auto text-[12px] font-bold text-[#FF6F0F]"
+                >
                   {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
-                </span>
+                </button>
               ) : null}
             </div>
           </article>
