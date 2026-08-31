@@ -9,6 +9,7 @@ type Props = {
   waypoints: CourseWaypointDraft[]
   draftRoute: DraftRoute | null
   selectedPlace: PlaceSearchResult | null
+  searchAnchorPlace?: PlaceSearchResult | null
   candidatePlaces?: PlaceSearchResult[]
   className?: string
   onMapPress?: () => void
@@ -25,6 +26,7 @@ function selectedMarkerContent(onClick?: () => void) {
   button.type = 'button'
   button.className = 'course-builder-selected-marker'
   button.setAttribute('aria-label', '선택한 장소 상세 보기')
+  button.innerHTML = '<span></span>'
   button.addEventListener('click', (event) => {
     event.stopPropagation()
     onClick?.()
@@ -46,6 +48,9 @@ function candidateMarkerClass(categoryGroupCode: string | null) {
 }
 
 function candidateMarkerIcon(categoryGroupCode: string | null) {
+  if (categoryGroupCode === 'AT4') {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" /></svg>'
+  }
   if (categoryGroupCode === 'CE7') {
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h11v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8Zm11 2h2.3a2.7 2.7 0 1 1 0 5.4H16" /></svg>'
   }
@@ -79,6 +84,7 @@ export function CourseBuilderMap({
   waypoints,
   draftRoute,
   selectedPlace,
+  searchAnchorPlace,
   candidatePlaces = [],
   className = '',
   onMapPress,
@@ -90,6 +96,7 @@ export function CourseBuilderMap({
   const routeRef = useRef<KakaoPolyline | null>(null)
   const waypointOverlayRefs = useRef<KakaoCustomOverlay[]>([])
   const candidateOverlayRefs = useRef<KakaoCustomOverlay[]>([])
+  const anchorOverlayRef = useRef<KakaoCustomOverlay | null>(null)
   const selectedOverlayRef = useRef<KakaoCustomOverlay | null>(null)
   const currentOverlayRef = useRef<KakaoCustomOverlay | null>(null)
   const onMapPressRef = useRef(onMapPress)
@@ -183,6 +190,21 @@ export function CourseBuilderMap({
       })
     ))
   }, [candidatePlaces, onCandidatePlaceClick, ready])
+
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.kakao) return
+    anchorOverlayRef.current?.setMap(null)
+    anchorOverlayRef.current = null
+    if (!searchAnchorPlace || searchAnchorPlace.kakaoPlaceId === selectedPlace?.kakaoPlaceId) return
+
+    anchorOverlayRef.current = new window.kakao.maps.CustomOverlay({
+      map: mapRef.current,
+      position: new window.kakao.maps.LatLng(searchAnchorPlace.lat, searchAnchorPlace.lng),
+      content: candidateMarkerContent(searchAnchorPlace, onCandidatePlaceClick),
+      zIndex: 10,
+      yAnchor: 1,
+    })
+  }, [onCandidatePlaceClick, ready, searchAnchorPlace, selectedPlace?.kakaoPlaceId])
 
   useEffect(() => {
     if (!ready || !mapRef.current || !window.kakao) return

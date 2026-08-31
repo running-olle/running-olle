@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { CourseBuilderMap } from '../../features/courseBuilder/CourseBuilderMap'
 import { courseBuilderService } from '../../features/courseBuilder/courseBuilderService'
 import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftStore'
-import { JEJU_CENTER, approximateWalkingMinutes, cleanDisplayText, difficultyLabel, formatDistanceKm, isInJejuBounds, kakaoSearchUrl } from '../../features/courseBuilder/courseBuilderUtils'
+import { JEJU_CENTER, approximateWalkingMinutes, cleanDisplayText, difficultyLabel, distanceMeters, formatDistanceKm, isInJejuBounds, kakaoSearchUrl } from '../../features/courseBuilder/courseBuilderUtils'
 import { useRouteCalculation } from '../../features/courseBuilder/useRouteCalculation'
 import type { CourseWaypointDraft, DraftRoute, LatLng, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult } from '../../features/courseBuilder/types'
 import { RunningIcon } from '../../features/running/RunningIcon'
@@ -15,7 +15,7 @@ type SheetSnap = 'peek' | 'full'
 type NearbyCategory = {
   code: NearbyCategoryGroupCode
   label: string
-  icon: 'camera' | 'coffee' | 'food' | 'store' | 'stay'
+  icon: 'star' | 'coffee' | 'food' | 'store' | 'stay'
 }
 
 type NearbyResultsByCategory = Record<NearbyCategoryGroupCode, PlaceSearchResult[]>
@@ -23,7 +23,7 @@ type NearbyResultsByCategory = Record<NearbyCategoryGroupCode, PlaceSearchResult
 const NEARBY_SEARCH_RADIUS_METERS = 1_500
 
 const nearbyCategories: NearbyCategory[] = [
-  { code: 'AT4', label: '관광지', icon: 'camera' },
+  { code: 'AT4', label: '관광지', icon: 'star' },
   { code: 'CE7', label: '카페', icon: 'coffee' },
   { code: 'FD6', label: '맛집', icon: 'food' },
   { code: 'CS2', label: '편의점', icon: 'store' },
@@ -38,6 +38,59 @@ function emptyNearbyResults(): NearbyResultsByCategory {
     CS2: [],
     AD5: [],
   }
+}
+
+function deduplicatePlaces(places: PlaceSearchResult[]) {
+  const seenPlaceIds = new Set<string>()
+  return places.filter((place) => {
+    if (seenPlaceIds.has(place.kakaoPlaceId)) return false
+    seenPlaceIds.add(place.kakaoPlaceId)
+    return true
+  })
+}
+
+function isSamePlace(left: PlaceSearchResult | null | undefined, right: PlaceSearchResult | null | undefined) {
+  if (!left || !right) return false
+  return left.kakaoPlaceId === right.kakaoPlaceId
+}
+
+function canonicalTourismName(name: string) {
+  let canonicalName = normalizeSearchText(compactPlaceName(name))
+  const routeSuffixes = ['정상전망대', '전망대', '관광지'].map(normalizeSearchText)
+  const areaSuffixes = ['해양도립공원', '도립공원', '국립공원'].map(normalizeSearchText)
+  let changed = true
+
+  while (changed) {
+    changed = false
+    routeSuffixes.forEach((suffix) => {
+      if (canonicalName.endsWith(suffix) && canonicalName.length > suffix.length + 1) {
+        canonicalName = canonicalName.slice(0, -suffix.length)
+        changed = true
+      }
+    })
+    areaSuffixes.forEach((suffix) => {
+      if (!canonicalName.endsWith(suffix)) return
+      const stem = canonicalName.slice(0, -suffix.length)
+      if (/(봉|산|오름|도)$/.test(stem)) {
+        canonicalName = stem
+        changed = true
+      }
+    })
+  }
+
+  return canonicalName
+}
+
+function isSearchAnchorDuplicate(place: PlaceSearchResult, anchor: PlaceSearchResult) {
+  if (isSamePlace(place, anchor)) return true
+  if (place.categoryGroupCode !== 'AT4' || anchor.categoryGroupCode !== 'AT4') return false
+
+  const placeName = canonicalTourismName(place.name)
+  const anchorName = canonicalTourismName(anchor.name)
+  const isSimilarTourismName = placeName === anchorName || placeName.includes(anchorName) || anchorName.includes(placeName)
+
+  return isSimilarTourismName
+    && distanceMeters({ lat: place.lat, lng: place.lng }, { lat: anchor.lat, lng: anchor.lng }) <= 600
 }
 
 type SheetControls = {
@@ -65,6 +118,10 @@ function categoryLabel(place: PlaceSearchResult | null, detail?: PlaceDetail | n
   return detail?.categoryName || place?.categoryName || '장소'
 }
 
+function placeCategoryLabel(place: PlaceSearchResult) {
+  return categoryLabel(place)
+}
+
 function referencePoint(waypoints: ReturnType<typeof useCourseDraftStore.getState>['waypoints'], currentPosition: LatLng | null) {
   const lastWaypoint = waypoints.at(-1)
   if (lastWaypoint) return { lat: lastWaypoint.lat, lng: lastWaypoint.lng }
@@ -73,6 +130,13 @@ function referencePoint(waypoints: ReturnType<typeof useCourseDraftStore.getStat
 
 function walkingMinuteText(minutes: number | null) {
   return minutes === null ? '거리 계산 전' : `약 ${minutes}분`
+}
+
+function compactPlaceName(name: string) {
+  return name
+    .replace(/\s*\[[^\]]+]/g, '')
+    .replace(/\s*\([^)]{2,}\)/g, '')
+    .trim() || name
 }
 
 function normalizeSearchText(value: string | null | undefined) {
@@ -99,15 +163,6 @@ function findBestSearchAnchor(keyword: string, places: PlaceSearchResult[]) {
   if (tourismContainMatch) return tourismContainMatch
 
   return places[0] ?? null
-}
-
-function isStrongSearchAnchor(keyword: string, place: PlaceSearchResult) {
-  const normalizedKeyword = normalizeSearchText(keyword)
-  const normalizedName = normalizeSearchText(place.name)
-  return normalizedName === normalizedKeyword || (
-    place.categoryGroupCode === 'AT4'
-    && normalizedName.startsWith(normalizedKeyword)
-  )
 }
 
 function useSheetControls(initialSnap: SheetSnap): SheetControls {
@@ -171,14 +226,17 @@ export function CourseBuilderPage() {
   const [nearbyStatus, setNearbyStatus] = useState<SearchStatus>('idle')
   const [nearbyError, setNearbyError] = useState<string | null>(null)
   const [activeNearbyCategory, setActiveNearbyCategory] = useState<NearbyCategoryGroupCode | null>(null)
+  const [isNearbyPanelOpen, setIsNearbyPanelOpen] = useState(false)
   const [detailStatus, setDetailStatus] = useState<SearchStatus>('idle')
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false)
   const searchRequestIdRef = useRef(0)
   const nearbyRequestIdRef = useRef(0)
   const detailSheetControls = useSheetControls('peek')
   const draftSheetControls = useSheetControls('peek')
+  const nearbyListSheetControls = useSheetControls('peek')
   const setDetailSheetSnap = detailSheetControls.setSnap
   const setDraftSheetSnap = draftSheetControls.setSnap
+  const setNearbyListSheetSnap = nearbyListSheetControls.setSnap
 
   useRouteCalculation()
 
@@ -217,7 +275,9 @@ export function CourseBuilderPage() {
     setNearbyStatus('idle')
     setNearbyError(null)
     setActiveNearbyCategory(null)
-  }, [])
+    setIsNearbyPanelOpen(false)
+    setNearbyListSheetSnap('peek')
+  }, [setNearbyListSheetSnap])
 
   const executeSearch = useCallback(async (trimmedKeyword: string) => {
     if (!trimmedKeyword) return []
@@ -248,6 +308,8 @@ export function CourseBuilderPage() {
     setNearbyError(null)
     setNearbyResults(emptyNearbyResults())
     setActiveNearbyCategory(null)
+    setIsNearbyPanelOpen(false)
+    setNearbyListSheetSnap('peek')
 
     const entries = await Promise.all(nearbyCategories.map(async (category) => {
       try {
@@ -267,14 +329,14 @@ export function CourseBuilderPage() {
 
     const nextResults = emptyNearbyResults()
     entries.forEach(([categoryCode, places]) => {
-      nextResults[categoryCode] = places.filter((place) => place.kakaoPlaceId !== anchor.kakaoPlaceId)
+      nextResults[categoryCode] = places.filter((place) => !isSearchAnchorDuplicate(place, anchor))
     })
     setNearbyResults(nextResults)
     setNearbyStatus('success')
     if (entries.every(([, places]) => places.length === 0)) {
       setNearbyError('주변 장소를 찾지 못했어요.')
     }
-  }, [])
+  }, [setNearbyListSheetSnap])
 
   const handleSelectPlace = useCallback((
     place: PlaceSearchResult,
@@ -354,10 +416,8 @@ export function CourseBuilderPage() {
     setSearchStatus('idle')
     setSearchResults([])
     setActiveNearbyCategory(null)
-    handleSelectPlace(anchor, {
-      sheetSnap: isStrongSearchAnchor(trimmedKeyword, anchor) ? 'full' : 'peek',
-      keepNearbySearch: true,
-    })
+    setIsNearbyPanelOpen(false)
+    handleSelectPlace(anchor, { sheetSnap: 'peek', keepNearbySearch: true })
     void loadNearbyResults(anchor)
   }, [executeSearch, handleSelectPlace, keyword, loadNearbyResults])
 
@@ -389,6 +449,7 @@ export function CourseBuilderPage() {
     setSearchResults([])
     setSearchError(null)
     setActiveNearbyCategory(null)
+    setIsNearbyPanelOpen(false)
     if (selectedPlace) {
       setDetailSheetSnap('peek')
     }
@@ -399,12 +460,34 @@ export function CourseBuilderPage() {
   }, [setDetailSheetSnap])
 
   const handleNearbyCategorySelect = useCallback((categoryCode: NearbyCategoryGroupCode) => {
-    setActiveNearbyCategory((currentCategoryCode) => currentCategoryCode === categoryCode ? null : categoryCode)
+    const nextCategoryCode = activeNearbyCategory === categoryCode ? null : categoryCode
+    setActiveNearbyCategory(nextCategoryCode)
+    setSelectedPlace(null)
+    setSelectedPlaceDetail(null)
     setSearchStatus('idle')
     setSearchResults([])
     setSearchError(null)
     setDetailSheetSnap('peek')
-  }, [setDetailSheetSnap])
+    setNearbyListSheetSnap('peek')
+  }, [
+    activeNearbyCategory,
+    setDetailSheetSnap,
+    setNearbyListSheetSnap,
+    setSelectedPlace,
+    setSelectedPlaceDetail,
+  ])
+
+  const handleNearbyPanelToggle = useCallback(() => {
+    if (isNearbyPanelOpen) {
+      setActiveNearbyCategory(null)
+      setNearbyListSheetSnap('peek')
+    }
+    setIsNearbyPanelOpen((value) => !value)
+    setSearchStatus('idle')
+    setSearchResults([])
+    setSearchError(null)
+    setDetailSheetSnap('peek')
+  }, [isNearbyPanelOpen, setDetailSheetSnap, setNearbyListSheetSnap])
 
   const handleCandidatePlaceClick = useCallback((place: PlaceSearchResult) => {
     handleSelectPlace(place, { sheetSnap: 'peek', keepNearbySearch: true })
@@ -414,14 +497,46 @@ export function CourseBuilderPage() {
     activeNearbyCategory ? nearbyResults[activeNearbyCategory] : []
   ), [activeNearbyCategory, nearbyResults])
 
+  const previewNearbyPlaces = useMemo(() => {
+    if (!committedSearchAnchor || nearbyStatus !== 'success') return []
+    return deduplicatePlaces(nearbyCategories.flatMap((category) => (
+      nearbyResults[category.code]
+    )))
+  }, [committedSearchAnchor, nearbyResults, nearbyStatus])
+
+  const mapSelectedPlace = useMemo(() => {
+    if (!selectedPlace) return null
+    if (!selectedPlaceDetail) return selectedPlace
+    return {
+      ...selectedPlace,
+      kakaoPlaceId: selectedPlaceDetail.kakaoPlaceId || selectedPlace.kakaoPlaceId,
+      name: selectedPlaceDetail.name || selectedPlace.name,
+      categoryName: selectedPlaceDetail.categoryName || selectedPlace.categoryName,
+      address: selectedPlaceDetail.address || selectedPlace.address,
+      lat: selectedPlaceDetail.lat,
+      lng: selectedPlaceDetail.lng,
+    }
+  }, [selectedPlace, selectedPlaceDetail])
+
+  const mapCandidatePlaces = useMemo(() => {
+    const places = activeNearbyCategory ? activeNearbyPlaces : previewNearbyPlaces
+    return places.filter((place) => (
+      !isSamePlace(place, committedSearchAnchor)
+      && !isSamePlace(place, mapSelectedPlace)
+    ))
+  }, [activeNearbyCategory, activeNearbyPlaces, committedSearchAnchor, mapSelectedPlace, previewNearbyPlaces])
+
+  const mapSearchAnchorPlace = selectedPlace && isSamePlace(selectedPlace, committedSearchAnchor)
+    ? null
+    : committedSearchAnchor
+
   const activeNearbyCategoryLabel = useMemo(() => (
     nearbyCategories.find((category) => category.code === activeNearbyCategory)?.label ?? null
   ), [activeNearbyCategory])
 
-  const isNearbyResultMode = Boolean(committedSearchAnchor && activeNearbyCategory)
-  const displayedSearchPlaces = isNearbyResultMode ? activeNearbyPlaces : searchResults
-  const displayedSearchStatus = isNearbyResultMode ? nearbyStatus : searchStatus
-  const displayedSearchError = isNearbyResultMode ? nearbyError : searchError
+  const nearbyListReferencePoint = committedSearchAnchor
+    ? { lat: committedSearchAnchor.lat, lng: committedSearchAnchor.lng }
+    : previousPoint
 
   function handleSave() {
     if (waypoints.length < 2) {
@@ -441,8 +556,9 @@ export function CourseBuilderPage() {
         currentPosition={jejuCurrentPosition}
         waypoints={waypoints}
         draftRoute={draftRoute}
-        selectedPlace={selectedPlace}
-        candidatePlaces={activeNearbyPlaces}
+        selectedPlace={mapSelectedPlace}
+        searchAnchorPlace={mapSearchAnchorPlace}
+        candidatePlaces={mapCandidatePlaces}
         onMapPress={handleMapPress}
         onSelectedPlaceMarkerClick={handleSelectedPlaceMarkerClick}
         onCandidatePlaceClick={handleCandidatePlaceClick}
@@ -474,16 +590,17 @@ export function CourseBuilderPage() {
             status={nearbyStatus}
             activeCategory={activeNearbyCategory}
             anchor={committedSearchAnchor}
+            isOpen={isNearbyPanelOpen}
+            onToggle={handleNearbyPanelToggle}
             onSelect={handleNearbyCategorySelect}
           />
         )}
         <SearchResultSheet
           currentPosition={previousPoint}
-          places={displayedSearchPlaces}
-          status={displayedSearchStatus}
-          error={displayedSearchError}
-          title={isNearbyResultMode && activeNearbyCategoryLabel ? `${activeNearbyCategoryLabel} 주변 장소` : undefined}
-          onSelect={isNearbyResultMode ? handleCandidatePlaceClick : handleSelectPlace}
+          places={searchResults}
+          status={searchStatus}
+          error={searchError}
+          onSelect={handleSelectPlace}
         />
       </section>
 
@@ -495,7 +612,11 @@ export function CourseBuilderPage() {
             lat: selectedPlaceDetail.lat,
             lng: selectedPlaceDetail.lng,
           })}
-          isAdded={waypoints.some((waypoint) => waypoint.kakaoPlaceId === selectedPlace.kakaoPlaceId)}
+          isAdded={waypoints.some((waypoint) => (
+            waypoint.kakaoPlaceId === selectedPlace.kakaoPlaceId
+            || waypoint.kakaoPlaceId === selectedPlaceDetail.kakaoPlaceId
+            || Boolean(selectedPlaceDetail.tourContentId && waypoint.tourContentId === selectedPlaceDetail.tourContentId)
+          ))}
           detailStatus={detailStatus}
           isOverviewExpanded={isOverviewExpanded}
           sheetControls={detailSheetControls}
@@ -506,6 +627,17 @@ export function CourseBuilderPage() {
             setDetailSheetSnap('peek')
           }}
           onAdd={handleAddWaypoint}
+        />
+      ) : activeNearbyCategory && committedSearchAnchor ? (
+        <NearbyPlaceListBottomSheet
+          anchor={committedSearchAnchor}
+          places={activeNearbyPlaces}
+          status={nearbyStatus}
+          error={nearbyError}
+          categoryLabel={activeNearbyCategoryLabel ?? '주변'}
+          currentPosition={nearbyListReferencePoint}
+          sheetControls={nearbyListSheetControls}
+          onSelect={handleCandidatePlaceClick}
         />
       ) : (
         <CourseDraftBottomSheet
@@ -537,6 +669,8 @@ type NearbyCategoryRailProps = {
   status: SearchStatus
   activeCategory: NearbyCategoryGroupCode | null
   anchor: PlaceSearchResult
+  isOpen: boolean
+  onToggle: () => void
   onSelect: (categoryCode: NearbyCategoryGroupCode) => void
 }
 
@@ -546,38 +680,60 @@ function NearbyCategoryRail({
   status,
   activeCategory,
   anchor,
+  isOpen,
+  onToggle,
   onSelect,
 }: NearbyCategoryRailProps) {
+  const totalCount = categories.reduce((sum, category) => sum + results[category.code].length, 0)
+
   return (
-    <div className="course-nearby-panel" aria-label={`${anchor.name} 주변 장소`}>
-      <div className="course-nearby-copy">
-        <strong>{anchor.name} 주변</strong>
-        <span>러닝 중 들르기 좋은 거점을 골라보세요.</span>
-      </div>
-      <div className="course-nearby-categories" role="list">
-        {categories.map((category) => {
-          const count = results[category.code].length
-          const isActive = activeCategory === category.code
-          return (
-            <button
-              key={category.code}
-              type="button"
-              className="course-nearby-chip"
-              data-active={isActive}
-              onClick={() => onSelect(category.code)}
-            >
-              <CategoryIcon name={category.icon} />
-              <span>{category.label}</span>
-              <small>{status === 'loading' ? '...' : count}</small>
-            </button>
-          )
-        })}
-      </div>
+    <div className="course-nearby-panel" data-open={isOpen} aria-label={`${anchor.name} 주변 장소`}>
+      <button
+        type="button"
+        className="course-nearby-toggle"
+        aria-expanded={isOpen}
+        onClick={onToggle}
+      >
+        <strong>{compactPlaceName(anchor.name)} 주변 거점</strong>
+        <span>
+          <b>{status === 'loading' ? '검색 중' : `${totalCount}곳`}</b>
+          <i aria-hidden="true" />
+        </span>
+      </button>
+      {isOpen && (
+        <div className="course-nearby-categories" role="list">
+          {categories.map((category) => {
+            const count = results[category.code].length
+            const isActive = activeCategory === category.code
+            return (
+              <button
+                key={category.code}
+                type="button"
+                className="course-nearby-chip"
+                data-category={category.code}
+                data-active={isActive}
+                onClick={() => onSelect(category.code)}
+              >
+                <CategoryIcon name={category.icon} />
+                <span>{category.label}</span>
+                <small>{status === 'loading' ? '...' : count}</small>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
 
 function CategoryIcon({ name }: { name: NearbyCategory['icon'] }) {
+  if (name === 'star') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" />
+      </svg>
+    )
+  }
   if (name === 'coffee') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -765,6 +921,71 @@ function WaypointDetailSheet({
       <button type="button" className="course-add-button" disabled={isAdded} onClick={onAdd}>
         {isAdded ? '이미 추가된 장소' : '+ 코스에 추가하기'}
       </button>
+    </section>
+  )
+}
+
+type NearbyPlaceListBottomSheetProps = {
+  anchor: PlaceSearchResult
+  places: PlaceSearchResult[]
+  status: SearchStatus
+  error: string | null
+  categoryLabel: string
+  currentPosition: LatLng | null
+  sheetControls: SheetControls
+  onSelect: (place: PlaceSearchResult) => void
+}
+
+function NearbyPlaceListBottomSheet({
+  anchor,
+  places,
+  status,
+  error,
+  categoryLabel,
+  currentPosition,
+  sheetControls,
+  onSelect,
+}: NearbyPlaceListBottomSheetProps) {
+  return (
+    <section className="course-nearby-list-sheet" data-snap={sheetControls.snap}>
+      <button
+        type="button"
+        className="course-sheet-handle"
+        aria-label={sheetControls.snap === 'full' ? '주변 장소 목록 접기' : '주변 장소 목록 펼치기'}
+        onClick={sheetControls.toggleSnap}
+        onPointerDown={sheetControls.onPointerDown}
+        onPointerUp={sheetControls.onPointerUp}
+      />
+      <div className="course-nearby-list-header">
+        <div>
+          <span>{categoryLabel} 주변 장소</span>
+          <strong>{compactPlaceName(anchor.name)} 근처</strong>
+        </div>
+        <small>{status === 'loading' ? '검색 중' : `${places.length}곳`}</small>
+      </div>
+      <div className="course-nearby-list">
+        {status === 'loading' && <p className="course-search-state">주변 장소를 찾고 있어요…</p>}
+        {status === 'error' && <p className="course-search-state">{error}</p>}
+        {status === 'success' && places.length === 0 && <p className="course-search-state">주변 장소를 찾지 못했어요.</p>}
+        {status === 'success' && places.map((place) => {
+          const minutes = approximateWalkingMinutes(currentPosition, { lat: place.lat, lng: place.lng })
+          return (
+            <button
+              key={place.kakaoPlaceId}
+              type="button"
+              className="course-nearby-list-item"
+              onClick={() => onSelect(place)}
+            >
+              <span className={`course-category-badge ${categoryBadgeClass(place.categoryGroupCode)}`}>
+                {placeCategoryLabel(place)}
+              </span>
+              <strong>{place.name}</strong>
+              <small>{place.address || place.categoryName || '주소 정보 없음'}</small>
+              <em>{walkingMinuteText(minutes)}</em>
+            </button>
+          )
+        })}
+      </div>
     </section>
   )
 }

@@ -3,7 +3,6 @@ package com.runningolle.domain.place.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -144,6 +143,66 @@ class PlaceServiceTest {
     }
 
     @Test
+    void infersKakaoTourismCategoryAndDeduplicatesOfficialTourismCluster() {
+        KakaoPlace kakaoPlace = kakaoPlace(
+                "kakao-seongsan",
+                "성산일출봉",
+                "",
+                "여행 > 관광,명소 > 산봉우리",
+                33.462147,
+                126.936424
+        );
+        TourismPlace tourismPlace = tourismPlace(
+                "tour-seongsan",
+                "성산일출봉 [유네스코 세계자연유산]",
+                33.4599,
+                126.9406
+        );
+        given(kakaoPlaceClient.searchKeyword("성산일출봉", 33.462147, 126.936424, 5_000))
+                .willReturn(List.of(kakaoPlace));
+        given(tourismPlaceRepository.searchNearbyOfficialTourismPlaces("성산일출봉", 33.462147, 126.936424, 5_000, 10))
+                .willReturn(List.of(tourismPlace));
+        given(tourismPlaceRepository.searchOfficialTourismPlacesByKeyword("성산일출봉", 10))
+                .willReturn(List.of(tourismPlace));
+
+        var response = placeService.searchPlaces("성산일출봉", 33.462147, 126.936424, null);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).kakaoPlaceId()).isEqualTo("kakao-seongsan");
+        assertThat(response.get(0).categoryGroupCode()).isEqualTo("AT4");
+        assertThat(response.get(0).isTourismCandidate()).isTrue();
+    }
+
+    @Test
+    void keepsOfficialTourismDestinationWhenPartialKeywordFindsBroadParkName() {
+        KakaoPlace broadPark = kakaoPlace(
+                "kakao-seongsan-park",
+                "성산일출해양도립공원",
+                "AT4",
+                "관광명소",
+                33.4599,
+                126.9406
+        );
+        TourismPlace tourismPlace = tourismPlace(
+                "tour-seongsan",
+                "성산일출봉 [유네스코 세계자연유산]",
+                33.462147,
+                126.936424
+        );
+        given(kakaoPlaceClient.searchKeyword("성산일출", 33.462147, 126.936424, 5_000))
+                .willReturn(List.of(broadPark));
+        given(tourismPlaceRepository.searchNearbyOfficialTourismPlaces("성산일출", 33.462147, 126.936424, 5_000, 10))
+                .willReturn(List.of(tourismPlace));
+        given(tourismPlaceRepository.searchOfficialTourismPlacesByKeyword("성산일출", 10))
+                .willReturn(List.of(tourismPlace));
+
+        var response = placeService.searchPlaces("성산일출", 33.462147, 126.936424, null);
+
+        assertThat(response).extracting("name")
+                .containsExactly("성산일출봉 [유네스코 세계자연유산]", "성산일출해양도립공원");
+    }
+
+    @Test
     void nearbyCategorySearchUsesCategoryAroundAnchor() {
         KakaoPlace cafe = kakaoPlace("kakao-cafe", "성산 카페", "CE7", "카페", 33.463, 126.935);
         given(kakaoPlaceClient.searchKeyword("카페", 33.462147, 126.936424, 1_500, "CE7"))
@@ -179,6 +238,8 @@ class PlaceServiceTest {
     void returnsTourApiDetailDirectlyForOfficialTourismSearchResult() {
         TourismPlace tourismPlace = tourismPlace("tour-halla", "한라산국립공원", 33.361667, 126.529167);
         given(tourismPlaceRepository.findByContentId("tour-halla")).willReturn(Optional.of(tourismPlace));
+        given(kakaoPlaceClient.searchKeyword("한라산국립공원", 33.361667, 126.529167, 2_000))
+                .willReturn(List.of());
 
         var response = placeService.getPlaceDetail(
                 "tourapi:tour-halla",
@@ -193,7 +254,42 @@ class PlaceServiceTest {
         assertThat(response.tourContentId()).isEqualTo("tour-halla");
         assertThat(response.name()).isEqualTo("한라산국립공원");
         assertThat(response.categoryName()).isEqualTo("관광지");
-        verify(kakaoPlaceClient, never()).searchKeyword(anyString(), anyDouble(), anyDouble(), anyInt(), anyString());
+    }
+
+    @Test
+    void enrichesOfficialTourismDetailWithMatchingKakaoPlaceForRoutingFriendlyCoordinate() {
+        TourismPlace tourismPlace = tourismPlace(
+                "tour-seongsan",
+                "성산일출봉 [유네스코 세계자연유산]",
+                33.4599,
+                126.9406
+        );
+        KakaoPlace kakaoPlace = kakaoPlace(
+                "kakao-seongsan",
+                "성산일출봉",
+                "",
+                "여행 > 관광,명소 > 산봉우리",
+                33.462147,
+                126.936424
+        );
+        given(tourismPlaceRepository.findByContentId("tour-seongsan")).willReturn(Optional.of(tourismPlace));
+        given(kakaoPlaceClient.searchKeyword("성산일출봉", 33.4599, 126.9406, 2_000))
+                .willReturn(List.of(kakaoPlace));
+
+        var response = placeService.getPlaceDetail(
+                "tourapi:tour-seongsan",
+                "성산일출봉 [유네스코 세계자연유산]",
+                33.4599,
+                126.9406,
+                "AT4"
+        );
+
+        assertThat(response.kakaoPlaceId()).isEqualTo("kakao-seongsan");
+        assertThat(response.name()).isEqualTo("성산일출봉");
+        assertThat(response.lat()).isEqualTo(33.462147);
+        assertThat(response.lng()).isEqualTo(126.936424);
+        assertThat(response.tourApiMatched()).isTrue();
+        assertThat(response.tourContentId()).isEqualTo("tour-seongsan");
     }
 
     @Test
@@ -202,7 +298,7 @@ class PlaceServiceTest {
         TourismPlace tourismPlace = tourismPlace("tour-halla", "한라산국립공원", 33.361667, 126.529167);
         given(kakaoPlaceClient.searchKeyword("한라산", 33.361667, 126.529167, 1_000, "AT4"))
                 .willReturn(List.of(kakaoPlace));
-        given(tourismPlaceRepository.findNearbyOfficialTourismPlaces(33.361667, 126.529167, 500.0, 20))
+        given(tourismPlaceRepository.findNearbyOfficialTourismPlaces(33.361667, 126.529167, 2_000.0, 20))
                 .willReturn(List.of(tourismPlace));
 
         var response = placeService.getPlaceDetail("kakao-halla", "한라산", 33.361667, 126.529167, "AT4");
@@ -221,7 +317,7 @@ class PlaceServiceTest {
         KakaoPlace kakaoPlace = kakaoPlace("kakao-tour", "용두암", "AT4", "관광명소", 33.5161104, 126.5119574);
         given(kakaoPlaceClient.searchKeyword("용두암", 33.5161104, 126.5119574, 1_000, "AT4"))
                 .willReturn(List.of(kakaoPlace));
-        given(tourismPlaceRepository.findNearbyOfficialTourismPlaces(33.5161104, 126.5119574, 500.0, 20))
+        given(tourismPlaceRepository.findNearbyOfficialTourismPlaces(33.5161104, 126.5119574, 2_000.0, 20))
                 .willReturn(List.of());
 
         var response = placeService.getPlaceDetail("kakao-tour", "용두암", 33.5161104, 126.5119574, "AT4");

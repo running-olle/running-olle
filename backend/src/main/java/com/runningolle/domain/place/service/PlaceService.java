@@ -34,11 +34,13 @@ public class PlaceService {
     private static final int TOURISM_SEARCH_LIMIT = 10;
     private static final int PLACE_SEARCH_RESULT_LIMIT = 15;
     private static final int NEARBY_SEARCH_RESULT_LIMIT = 12;
-    private static final double TOURISM_MATCH_RADIUS_METERS = 500.0;
+    private static final double TOURISM_MATCH_RADIUS_METERS = 2_000.0;
     private static final double TOURISM_SEARCH_DEDUPLICATE_RADIUS_METERS = 250.0;
+    private static final double TOURISM_CLUSTER_DEDUPLICATE_RADIUS_METERS = 2_000.0;
     private static final int TOURISM_MATCH_LIMIT = 20;
     private static final double MIN_TOURISM_NAME_SCORE = 0.55;
     private static final double MIN_TOURISM_DUPLICATE_NAME_SCORE = 0.70;
+    private static final double MIN_TOURISM_CLUSTER_NAME_SCORE = 0.85;
     private static final double EARTH_RADIUS_METERS = 6_371_000.0;
     private static final List<String> CATEGORY_ALIASES = List.of(
             "게스트하우스", "관광지", "음식점", "베이커리", "편의점",
@@ -65,7 +67,7 @@ public class PlaceService {
                 ? relevantKakaoPlaces(keyword, kakaoPlaceClient.searchKeywordInJeju(keyword))
                 : nearbyKakaoPlaces;
         List<PlaceSearchResultResponse> kakaoResults = kakaoPlaces.stream()
-                .map(place -> PlaceSearchResultResponse.from(place, isTourismCandidate(place.categoryGroupCode())))
+                .map(place -> PlaceSearchResultResponse.from(place, isTourismCandidate(resolvedCategoryGroupCode(place))))
                 .toList();
         List<PlaceSearchResultResponse> officialTourismResults = searchOfficialTourismPlaces(keyword, lat, lng, radius).stream()
                 .filter(place -> !hasDuplicateKakaoPlace(place, kakaoPlaces))
@@ -94,7 +96,7 @@ public class PlaceService {
                 normalizedCategoryGroupCode
         );
         List<PlaceSearchResultResponse> kakaoResults = kakaoPlaces.stream()
-                .map(place -> PlaceSearchResultResponse.from(place, isTourismCandidate(place.categoryGroupCode())))
+                .map(place -> PlaceSearchResultResponse.from(place, isTourismCandidate(resolvedCategoryGroupCode(place))))
                 .toList();
 
         List<PlaceSearchResultResponse> officialTourismResults = List.of();
@@ -135,14 +137,16 @@ public class PlaceService {
         if (isTourApiPlaceId(kakaoPlaceId)) {
             return tourismPlaceRepository.findByContentId(tourContentId(kakaoPlaceId))
                     .filter(place -> !Boolean.TRUE.equals(place.getIsDeleted()))
-                    .map(place -> tourApiOnlyDetail(kakaoPlaceId, place))
+                    .map(place -> findKakaoTourismMatchForOfficialTourism(place)
+                            .map(kakaoPlace -> matchedDetail(kakaoPlace, place))
+                            .orElseGet(() -> tourApiOnlyDetail(kakaoPlaceId, place)))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TourAPI 관광지 정보를 찾을 수 없습니다."));
         }
 
         KakaoPlace kakaoPlace = resolveKakaoPlace(kakaoPlaceId, name, lat, lng, categoryGroupCode)
                 .map(place -> keepRequestedKakaoPlaceId(place, kakaoPlaceId))
                 .orElseGet(() -> fallbackKakaoPlace(kakaoPlaceId, name, lat, lng, categoryGroupCode));
-        String resolvedCategoryGroupCode = firstNonBlank(kakaoPlace.categoryGroupCode(), categoryGroupCode);
+        String resolvedCategoryGroupCode = firstNonBlank(resolvedCategoryGroupCode(kakaoPlace), categoryGroupCode);
 
         if (isTourismCandidate(resolvedCategoryGroupCode)) {
             Optional<TourismPlace> tourismPlace = findBestTourismMatch(kakaoPlace.name(), kakaoPlace.lat(), kakaoPlace.lng());
@@ -279,6 +283,11 @@ public class PlaceService {
         if (!java.util.Objects.equals(left.categoryGroupCode(), right.categoryGroupCode())) {
             return false;
         }
+        if (isTourismCandidate(left.categoryGroupCode())) {
+            double nameScore = tourismClusterNameScore(left.name(), right.name());
+            double distanceMeters = distanceMeters(left.lat(), left.lng(), right.lat(), right.lng());
+            return isSameTourismCluster(nameScore, distanceMeters);
+        }
         double nameScore = normalizedNameScore(left.name(), right.name());
         double distanceMeters = distanceMeters(left.lat(), left.lng(), right.lat(), right.lng());
         return nameScore >= MIN_TOURISM_DUPLICATE_NAME_SCORE
@@ -309,10 +318,12 @@ public class PlaceService {
         if (kakaoPlace.lat() == null || kakaoPlace.lng() == null) {
             return false;
         }
-        double nameScore = normalizedNameScore(tourismPlace.getTitle(), kakaoPlace.name());
+        if (!isTourismCandidate(resolvedCategoryGroupCode(kakaoPlace))) {
+            return false;
+        }
+        double nameScore = tourismClusterNameScore(tourismPlace.getTitle(), kakaoPlace.name());
         double distanceMeters = distanceMeters(kakaoPlace.lat(), kakaoPlace.lng(), tourismPlace.getLocation());
-        return nameScore >= MIN_TOURISM_DUPLICATE_NAME_SCORE
-                && distanceMeters <= TOURISM_SEARCH_DEDUPLICATE_RADIUS_METERS;
+        return isSameTourismCluster(nameScore, distanceMeters);
     }
 
     private Optional<KakaoPlace> resolveKakaoPlace(
@@ -359,7 +370,7 @@ public class PlaceService {
                 ).stream()
                 .map(place -> new TourismMatch(
                         place,
-                        normalizedNameScore(place.getTitle(), kakaoPlaceName),
+                        tourismClusterNameScore(place.getTitle(), kakaoPlaceName),
                         distanceMeters(lat, lng, place.getLocation())
                 ))
                 .filter(match -> match.nameScore() >= MIN_TOURISM_NAME_SCORE)
@@ -367,6 +378,32 @@ public class PlaceService {
                         .reversed()
                         .thenComparingDouble(TourismMatch::distanceMeters))
                 .map(TourismMatch::tourismPlace)
+                .findFirst();
+    }
+
+    private Optional<KakaoPlace> findKakaoTourismMatchForOfficialTourism(TourismPlace tourismPlace) {
+        List<KakaoPlace> kakaoPlaces = kakaoPlaceClient.searchKeyword(
+                tourismSearchKeyword(tourismPlace.getTitle()),
+                tourismPlace.getLocation().getY(),
+                tourismPlace.getLocation().getX(),
+                (int) TOURISM_MATCH_RADIUS_METERS
+        );
+        if (kakaoPlaces == null || kakaoPlaces.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return kakaoPlaces.stream()
+                .filter(place -> isTourismCandidate(resolvedCategoryGroupCode(place)))
+                .map(place -> new KakaoTourismMatch(
+                        place,
+                        tourismClusterNameScore(tourismPlace.getTitle(), place.name()),
+                        distanceMeters(place.lat(), place.lng(), tourismPlace.getLocation())
+                ))
+                .filter(match -> isSameTourismCluster(match.nameScore(), match.distanceMeters()))
+                .sorted(Comparator.comparingDouble(KakaoTourismMatch::nameScore)
+                        .reversed()
+                        .thenComparingDouble(KakaoTourismMatch::distanceMeters))
+                .map(KakaoTourismMatch::kakaoPlace)
                 .findFirst();
     }
 
@@ -479,6 +516,37 @@ public class PlaceService {
         );
     }
 
+    private static String resolvedCategoryGroupCode(KakaoPlace place) {
+        return firstNonBlank(place.categoryGroupCode(), inferredCategoryGroupCode(place.categoryName()));
+    }
+
+    private static String inferredCategoryGroupCode(String categoryName) {
+        if (!StringUtils.hasText(categoryName)) {
+            return null;
+        }
+        if (categoryName.contains("관광")
+                || categoryName.contains("명소")
+                || categoryName.contains("여행")
+                || categoryName.contains("산봉우리")
+                || categoryName.contains("오름")
+                || categoryName.contains("해수욕장")) {
+            return "AT4";
+        }
+        if (categoryName.contains("카페") || categoryName.contains("커피")) {
+            return "CE7";
+        }
+        if (categoryName.contains("음식점")) {
+            return "FD6";
+        }
+        if (categoryName.contains("편의점")) {
+            return "CS2";
+        }
+        if (categoryName.contains("숙박")) {
+            return "AD5";
+        }
+        return null;
+    }
+
     private static boolean isTourismCandidate(String categoryGroupCode) {
         return TOURISM_CATEGORY_GROUP_CODE.equals(categoryGroupCode);
     }
@@ -492,7 +560,7 @@ public class PlaceService {
         if (!StringUtils.hasText(normalizedKeyword)) {
             return true;
         }
-        if (intent.hasExplicitCategory() && intent.matches(place.categoryGroupCode())) {
+        if (intent.hasExplicitCategory() && intent.matches(resolvedCategoryGroupCode(place))) {
             return true;
         }
 
@@ -661,6 +729,86 @@ public class PlaceService {
         return commonCharacterCount / (double) Math.max(normalizedLeft.length(), normalizedRight.length());
     }
 
+    private static double tourismClusterNameScore(String left, String right) {
+        String canonicalLeft = canonicalTourismName(left);
+        String canonicalRight = canonicalTourismName(right);
+        if (!StringUtils.hasText(canonicalLeft) || !StringUtils.hasText(canonicalRight)) {
+            return normalizedNameScore(left, right);
+        }
+        if (canonicalLeft.equals(canonicalRight)) {
+            return 1.0;
+        }
+        if (canonicalLeft.contains(canonicalRight) || canonicalRight.contains(canonicalLeft)) {
+            return 0.9;
+        }
+        return normalizedNameScore(canonicalLeft, canonicalRight);
+    }
+
+    private static boolean isSameTourismCluster(double nameScore, double distanceMeters) {
+        if (nameScore >= 1.0 && distanceMeters <= TOURISM_CLUSTER_DEDUPLICATE_RADIUS_METERS) {
+            return true;
+        }
+        return nameScore >= MIN_TOURISM_CLUSTER_NAME_SCORE
+                && distanceMeters <= TOURISM_SEARCH_DEDUPLICATE_RADIUS_METERS;
+    }
+
+    private static String canonicalTourismName(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+        String canonicalName = value
+                .replaceAll("\\[[^\\]]+]", " ")
+                .replaceAll("\\([^)]{2,}\\)", " ");
+        canonicalName = normalizeName(canonicalName);
+
+        List<String> routeSuffixes = List.of("정상전망대", "전망대", "관광지");
+        List<String> areaSuffixes = List.of("해양도립공원", "도립공원", "국립공원");
+        boolean changed;
+        do {
+            changed = false;
+            for (String suffix : routeSuffixes) {
+                String normalizedSuffix = normalizeName(suffix);
+                if (canonicalName.endsWith(normalizedSuffix)
+                        && canonicalName.length() > normalizedSuffix.length() + 1) {
+                    canonicalName = canonicalName.substring(0, canonicalName.length() - normalizedSuffix.length());
+                    changed = true;
+                }
+            }
+            for (String suffix : areaSuffixes) {
+                String normalizedSuffix = normalizeName(suffix);
+                if (!canonicalName.endsWith(normalizedSuffix)) {
+                    continue;
+                }
+                String stem = canonicalName.substring(0, canonicalName.length() - normalizedSuffix.length());
+                if (hasDistinctTourismLandmarkSuffix(stem)) {
+                    canonicalName = stem;
+                    changed = true;
+                }
+            }
+        } while (changed);
+
+        return canonicalName;
+    }
+
+    private static String tourismSearchKeyword(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+        String keyword = value
+                .replaceAll("\\[[^\\]]+]", " ")
+                .replaceAll("\\([^)]{2,}\\)", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return keyword.isBlank() ? value.trim() : keyword;
+    }
+
+    private static boolean hasDistinctTourismLandmarkSuffix(String value) {
+        return value.endsWith("봉")
+                || value.endsWith("산")
+                || value.endsWith("오름")
+                || value.endsWith("도");
+    }
+
     private static String normalizeName(String value) {
         if (!StringUtils.hasText(value)) {
             return "";
@@ -687,6 +835,13 @@ public class PlaceService {
 
     private record TourismMatch(
             TourismPlace tourismPlace,
+            double nameScore,
+            double distanceMeters
+    ) {
+    }
+
+    private record KakaoTourismMatch(
+            KakaoPlace kakaoPlace,
             double nameScore,
             double distanceMeters
     ) {
