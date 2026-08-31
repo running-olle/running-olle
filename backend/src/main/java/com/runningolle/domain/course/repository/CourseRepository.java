@@ -21,7 +21,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
               and (:createdOnly = false or c.creator.id = :userId)
               and (:courseType is null or c.courseType = :courseType)
               and (
-                    (:libraryOnly = false and (c.isPublic = true or c.creator.id = :userId))
+                    (:libraryOnly = false and c.isPublic = true)
                     or (:libraryOnly = true and (
                         c.creator.id = :userId
                         or exists (

@@ -49,3 +49,7 @@ export type CourseDetail = Omit<CourseListItem, 'previewRouteCoordinates' | 'way
   surfaceStairsPct: number
   routeCoordinates: CourseRouteCoordinate[]
 }
+
+export type CourseBookmarkResponse = {
+  bookmarkId: string
+}

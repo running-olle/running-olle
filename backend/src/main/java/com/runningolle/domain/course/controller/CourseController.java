@@ -1,11 +1,13 @@
 package com.runningolle.domain.course.controller;
 
+import com.runningolle.domain.course.dto.CourseBookmarkResponse;
 import com.runningolle.domain.course.dto.CourseCreateRequest;
 import com.runningolle.domain.course.dto.CourseCreateResponse;
 import com.runningolle.domain.course.dto.CourseDetailResponse;
 import com.runningolle.domain.course.dto.CourseListFilter;
 import com.runningolle.domain.course.dto.CourseListItemResponse;
 import com.runningolle.domain.course.dto.CourseListScope;
+import com.runningolle.domain.course.service.CourseBookmarkService;
 import com.runningolle.domain.course.service.CourseCreateService;
 import com.runningolle.domain.course.service.CourseQueryService;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ public class CourseController {
 
     private final CourseCreateService courseCreateService;
     private final CourseQueryService courseQueryService;
+    private final CourseBookmarkService courseBookmarkService;
 
     @GetMapping
     public List<CourseListItemResponse> getCourses(
@@ -55,5 +58,14 @@ public class CourseController {
             @Valid @RequestBody CourseCreateRequest request
     ) {
         return courseCreateService.createCourse(UUID.fromString(authentication.getName()), request);
+    }
+
+    @PostMapping("/{courseId}/bookmark")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CourseBookmarkResponse bookmarkCourse(
+            Authentication authentication,
+            @PathVariable UUID courseId
+    ) {
+        return courseBookmarkService.bookmarkCourse(UUID.fromString(authentication.getName()), courseId);
     }
 }

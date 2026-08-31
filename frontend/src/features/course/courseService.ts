@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { CourseDetail, CourseListFilter, CourseListItem, CourseListScope } from './types'
+import type { CourseBookmarkResponse, CourseDetail, CourseListFilter, CourseListItem, CourseListScope } from './types'
 
 type GetCoursesParams = {
   filter: CourseListFilter
@@ -15,5 +15,9 @@ export const courseService = {
 
   getCourse(courseId: string) {
     return axiosInstance.get<CourseDetail>(`/courses/${courseId}`).then(({ data }) => data)
+  },
+
+  bookmarkCourse(courseId: string) {
+    return axiosInstance.post<CourseBookmarkResponse>(`/courses/${courseId}/bookmark`).then(({ data }) => data)
   },
 }

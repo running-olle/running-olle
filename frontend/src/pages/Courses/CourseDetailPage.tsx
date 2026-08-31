@@ -20,12 +20,15 @@ export function CourseDetailPage() {
   const { courseId } = useParams()
   const [course, setCourse] = useState<CourseDetail | null>(null)
   const [hasError, setHasError] = useState(false)
+  const [bookmarkError, setBookmarkError] = useState(false)
+  const [isSavingBookmark, setIsSavingBookmark] = useState(false)
 
   useEffect(() => {
     if (!courseId) return
     let ignore = false
     setCourse(null)
     setHasError(false)
+    setBookmarkError(false)
 
     courseService.getCourse(courseId)
       .then((data) => {
@@ -54,13 +57,29 @@ export function CourseDetailPage() {
     })
   }
 
+  const saveCourse = async () => {
+    if (!course || course.createdByMe || course.bookmarkedByMe || isSavingBookmark) return
+    setIsSavingBookmark(true)
+    setBookmarkError(false)
+    try {
+      const response = await courseService.bookmarkCourse(course.id)
+      setCourse((current) => current
+        ? { ...current, bookmarkedByMe: true, bookmarkId: response.bookmarkId }
+        : current)
+    } catch {
+      setBookmarkError(true)
+    } finally {
+      setIsSavingBookmark(false)
+    }
+  }
+
   if (hasError) {
     return (
       <section className="course-detail-page">
         <div className="course-detail-empty">
           <strong>코스를 불러오지 못했어요</strong>
           <p>삭제되었거나 볼 수 없는 코스일 수 있어요.</p>
-          <Link to="/courses">코스 목록으로</Link>
+          <Link to="/courses">코스 탐색으로</Link>
         </div>
       </section>
     )
@@ -75,6 +94,7 @@ export function CourseDetailPage() {
   }
 
   const hasSurface = course.surfaceAsphaltPct > 0 || course.surfaceDirtPct > 0 || course.surfaceStairsPct > 0
+  const showBookmarkAction = !course.createdByMe
 
   return (
     <section className="course-detail-page">
@@ -133,7 +153,23 @@ export function CourseDetailPage() {
         </ol>
       </section>
 
-      <button className="course-detail-start" type="button" onClick={startCourseRun}>이 코스로 달리기</button>
+      {bookmarkError && (
+        <p className="course-detail-action-error">코스를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.</p>
+      )}
+
+      <div className="course-detail-footer" data-has-bookmark={showBookmarkAction}>
+        {showBookmarkAction && (
+          <button
+            className="course-detail-bookmark"
+            type="button"
+            disabled={course.bookmarkedByMe || isSavingBookmark}
+            onClick={saveCourse}
+          >
+            {isSavingBookmark ? '저장 중' : course.bookmarkedByMe ? '저장됨' : '저장하기'}
+          </button>
+        )}
+        <button className="course-detail-start" type="button" onClick={startCourseRun}>이 코스로 달리기</button>
+      </div>
     </section>
   )
 }
