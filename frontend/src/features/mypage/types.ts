@@ -1,4 +1,5 @@
 export type Profile = { nickname: string; profileImageUrl: string | null; bio: string | null; userTypes: string[]; preferredDistance: string | null; preferredDifficulty: string | null; createdAt: string; accountStatus: string }
+export type ProfileUpdate = Pick<Profile, 'nickname' | 'profileImageUrl' | 'bio' | 'userTypes' | 'preferredDistance' | 'preferredDifficulty'>
 export type Dashboard = { profile: Profile; totalDistanceKm: number; completionCount: number; uniqueCourseCount: number }
 export type RunRecord = { id: string; courseId: string | null; courseName: string | null; courseType: 'RUNNING_COURSE' | 'SPOT_COURSE' | null; thumbnailImageUrl: string | null; distanceKm: number; durationSeconds: number; averagePace: number | null; startedAt: string }
 export type Visit = { id: string; waypointId: string; courseId: string; courseName: string; name: string; description: string | null; imageUrl: string | null; visitedAt: string; orderIndex: number; latitude: number; longitude: number }
