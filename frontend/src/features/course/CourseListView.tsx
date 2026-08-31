@@ -30,10 +30,12 @@ type CourseListViewProps = {
   emptyDescription: string
   kicker?: string
   createActionLabel?: string
+  createdBadgeLabel?: string
   onRemoveBookmark?: (bookmarkId: string) => Promise<void>
   showHeader?: boolean
   showCreateAction?: boolean
   showCreatedFilter?: boolean
+  showSummary?: boolean
   showStartAction?: boolean
   showBookmarkAction?: boolean
   summaryThirdMetric?: 'CREATED' | 'BOOKMARKED'
@@ -47,10 +49,12 @@ export function CourseListView({
   emptyDescription,
   kicker = 'Jeju Running Course',
   createActionLabel = '새 코스',
+  createdBadgeLabel = '내가 만든 코스',
   onRemoveBookmark,
   showHeader = true,
   showCreateAction = true,
   showCreatedFilter = true,
+  showSummary = true,
   showStartAction = true,
   showBookmarkAction = false,
   summaryThirdMetric = 'CREATED',
@@ -168,11 +172,13 @@ export function CourseListView({
         </div>
       )}
 
-      <div className="course-library-summary" aria-label="코스 요약">
-        <div><span>코스</span><strong>{summary.count}<small>개</small></strong></div>
-        <div><span>총 거리</span><strong>{summary.totalDistanceKm.toFixed(1)}<small>km</small></strong></div>
-        <div><span>{thirdSummary.label}</span><strong>{thirdSummary.value}<small>개</small></strong></div>
-      </div>
+      {showSummary && (
+        <div className="course-library-summary" aria-label="코스 요약">
+          <div><span>코스</span><strong>{summary.count}<small>개</small></strong></div>
+          <div><span>총 거리</span><strong>{summary.totalDistanceKm.toFixed(1)}<small>km</small></strong></div>
+          <div><span>{thirdSummary.label}</span><strong>{thirdSummary.value}<small>개</small></strong></div>
+        </div>
+      )}
 
       <div className="course-library-filters" aria-label="코스 필터">
         {filterOptions.map((option) => (
@@ -202,6 +208,7 @@ export function CourseListView({
               removingBookmarkId={removingBookmarkId}
               savingBookmarkCourseId={savingBookmarkCourseId}
               canRemoveBookmark={Boolean(onRemoveBookmark && course.bookmarkId)}
+              createdBadgeLabel={createdBadgeLabel}
               showStartAction={showStartAction}
               showBookmarkAction={showBookmarkAction}
               onRemoveBookmark={() => handleRemoveBookmark(course)}
@@ -226,6 +233,7 @@ function CourseListCard({
   removingBookmarkId,
   savingBookmarkCourseId,
   canRemoveBookmark,
+  createdBadgeLabel,
   showStartAction,
   showBookmarkAction,
   onRemoveBookmark,
@@ -236,6 +244,7 @@ function CourseListCard({
   removingBookmarkId: string | null
   savingBookmarkCourseId: string | null
   canRemoveBookmark: boolean
+  createdBadgeLabel: string
   showStartAction: boolean
   showBookmarkAction: boolean
   onRemoveBookmark: () => void
@@ -247,11 +256,18 @@ function CourseListCard({
     : '경유지 정보 준비 중'
   const isRemovingBookmark = course.bookmarkId !== null && removingBookmarkId === course.bookmarkId
   const isSavingBookmark = savingBookmarkCourseId === course.id
-  const canShowBookmarkAction = showBookmarkAction && !course.createdByMe
+  const bookmarkActionLabel = course.createdByMe
+    ? '내 코스'
+    : isSavingBookmark
+      ? '저장 중'
+      : course.bookmarkedByMe
+        ? '저장됨'
+        : '저장하기'
+  const bookmarkActionClass = course.createdByMe || course.bookmarkedByMe ? 'is-muted' : 'is-primary'
   const actionCount = [
     canRemoveBookmark,
     true,
-    canShowBookmarkAction,
+    showBookmarkAction,
     showStartAction,
   ].filter(Boolean).length
 
@@ -270,7 +286,7 @@ function CourseListCard({
       </div>
       <div className="course-library-card-body">
         <div className="course-library-card-badges">
-          {course.createdByMe && <span>내가 만든 코스</span>}
+          {course.createdByMe && <span>{createdBadgeLabel}</span>}
           {!course.isPublic && <span>비공개</span>}
           {course.bookmarkedByMe && <span>저장됨</span>}
         </div>
@@ -290,14 +306,14 @@ function CourseListCard({
             </button>
           )}
           <Link className="course-library-action is-secondary" to={`/courses/${course.id}`}>상세보기</Link>
-          {canShowBookmarkAction && (
+          {showBookmarkAction && (
             <button
-              className={`course-library-action ${course.bookmarkedByMe ? 'is-muted' : 'is-primary'}`}
+              className={`course-library-action ${bookmarkActionClass}`}
               type="button"
-              disabled={course.bookmarkedByMe || isSavingBookmark}
+              disabled={course.createdByMe || course.bookmarkedByMe || isSavingBookmark}
               onClick={onBookmark}
             >
-              {isSavingBookmark ? '저장 중' : course.bookmarkedByMe ? '저장됨' : '저장하기'}
+              {bookmarkActionLabel}
             </button>
           )}
           {showStartAction && (
