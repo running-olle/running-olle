@@ -3,6 +3,10 @@ package com.runningolle.domain.mypage.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
 
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.entity.CourseWaypoint;
@@ -17,6 +21,10 @@ import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.running.repository.RunningWaypointVisitRepository;
 import com.runningolle.domain.trip.repository.TripRepository;
 import com.runningolle.domain.user.entity.User;
+import com.runningolle.domain.user.entity.UserType;
+import com.runningolle.domain.user.entity.UserUserType;
+import com.runningolle.domain.user.enums.PreferredDifficulty;
+import com.runningolle.domain.user.enums.PreferredDistance;
 import com.runningolle.domain.user.repository.UserNotificationSettingRepository;
 import com.runningolle.domain.user.repository.UserRepository;
 import com.runningolle.domain.user.repository.UserTypeRepository;
@@ -32,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mock;
+import org.mockito.InOrder;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -119,6 +128,62 @@ class MyPageServiceTest {
         assertThatThrownBy(() -> myPageService.runDetail(USER_ID, runId))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("러닝 기록을 찾을 수 없습니다.");
+    }
+
+    @Test
+    void updatesProfileWithoutRecreatingUnchangedUserType() {
+        User user = user(USER_ID);
+        user.updateProfile("기존닉네임", null, null, null, null);
+        UserType activeRunner = UserType.of("ACTIVE_RUNNER", "활동적인 러너");
+        UserUserType currentLink = UserUserType.of(user, activeRunner);
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(userUserTypeRepository.findAllByUserId(USER_ID)).willReturn(List.of(currentLink));
+
+        MyPageDtos.Profile profile = myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
+                "  새닉네임  ", null, "  새로운 소개  ", List.of("ACTIVE_RUNNER"),
+                PreferredDistance.FROM_5_TO_10KM, PreferredDifficulty.NORMAL
+        ));
+
+        assertThat(profile.nickname()).isEqualTo("새닉네임");
+        assertThat(profile.bio()).isEqualTo("새로운 소개");
+        assertThat(profile.userTypes()).containsExactly("ACTIVE_RUNNER");
+        verify(userUserTypeRepository, never()).deleteAllByUserId(USER_ID);
+        verify(userUserTypeRepository, never()).flush();
+        verify(userUserTypeRepository, never()).save(any(UserUserType.class));
+    }
+
+    @Test
+    void flushesDeletedUserTypesBeforeSavingReplacement() {
+        User user = user(USER_ID);
+        user.updateProfile("기존닉네임", null, null, null, null);
+        UserUserType currentLink = UserUserType.of(user, UserType.of("ACTIVE_RUNNER", "활동적인 러너"));
+        UserType relaxedTraveler = UserType.of("RELAXED_TRAVELER", "여유로운 여행자");
+        UserUserType replacementLink = UserUserType.of(user, relaxedTraveler);
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(userUserTypeRepository.findAllByUserId(USER_ID))
+                .willReturn(List.of(currentLink), List.of(replacementLink));
+        given(userTypeRepository.findByCode("RELAXED_TRAVELER")).willReturn(Optional.of(relaxedTraveler));
+
+        myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
+                "기존닉네임", null, null, List.of("RELAXED_TRAVELER"), null, null
+        ));
+
+        InOrder order = inOrder(userUserTypeRepository);
+        order.verify(userUserTypeRepository).deleteAllByUserId(USER_ID);
+        order.verify(userUserTypeRepository).flush();
+        order.verify(userUserTypeRepository).save(any(UserUserType.class));
+    }
+
+    @Test
+    void rejectsUnknownUserType() {
+        User user = user(USER_ID);
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
+                "새닉네임", null, null, List.of("UNKNOWN"), null, null
+        )))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("올바른 사용자 유형");
     }
 
     private static RunningRecord runningRecord(UUID id, User user, Course course) {

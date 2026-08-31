@@ -26,6 +26,7 @@ import com.runningolle.domain.user.entity.UserUserType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -66,15 +67,26 @@ public class MyPageService {
     public MyPageDtos.Profile updateProfile(UUID userId, MyPageDtos.UpdateProfileRequest request) {
         User user = activeUser(userId);
         String nickname = request.nickname() == null ? "" : request.nickname().trim();
-        if (nickname.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "닉네임을 입력해주세요.");
+        if (nickname.length() < 2) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "닉네임을 2자 이상 입력해주세요.");
         if (userRepository.existsByNickname(nickname) && !nickname.equals(user.getNickname()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
         user.updateProfile(nickname, request.profileImageUrl(), trim(request.bio()), request.preferredDistance(), request.preferredDifficulty());
-        userUserTypeRepository.deleteAllByUserId(userId);
-        if (request.userTypes() != null) for (String code : request.userTypes()) {
-            UserTypeCode value = UserTypeCode.valueOf(code);
-            UserType type = userTypeRepository.findByCode(code).orElseGet(() -> userTypeRepository.save(UserType.of(code, value.getDisplayName())));
-            userUserTypeRepository.save(UserUserType.of(user, type));
+
+        List<String> requestedTypes = validateUserTypes(request.userTypes());
+        List<String> currentTypes = userUserTypeRepository.findAllByUserId(userId).stream()
+                .map(link -> link.getUserType().getCode())
+                .toList();
+        if (!new LinkedHashSet<>(currentTypes).equals(new LinkedHashSet<>(requestedTypes))) {
+            userUserTypeRepository.deleteAllByUserId(userId);
+            // Hibernate executes inserts before entity deletes unless the delete queue is flushed first.
+            // Without this flush, re-selecting a profile type can violate the user/type unique constraint.
+            userUserTypeRepository.flush();
+            for (String code : requestedTypes) {
+                UserTypeCode value = UserTypeCode.valueOf(code);
+                UserType type = userTypeRepository.findByCode(code)
+                        .orElseGet(() -> userTypeRepository.save(UserType.of(code, value.getDisplayName())));
+                userUserTypeRepository.save(UserUserType.of(user, type));
+            }
         }
         return profile(userId);
     }
@@ -223,4 +235,16 @@ public class MyPageService {
     private User activeUser(UUID id) { return userRepository.findById(id).filter(u -> u.getAccountStatus() == AccountStatus.ACTIVE)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.")); }
     private String trim(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+    private List<String> validateUserTypes(List<String> userTypes) {
+        if (userTypes == null) return List.of();
+        try {
+            return userTypes.stream()
+                    .map(UserTypeCode::valueOf)
+                    .distinct()
+                    .map(Enum::name)
+                    .toList();
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "올바른 사용자 유형을 선택해주세요.");
+        }
+    }
 }

@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { Bookmark, Dashboard, NotificationSettings, Profile, RunRecord, RunRecordDetail, Trip, Visit } from './types'
+import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, Trip, Visit } from './types'
 export const myPageService = {
   dashboard: () => axiosInstance.get<Dashboard>('/mypage').then(({ data }) => data),
   runs: () => axiosInstance.get<RunRecord[]>('/mypage/runs').then(({ data }) => data),
@@ -10,7 +10,14 @@ export const myPageService = {
   trips: () => axiosInstance.get<Trip[]>('/mypage/trips').then(({ data }) => data),
   createTrip: (body: Pick<Trip, 'name' | 'region' | 'startDate' | 'endDate' | 'thumbnailImageUrl'>) => axiosInstance.post<Trip>('/mypage/trips', body).then(({ data }) => data),
   profile: () => axiosInstance.get<Profile>('/users/me/profile').then(({ data }) => data),
-  updateProfile: (body: Partial<Profile>) => axiosInstance.put<Profile>('/users/me/profile', body).then(({ data }) => data),
+  updateProfile: (body: ProfileUpdate) => axiosInstance.put<Profile>('/users/me/profile', body).then(({ data }) => data),
+  uploadProfileImage: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return axiosInstance.post<{ imageUrls: string[] }>('/users/me/profile/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(({ data }) => data.imageUrls[0])
+  },
   notifications: () => axiosInstance.get<NotificationSettings>('/users/me/notifications').then(({ data }) => data),
   updateNotifications: (body: NotificationSettings) => axiosInstance.put<NotificationSettings>('/users/me/notifications', body).then(({ data }) => data),
 }

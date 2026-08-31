@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { axiosInstance } from '../../api/axiosInstance'
 import { CourseListView } from '../../features/course/CourseListView'
@@ -18,7 +18,12 @@ const paths: Record<string, ReactNode> = {
   user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>, logout: <><path d="M10 17l5-5-5-5M15 12H3"/><path d="M15 3h6v18h-6"/></>, chevron: <path d="m9 18 6-6-6-6"/>, map: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/></>,
 }
 function Icon({ name, size = 22 }: { name: string; size?: number }) { return <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg> }
-function Avatar({ profile, large = false }: { profile: Profile; large?: boolean }) { return <div className={`my-avatar ${large ? 'large' : ''}`} style={profile.profileImageUrl ? { backgroundImage: `url(${profile.profileImageUrl})` } : undefined}>{!profile.profileImageUrl && profile.nickname.slice(0, 1)}</div> }
+function assetUrl(url: string) {
+  if (!url.startsWith('/')) return url
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined
+  return apiBaseUrl?.startsWith('http') ? `${new URL(apiBaseUrl).origin}${url}` : url
+}
+function Avatar({ profile, large = false }: { profile: Profile; large?: boolean }) { return <div className={`my-avatar ${large ? 'large' : ''}`} style={profile.profileImageUrl ? { backgroundImage: `url(${assetUrl(profile.profileImageUrl)})` } : undefined}>{!profile.profileImageUrl && profile.nickname.slice(0, 1)}</div> }
 function PageHeader({ title, action }: { title: string; action?: ReactNode }) { const navigate = useNavigate(); return <header className="my-header"><button onClick={() => navigate(-1)} aria-label="뒤로"><Icon name="back"/></button><h1>{title}</h1><div>{action}</div></header> }
 function Empty({ icon = 'history', title, description, action }: { icon?: string; title: string; description: string; action?: ReactNode }) { return <div className="my-empty"><span><Icon name={icon} size={28}/></span><strong>{title}</strong><p>{description}</p>{action}</div> }
 function Loading() { return <div className="my-loading"><div className="spinner"/><span>기록을 불러오는 중…</span></div> }
@@ -99,7 +104,79 @@ function SettingGroup({title,children}:{title:string;children:ReactNode}){return
 export function AccountPage(){const [p,setP]=useState<Profile|null>(null);useEffect(()=>{myPageService.profile().then(setP).catch(()=>setP(EMPTY_PROFILE))},[]);return <div className="my-screen settings-bg"><PageHeader title="계정 정보"/><main className="my-content">{!p?<Loading/>:<><section className="account-panel"><div className="account-person"><Avatar profile={p}/><div><h2>{p.nickname}</h2><p>카카오 소셜 계정</p></div></div><dl><div><dt>로그인 방식</dt><dd><i className="kakao-dot">K</i> 카카오</dd></div><div><dt>가입일</dt><dd>{p.createdAt?new Date(p.createdAt).toLocaleDateString('ko-KR'):'-'}</dd></div><div><dt>계정 상태</dt><dd><span className="status-pill">정상</span></dd></div></dl></section><div className="info-box">러닝올레는 카카오 로그인만 지원합니다. 비밀번호와 카카오 계정 정보는 카카오에서 안전하게 관리돼요.</div><a className="outline-link" href="https://accounts.kakao.com" target="_blank" rel="noreferrer">카카오 계정 관리 열기</a></>}</main></div>}
 
 const typeLabels:Record<string,string>={ACTIVE_RUNNER:'활동적인 러너',RELAXED_TRAVELER:'여유로운 여행자',JEJU_RESIDENT:'제주 거주민'}
-export function ProfileEditPage(){const nav=useNavigate();const [p,setP]=useState<Profile|null>(null);const [saving,setSaving]=useState(false);useEffect(()=>{myPageService.profile().then(setP).catch(()=>setP(EMPTY_PROFILE))},[]);if(!p)return <div className="my-screen"><Loading/></div>;const save=async()=>{setSaving(true);try{await myPageService.updateProfile(p);nav('/mypage')}catch{setSaving(false);alert('프로필을 저장하지 못했어요.')}};return <div className="my-screen settings-bg"><PageHeader title="프로필 편집" action={<button className="save-text" onClick={save} disabled={saving}>{saving?'저장 중':'저장'}</button>}/><main className="my-content profile-form"><div className="profile-avatar"><Avatar profile={p} large/><span><Icon name="edit" size={15}/></span></div><label>닉네임<input value={p.nickname} maxLength={100} onChange={e=>setP({...p,nickname:e.target.value})}/></label><label>자기소개<textarea value={p.bio||''} maxLength={300} onChange={e=>setP({...p,bio:e.target.value})}/></label><Choice title="사용자 유형" options={['ACTIVE_RUNNER','RELAXED_TRAVELER','JEJU_RESIDENT']} value={p.userTypes[0]||''} labels={typeLabels} onChange={v=>setP({...p,userTypes:[v]})}/><Choice title="선호 거리" options={['UNDER_3KM','FROM_5_TO_10KM','OVER_10KM']} value={p.preferredDistance||''} labels={{UNDER_3KM:'3km 이하',FROM_5_TO_10KM:'5km ~ 10km',OVER_10KM:'10km 이상'}} onChange={v=>setP({...p,preferredDistance:v})}/><Choice title="선호 난이도" options={['EASY','NORMAL','HARD']} value={p.preferredDifficulty||''} labels={{EASY:'쉬움',NORMAL:'보통',HARD:'어려움'}} onChange={v=>setP({...p,preferredDifficulty:v})}/><button className="submit-button" onClick={save} disabled={saving}>저장하기</button></main></div>}
+export function ProfileEditPage() {
+  const nav = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [p, setP] = useState<Profile | null>(null)
+  const [loadError, setLoadError] = useState(false)
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const load = () => {
+    setLoadError(false)
+    myPageService.profile().then(setP).catch(() => setLoadError(true))
+  }
+  useEffect(load, [])
+
+  if (loadError) return <div className="my-screen settings-bg"><PageHeader title="프로필 편집"/><main className="my-content"><div className="my-empty"><strong>프로필을 불러오지 못했어요</strong><p>잠시 후 다시 시도해 주세요.</p><button className="primary-link" onClick={load}>다시 불러오기</button></div></main></div>
+  if (!p) return <div className="my-screen"><Loading/></div>
+
+  const selectImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) return setError('이미지 파일만 선택할 수 있어요.')
+    if (file.size > 10 * 1024 * 1024) return setError('프로필 사진은 10MB 이하만 올릴 수 있어요.')
+    setUploading(true)
+    setError('')
+    try {
+      const imageUrl = await myPageService.uploadProfileImage(file)
+      if (!imageUrl) throw new Error('empty image url')
+      setP(current => current ? { ...current, profileImageUrl: imageUrl } : current)
+    } catch {
+      setError('프로필 사진을 업로드하지 못했어요.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const save = async () => {
+    const nickname = p.nickname.trim()
+    if (nickname.length < 2) return setError('닉네임을 2자 이상 입력해 주세요.')
+    setSaving(true)
+    setError('')
+    try {
+      await myPageService.updateProfile({
+        nickname,
+        profileImageUrl: p.profileImageUrl,
+        bio: p.bio?.trim() || null,
+        userTypes: p.userTypes,
+        preferredDistance: p.preferredDistance,
+        preferredDifficulty: p.preferredDifficulty,
+      })
+      nav('/mypage')
+    } catch (caught) {
+      const response = (caught as { response?: { status?: number; data?: { detail?: string; message?: string } } }).response
+      setError(response?.status === 409 ? '이미 사용 중인 닉네임이에요.' : response?.data?.detail || response?.data?.message || '프로필을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <div className="my-screen settings-bg"><PageHeader title="프로필 편집" action={<button className="save-text" onClick={save} disabled={saving || uploading}>{saving ? '저장 중' : '저장'}</button>}/><main className="my-content profile-form">
+    <input ref={fileInputRef} className="profile-file-input" type="file" accept="image/*" onChange={selectImage}/>
+    <button className="profile-avatar" type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} aria-label="프로필 사진 변경"><Avatar profile={p} large/><span><Icon name="edit" size={15}/></span></button>
+    <div className="profile-image-actions"><button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}>{uploading ? '업로드 중…' : '사진 변경'}</button>{p.profileImageUrl && <button type="button" className="danger" onClick={() => setP({...p, profileImageUrl: null})} disabled={uploading}>사진 삭제</button>}</div>
+    <label>닉네임<input value={p.nickname} minLength={2} maxLength={100} onChange={e => { setError(''); setP({...p,nickname:e.target.value}) }}/><small>{p.nickname.length} / 100자</small></label>
+    <label>자기소개<textarea value={p.bio || ''} maxLength={300} onChange={e => { setError(''); setP({...p,bio:e.target.value}) }}/><small>{p.bio?.length || 0} / 300자</small></label>
+    <Choice title="사용자 유형" options={['ACTIVE_RUNNER','RELAXED_TRAVELER','JEJU_RESIDENT']} value={p.userTypes[0] || ''} labels={typeLabels} onChange={v => setP({...p,userTypes:[v]})}/>
+    <Choice title="선호 거리" options={['UNDER_3KM','FROM_5_TO_10KM','OVER_10KM']} value={p.preferredDistance || ''} labels={{UNDER_3KM:'3km 이하',FROM_5_TO_10KM:'5km ~ 10km',OVER_10KM:'10km 이상'}} onChange={v => setP({...p,preferredDistance:v})}/>
+    <Choice title="선호 난이도" options={['EASY','NORMAL','HARD']} value={p.preferredDifficulty || ''} labels={{EASY:'쉬움',NORMAL:'보통',HARD:'어려움'}} onChange={v => setP({...p,preferredDifficulty:v})}/>
+    {error && <p className="my-error" role="alert">{error}</p>}
+    <button className="submit-button" onClick={save} disabled={saving || uploading}>{saving ? '저장 중…' : '저장하기'}</button>
+  </main></div>
+}
 function Choice({title,options,value,labels,onChange}:{title:string;options:string[];value:string;labels:Record<string,string>;onChange:(v:string)=>void}){return <section className="profile-choice"><h2>{title}</h2><div className="chips">{options.map(x=><button className={value===x?'active':''} onClick={()=>onChange(x)} key={x}>{labels[x]}</button>)}</div></section>}
 export function NotificationPage(){const [settings,setSettings]=useState<NotificationSettings|null>(null);const [saved,setSaved]=useState(false);useEffect(()=>{myPageService.notifications().then(setSettings).catch(()=>setSettings(DEFAULT_NOTIFICATIONS))},[]);const toggle=async(key:keyof NotificationSettings)=>{if(!settings)return;const next={...settings,[key]:!settings[key]};setSettings(next);setSaved(false);try{await myPageService.updateNotifications(next);setSaved(true);setTimeout(()=>setSaved(false),1500)}catch{setSettings(settings)}};if(!settings)return <div className="my-screen"><Loading/></div>;return <div className="my-screen settings-bg"><PageHeader title="알림 설정"/><main className="my-content notification-content"><div className="info-box">현재 서비스에서 바로 전달할 수 있는 소식만 표시해요. 알림은 앱 우측 상단의 종 아이콘에 쌓입니다.</div><ToggleGroup title="커뮤니티" rows={[['meetupInvite','같이 달리기','참여 요청·승인·일정 변경·취소 알림'],['commentLike','댓글/좋아요','내 게시글에 대한 댓글과 좋아요 알림']]} settings={settings} toggle={toggle}/>{saved&&<div className="save-toast">알림 설정을 저장했어요</div>}</main></div>}
 function ToggleGroup({title,rows,settings,toggle}:{title:string;rows:[keyof NotificationSettings,string,string][];settings:NotificationSettings;toggle:(k:keyof NotificationSettings)=>void}){return <section className="toggle-group"><h2>{title}</h2><div>{rows.map(([key,label,desc])=><button key={key} onClick={()=>toggle(key)}><span><b>{label}</b><small>{desc}</small></span><i className={settings[key]?'on':''}><em/></i></button>)}</div></section>}
