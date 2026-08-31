@@ -9,6 +9,7 @@ export function RunningCourseSelectPage() {
       emptyTitle="달릴 코스가 아직 없어요"
       emptyDescription="코스를 만들거나 공개 코스를 저장하면 여기서 선택해서 달릴 수 있어요."
       createActionLabel="새 코스"
+      showSearch
       showStartAction
     />
   )

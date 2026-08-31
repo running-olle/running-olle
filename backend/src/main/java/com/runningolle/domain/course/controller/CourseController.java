@@ -41,9 +41,10 @@ public class CourseController {
     public List<CourseListItemResponse> getCourses(
             Authentication authentication,
             @RequestParam(defaultValue = "ALL") CourseListFilter filter,
-            @RequestParam(defaultValue = "AVAILABLE") CourseListScope scope
+            @RequestParam(defaultValue = "AVAILABLE") CourseListScope scope,
+            @RequestParam(required = false) String keyword
     ) {
-        return courseQueryService.getCourses(UUID.fromString(authentication.getName()), filter, scope);
+        return courseQueryService.getCourses(UUID.fromString(authentication.getName()), filter, scope, keyword);
     }
 
     @GetMapping("/{courseId}")
@@ -70,6 +71,15 @@ public class CourseController {
             @PathVariable UUID courseId
     ) {
         return courseBookmarkService.bookmarkCourse(UUID.fromString(authentication.getName()), courseId);
+    }
+
+    @DeleteMapping("/{courseId}/bookmark")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unbookmarkCourse(
+            Authentication authentication,
+            @PathVariable UUID courseId
+    ) {
+        courseBookmarkService.unbookmarkCourse(UUID.fromString(authentication.getName()), courseId);
     }
 
     @DeleteMapping("/{courseId}")

@@ -32,12 +32,24 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
                         )
                     ))
                   )
+              and (
+                    :keyword is null
+                    or lower(c.name) like concat('%', :keyword, '%')
+                    or lower(coalesce(c.description, '')) like concat('%', :keyword, '%')
+                    or exists (
+                        select 1
+                        from CourseWaypoint waypoint
+                        where waypoint.course = c
+                          and lower(waypoint.name) like concat('%', :keyword, '%')
+                    )
+                  )
             order by c.createdAt desc
             """)
     List<Course> findVisibleCourses(
             @Param("userId") UUID userId,
             @Param("courseType") CourseType courseType,
             @Param("createdOnly") boolean createdOnly,
-            @Param("libraryOnly") boolean libraryOnly
+            @Param("libraryOnly") boolean libraryOnly,
+            @Param("keyword") String keyword
     );
 }

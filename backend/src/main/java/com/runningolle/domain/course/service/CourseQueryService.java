@@ -33,12 +33,19 @@ public class CourseQueryService {
     private final CourseBookmarkRepository courseBookmarkRepository;
 
     @Transactional(readOnly = true)
-    public List<CourseListItemResponse> getCourses(UUID userId, CourseListFilter filter, CourseListScope scope) {
+    public List<CourseListItemResponse> getCourses(UUID userId, CourseListFilter filter, CourseListScope scope, String keyword) {
         CourseType courseType = toCourseType(filter);
         boolean createdOnly = filter == CourseListFilter.CREATED;
         boolean libraryOnly = scope == CourseListScope.LIBRARY;
+        String normalizedKeyword = normalizeKeyword(keyword);
 
-        List<Course> courses = courseRepository.findVisibleCourses(userId, courseType, createdOnly, libraryOnly);
+        List<Course> courses = courseRepository.findVisibleCourses(
+                userId,
+                courseType,
+                createdOnly,
+                libraryOnly,
+                normalizedKeyword
+        );
         if (courses.isEmpty()) {
             return List.of();
         }
@@ -89,6 +96,13 @@ public class CourseQueryService {
             case SPOT_COURSE -> CourseType.SPOT_COURSE;
             case ALL, CREATED -> null;
         };
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim().toLowerCase();
     }
 
     private Map<UUID, List<CourseWaypointResponse>> waypointsByCourseId(List<UUID> courseIds) {

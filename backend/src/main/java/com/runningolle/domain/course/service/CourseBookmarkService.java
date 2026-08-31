@@ -43,4 +43,11 @@ public class CourseBookmarkService {
                     return new CourseBookmarkResponse(bookmark.getId());
                 });
     }
+
+    @Transactional
+    public void unbookmarkCourse(UUID userId, UUID courseId) {
+        CourseBookmark bookmark = courseBookmarkRepository.findByUser_IdAndCourse_Id(userId, courseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "저장한 코스를 찾을 수 없습니다."));
+        courseBookmarkRepository.delete(bookmark);
+    }
 }

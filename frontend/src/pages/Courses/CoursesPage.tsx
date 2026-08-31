@@ -12,6 +12,9 @@ export function CoursesPage() {
       createdBadgeLabel="내 공개 코스"
       showCreatedFilter={false}
       showSummary={false}
+      showSearch
+      showDescription={false}
+      compactCards
       showStartAction={false}
       showBookmarkAction
     />

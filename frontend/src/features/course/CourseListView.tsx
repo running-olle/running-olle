@@ -37,6 +37,9 @@ type CourseListViewProps = {
   showCreateAction?: boolean
   showCreatedFilter?: boolean
   showSummary?: boolean
+  showSearch?: boolean
+  showDescription?: boolean
+  compactCards?: boolean
   showStartAction?: boolean
   showBookmarkAction?: boolean
   summaryThirdMetric?: 'CREATED' | 'BOOKMARKED'
@@ -57,6 +60,9 @@ export function CourseListView({
   showCreateAction = true,
   showCreatedFilter = true,
   showSummary = true,
+  showSearch = false,
+  showDescription = true,
+  compactCards = false,
   showStartAction = true,
   showBookmarkAction = false,
   summaryThirdMetric = 'CREATED',
@@ -64,6 +70,8 @@ export function CourseListView({
   const navigate = useNavigate()
   const [filter, setFilter] = useState<CourseListFilter>('ALL')
   const [courses, setCourses] = useState<CourseListItem[] | null>(null)
+  const [searchInput, setSearchInput] = useState('')
+  const [keyword, setKeyword] = useState('')
   const [hasError, setHasError] = useState(false)
   const [removingBookmarkId, setRemovingBookmarkId] = useState<string | null>(null)
   const [savingBookmarkCourseId, setSavingBookmarkCourseId] = useState<string | null>(null)
@@ -82,11 +90,18 @@ export function CourseListView({
   }, [filter, showCreatedFilter])
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setKeyword(searchInput.trim())
+    }, 300)
+    return () => window.clearTimeout(timer)
+  }, [searchInput])
+
+  useEffect(() => {
     let ignore = false
     setCourses(null)
     setHasError(false)
 
-    courseService.getCourses({ filter, scope })
+    courseService.getCourses({ filter, scope, keyword })
       .then((data) => {
         if (!ignore) setCourses(data)
       })
@@ -100,7 +115,7 @@ export function CourseListView({
     return () => {
       ignore = true
     }
-  }, [filter, scope])
+  }, [filter, keyword, scope])
 
   const summary = useMemo(() => {
     const loadedCourses = courses ?? []
@@ -144,17 +159,26 @@ export function CourseListView({
     }
   }
 
-  const handleBookmark = async (course: CourseListItem) => {
-    if (course.bookmarkedByMe || course.createdByMe) return
+  const handleToggleBookmark = async (course: CourseListItem) => {
+    if (course.createdByMe) return
     setSavingBookmarkCourseId(course.id)
     setHasError(false)
     try {
-      const response = await courseService.bookmarkCourse(course.id)
-      setCourses((current) => current?.map((item) => (
-        item.id === course.id
-          ? { ...item, bookmarkedByMe: true, bookmarkId: response.bookmarkId }
-          : item
-      )) ?? current)
+      if (course.bookmarkedByMe) {
+        await courseService.unbookmarkCourse(course.id)
+        setCourses((current) => current?.map((item) => (
+          item.id === course.id
+            ? { ...item, bookmarkedByMe: false, bookmarkId: null }
+            : item
+        )) ?? current)
+      } else {
+        const response = await courseService.bookmarkCourse(course.id)
+        setCourses((current) => current?.map((item) => (
+          item.id === course.id
+            ? { ...item, bookmarkedByMe: true, bookmarkId: response.bookmarkId }
+            : item
+        )) ?? current)
+      }
     } catch {
       setHasError(true)
     } finally {
@@ -180,7 +204,7 @@ export function CourseListView({
   }
 
   return (
-    <section className="course-library">
+    <section className={`course-library ${compactCards ? 'is-compact' : ''}`}>
       {showHeader && (
         <div className="course-library-head">
           <div>
@@ -190,6 +214,24 @@ export function CourseListView({
           </div>
           {showCreateAction && <Link to="/courses/create">{createActionLabel}</Link>}
         </div>
+      )}
+
+      {showSearch && (
+        <label className="course-library-search">
+          <span aria-hidden="true">
+            <SearchIcon />
+          </span>
+          <input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="코스명이나 스팟으로 검색"
+          />
+          {searchInput && (
+            <button type="button" aria-label="검색어 지우기" onClick={() => setSearchInput('')}>
+              ×
+            </button>
+          )}
+        </label>
       )}
 
       {showSummary && (
@@ -233,9 +275,10 @@ export function CourseListView({
               createdBadgeLabel={createdBadgeLabel}
               showStartAction={showStartAction}
               showBookmarkAction={showBookmarkAction}
+              showDescription={showDescription}
               onRemoveBookmark={() => handleRemoveBookmark(course)}
               onDeleteCourse={() => handleDeleteCourse(course)}
-              onBookmark={() => handleBookmark(course)}
+              onToggleBookmark={() => handleToggleBookmark(course)}
               onStart={() => handleStart(course)}
             />
           ))}
@@ -261,9 +304,10 @@ function CourseListCard({
   createdBadgeLabel,
   showStartAction,
   showBookmarkAction,
+  showDescription,
   onRemoveBookmark,
   onDeleteCourse,
-  onBookmark,
+  onToggleBookmark,
   onStart,
 }: {
   course: CourseListItem
@@ -275,9 +319,10 @@ function CourseListCard({
   createdBadgeLabel: string
   showStartAction: boolean
   showBookmarkAction: boolean
+  showDescription: boolean
   onRemoveBookmark: () => void
   onDeleteCourse: () => void
-  onBookmark: () => void
+  onToggleBookmark: () => void
   onStart: () => void
 }) {
   const waypointPreview = course.waypointNames.length > 0
@@ -312,8 +357,8 @@ function CourseListCard({
             type="button"
             aria-label={`${course.name} ${course.bookmarkedByMe ? '저장됨' : '저장하기'}`}
             title={course.bookmarkedByMe ? '저장됨' : '저장하기'}
-            disabled={course.bookmarkedByMe || isSavingBookmark}
-            onClick={onBookmark}
+            disabled={isSavingBookmark}
+            onClick={onToggleBookmark}
           >
             <BookmarkIcon filled={course.bookmarkedByMe || isSavingBookmark} />
           </button>
@@ -326,7 +371,7 @@ function CourseListCard({
           {course.bookmarkedByMe && <span>저장됨</span>}
         </div>
         <h2>{course.name}</h2>
-        {course.description && <p className="course-library-description">{course.description}</p>}
+        {showDescription && course.description && <p className="course-library-description">{course.description}</p>}
         <p className="course-library-waypoints">{waypointPreview}</p>
         <div className="course-library-stats">
           <span><b>{course.distanceKm.toFixed(1)}</b>km</span>
@@ -367,6 +412,15 @@ function BookmarkIcon({ filled }: { filled: boolean }) {
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
     </svg>
   )
 }

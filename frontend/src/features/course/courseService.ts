@@ -4,12 +4,13 @@ import type { CourseBookmarkResponse, CourseDetail, CourseListFilter, CourseList
 type GetCoursesParams = {
   filter: CourseListFilter
   scope: CourseListScope
+  keyword?: string
 }
 
 export const courseService = {
-  getCourses({ filter, scope }: GetCoursesParams) {
+  getCourses({ filter, scope, keyword }: GetCoursesParams) {
     return axiosInstance.get<CourseListItem[]>('/courses', {
-      params: { filter, scope },
+      params: { filter, scope, keyword: keyword || undefined },
     }).then(({ data }) => data)
   },
 
@@ -19,6 +20,10 @@ export const courseService = {
 
   bookmarkCourse(courseId: string) {
     return axiosInstance.post<CourseBookmarkResponse>(`/courses/${courseId}/bookmark`).then(({ data }) => data)
+  },
+
+  unbookmarkCourse(courseId: string) {
+    return axiosInstance.delete(`/courses/${courseId}/bookmark`)
   },
 
   deleteCourse(courseId: string) {
