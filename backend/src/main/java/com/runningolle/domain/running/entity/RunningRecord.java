@@ -163,4 +163,12 @@ public class RunningRecord extends BaseCreatedAtEntity {
     public void assignToTrip(Trip trip) {
         this.trip = trip;
     }
+
+    public void attachCreatedCourse(Course course) {
+        if (this.course != null || this.runningMode != RunningMode.FREE_RUN) {
+            throw new IllegalStateException("자유 러닝 기록에만 새 코스를 연결할 수 있습니다.");
+        }
+        this.course = course;
+        this.runningMode = RunningMode.COURSE_CREATE;
+    }
 }
