@@ -65,7 +65,7 @@ public class CourseRecommendationSyncService {
         switch (result) {
             case SYNCED -> stats.embeddingSyncedCount++;
             case DELETED_FROM_VECTOR_STORE -> stats.embeddingDeletedCount++;
-            case SKIPPED_RAG_DISABLED, SKIPPED_VECTOR_STORE_UNAVAILABLE, SKIPPED_DOCUMENT_NOT_FOUND ->
+            case SKIPPED_EMBEDDING_SYNC_DISABLED, SKIPPED_VECTOR_STORE_UNAVAILABLE, SKIPPED_DOCUMENT_NOT_FOUND ->
                     stats.embeddingSkippedCount++;
             case FAILED -> stats.embeddingFailedCount++;
         }

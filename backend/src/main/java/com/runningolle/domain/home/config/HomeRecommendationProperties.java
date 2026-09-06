@@ -21,6 +21,8 @@ public class HomeRecommendationProperties {
 
     private boolean manualSyncEnabled = false;
 
+    private boolean embeddingSyncEnabled = false;
+
     @Min(1)
     private int rerankCandidateLimit = 5;
 
@@ -37,6 +39,9 @@ public class HomeRecommendationProperties {
 
     @Valid
     private final Rag rag = new Rag();
+
+    @Valid
+    private final Sync sync = new Sync();
 
     public boolean isAiRerankingEnabled() {
         return aiEnabled && ai.isRerankEnabled();
@@ -70,5 +75,16 @@ public class HomeRecommendationProperties {
         @DecimalMin("0.0")
         @DecimalMax("1.0")
         private double similarityThreshold = 0.0;
+    }
+
+    @Getter
+    @Setter
+    public static class Sync {
+
+        private boolean schedulerEnabled = false;
+
+        private String cron = "0 0 4 * * *";
+
+        private String zone = "Asia/Seoul";
     }
 }

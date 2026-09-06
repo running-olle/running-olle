@@ -47,7 +47,7 @@ class CourseRecommendationEmbeddingServiceTest {
     private VectorStore vectorStore;
 
     @Test
-    void skipsWhenRagIsDisabled() {
+    void skipsWhenEmbeddingSyncIsDisabled() {
         HomeRecommendationProperties properties = new HomeRecommendationProperties();
         CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
                 courseRecommendationDocumentRepository,
@@ -58,7 +58,7 @@ class CourseRecommendationEmbeddingServiceTest {
         CourseRecommendationEmbeddingService.SyncResult result =
                 service.syncCourseDescriptionEmbedding(UUID.randomUUID());
 
-        assertThat(result).isEqualTo(CourseRecommendationEmbeddingService.SyncResult.SKIPPED_RAG_DISABLED);
+        assertThat(result).isEqualTo(CourseRecommendationEmbeddingService.SyncResult.SKIPPED_EMBEDDING_SYNC_DISABLED);
         verify(vectorStoreProvider, never()).getIfAvailable();
     }
 
@@ -67,7 +67,7 @@ class CourseRecommendationEmbeddingServiceTest {
         UUID courseId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
         HomeRecommendationProperties properties = new HomeRecommendationProperties();
-        properties.getRag().setEnabled(true);
+        properties.setEmbeddingSyncEnabled(true);
         CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
                 courseRecommendationDocumentRepository,
                 properties,
@@ -99,7 +99,7 @@ class CourseRecommendationEmbeddingServiceTest {
         UUID courseId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
         HomeRecommendationProperties properties = new HomeRecommendationProperties();
-        properties.getRag().setEnabled(true);
+        properties.setEmbeddingSyncEnabled(true);
         CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
                 courseRecommendationDocumentRepository,
                 properties,
@@ -127,7 +127,7 @@ class CourseRecommendationEmbeddingServiceTest {
         UUID courseId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
         HomeRecommendationProperties properties = new HomeRecommendationProperties();
-        properties.getRag().setEnabled(true);
+        properties.setEmbeddingSyncEnabled(true);
         CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
                 courseRecommendationDocumentRepository,
                 properties,
@@ -158,7 +158,7 @@ class CourseRecommendationEmbeddingServiceTest {
         UUID courseId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();
         HomeRecommendationProperties properties = new HomeRecommendationProperties();
-        properties.getRag().setEnabled(true);
+        properties.setEmbeddingSyncEnabled(true);
         CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
                 courseRecommendationDocumentRepository,
                 properties,

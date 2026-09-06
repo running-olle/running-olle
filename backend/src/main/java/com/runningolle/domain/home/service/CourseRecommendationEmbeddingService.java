@@ -32,8 +32,8 @@ public class CourseRecommendationEmbeddingService {
 
     @Transactional
     public SyncResult syncCourseDescriptionEmbedding(UUID courseId) {
-        if (!homeRecommendationProperties.getRag().isEnabled()) {
-            return SyncResult.SKIPPED_RAG_DISABLED;
+        if (!homeRecommendationProperties.isEmbeddingSyncEnabled()) {
+            return SyncResult.SKIPPED_EMBEDDING_SYNC_DISABLED;
         }
 
         VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
@@ -56,8 +56,8 @@ public class CourseRecommendationEmbeddingService {
 
     @Transactional
     public List<SyncResult> syncCourseRecommendationEmbeddings(UUID courseId) {
-        if (!homeRecommendationProperties.getRag().isEnabled()) {
-            return List.of(SyncResult.SKIPPED_RAG_DISABLED);
+        if (!homeRecommendationProperties.isEmbeddingSyncEnabled()) {
+            return List.of(SyncResult.SKIPPED_EMBEDDING_SYNC_DISABLED);
         }
 
         VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
@@ -145,7 +145,7 @@ public class CourseRecommendationEmbeddingService {
     public enum SyncResult {
         SYNCED,
         DELETED_FROM_VECTOR_STORE,
-        SKIPPED_RAG_DISABLED,
+        SKIPPED_EMBEDDING_SYNC_DISABLED,
         SKIPPED_VECTOR_STORE_UNAVAILABLE,
         SKIPPED_DOCUMENT_NOT_FOUND,
         FAILED
