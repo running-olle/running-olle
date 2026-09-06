@@ -12,6 +12,8 @@ public interface TourismPlaceRepository extends JpaRepository<TourismPlace, UUID
 
     Optional<TourismPlace> findByContentId(String contentId);
 
+    long countByIsDeletedFalseAndContentTypeIdIn(List<String> contentTypeIds);
+
     @Query(value = """
             SELECT *
             FROM tourism_places
