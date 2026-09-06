@@ -26,7 +26,8 @@ public final class MyPageDtos {
                                long visitedPlaces, long totalDurationSeconds) {}
     public record CreateTripRequest(String name, String region, LocalDate startDate, LocalDate endDate, String thumbnailImageUrl) {}
     public record UpdateProfileRequest(String nickname, String profileImageUrl, String bio, List<String> userTypes,
-                                       PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty) {}
+                                       PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty,
+                                       List<UUID> themeIds) {}
     public record NotificationSettings(boolean recommendedCourse, boolean weather, boolean savedCourseUpdate,
                                        boolean meetupInvite, boolean commentLike, boolean tierChange, boolean eventChallenge) {}
 }

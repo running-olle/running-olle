@@ -13,6 +13,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
 
     Optional<Course> findByIdAndIsDeletedFalse(UUID id);
     List<Course> findTop10ByIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc();
+    List<Course> findAllByIsDeletedFalseAndIsPublicTrueOrderByCreatedAtDesc();
 
     @Query("""
             select distinct c
