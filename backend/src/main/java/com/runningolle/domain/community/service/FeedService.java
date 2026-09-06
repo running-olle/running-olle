@@ -19,6 +19,8 @@ import com.runningolle.domain.community.repository.FeedPostRepository;
 import com.runningolle.domain.community.storage.FileStorageService;
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.repository.CourseRepository;
+import com.runningolle.domain.notification.enums.NotificationType;
+import com.runningolle.domain.notification.service.NotificationService;
 import com.runningolle.domain.running.entity.RunningRecord;
 import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.user.entity.User;
@@ -46,6 +48,7 @@ public class FeedService {
     private final RunningRecordRepository runningRecordRepository;
     private final CourseRepository courseRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<FeedPostResponse> getFeed(UUID userId) {
@@ -149,7 +152,17 @@ public class FeedService {
                     return new FeedLikeToggleResponse(false, feedLikeRepository.countByFeedPostId(feedPostId));
                 })
                 .orElseGet(() -> {
-                    feedLikeRepository.save(FeedLike.create(getUser(userId), feedPost));
+                    User actor = getUser(userId);
+                    feedLikeRepository.save(FeedLike.create(actor, feedPost));
+                    if (!feedPost.getUser().getId().equals(userId)) {
+                        notificationService.createSocial(
+                                feedPost.getUser(),
+                                NotificationType.FEED_LIKE,
+                                "게시글에 새 좋아요가 있어요",
+                                actor.getNickname() + "님이 회원님의 게시글을 좋아합니다.",
+                                "FEED_LIKE:" + userId + ":" + feedPostId
+                        );
+                    }
                     return new FeedLikeToggleResponse(true, feedLikeRepository.countByFeedPostId(feedPostId));
                 });
     }
@@ -157,9 +170,19 @@ public class FeedService {
     @Transactional
     public FeedCommentResponse addComment(UUID userId, UUID feedPostId, FeedCommentCreateRequest request) {
         FeedPost feedPost = getFeedPost(feedPostId, userId);
+        User actor = getUser(userId);
         FeedComment feedComment = feedCommentRepository.save(
-                FeedComment.create(feedPost, getUser(userId), request.content().trim())
+                FeedComment.create(feedPost, actor, request.content().trim())
         );
+        if (!feedPost.getUser().getId().equals(userId)) {
+            notificationService.createSocial(
+                    feedPost.getUser(),
+                    NotificationType.FEED_COMMENT,
+                    "게시글에 새 댓글이 달렸어요",
+                    actor.getNickname() + "님: " + summarize(request.content()),
+                    "FEED_COMMENT:" + feedComment.getId()
+            );
+        }
         return toCommentResponse(feedComment, userId);
     }
 
@@ -276,5 +299,10 @@ public class FeedService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "연결할 코스를 찾을 수 없습니다.");
         }
         return course;
+    }
+
+    private String summarize(String content) {
+        String normalized = content.trim().replaceAll("\\s+", " ");
+        return normalized.length() <= 80 ? normalized : normalized.substring(0, 80) + "…";
     }
 }

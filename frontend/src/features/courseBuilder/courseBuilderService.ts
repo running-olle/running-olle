@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { CourseCreateResponse, CourseTagOption, CourseType, CourseWaypointDraft, DraftRoute, PlaceDetail, PlaceSearchResult, ThemeOption } from './types'
+import type { CourseCreateResponse, CourseTagOption, CourseType, CourseWaypointDraft, DraftRoute, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult, ThemeOption } from './types'
 
 type DraftRouteWaypointRequest = {
   kakaoPlaceId: string | null
@@ -45,6 +45,12 @@ export const courseBuilderService = {
   searchPlaces(keyword: string, lat: number, lng: number, radius: number) {
     return axiosInstance.get<PlaceSearchResult[]>('/places/search', {
       params: { keyword, lat, lng, radius },
+    }).then(({ data }) => data)
+  },
+
+  searchNearbyPlaces(lat: number, lng: number, radius: number, categoryGroupCode: NearbyCategoryGroupCode) {
+    return axiosInstance.get<PlaceSearchResult[]>('/places/nearby', {
+      params: { lat, lng, radius, categoryGroupCode },
     }).then(({ data }) => data)
   },
 

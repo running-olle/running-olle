@@ -9,6 +9,15 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/oauth2\//,
+          /^\/login\/oauth2\//,
+          /^\/uploads\//,
+        ],
+      },
       manifest: {
         name: 'Running Olle',
         short_name: 'RunningOlle',

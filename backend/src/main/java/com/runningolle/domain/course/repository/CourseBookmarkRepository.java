@@ -12,5 +12,6 @@ public interface CourseBookmarkRepository extends JpaRepository<CourseBookmark, 
     @EntityGraph(attributePaths = {"course", "course.creator"})
     List<CourseBookmark> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
     Optional<CourseBookmark> findByIdAndUserId(UUID id, UUID userId);
+    Optional<CourseBookmark> findByUser_IdAndCourse_Id(UUID userId, UUID courseId);
     List<CourseBookmark> findAllByUser_IdAndCourse_IdIn(UUID userId, Collection<UUID> courseIds);
 }

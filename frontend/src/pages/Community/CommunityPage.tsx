@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { ChatList } from '../../features/community/ChatList'
 import { ChatRoomModal } from '../../features/community/ChatRoomModal'
 import { createInquiryRoom, deleteChatMessage, getChatRoom, getChatRooms, sendChatMessage } from '../../features/community/chatApi'
 import { connectChatListRealtime } from '../../features/community/chatRealtime'
 import { getCommunityErrorMessage } from '../../features/community/communityError'
 import type { ChatRoom, CommunityTab, Meetup, MeetupFilter } from '../../features/community/communityTypes'
+import { CoursePreviewModal } from '../../features/community/CoursePreviewModal'
 import { FeedComposer } from '../../features/community/FeedComposer'
 import { FeedDetailModal } from '../../features/community/FeedDetailModal'
 import { FeedPostCard } from '../../features/community/FeedPostCard'
@@ -40,7 +42,8 @@ const filters: Array<{ key: FeedFilter; label: string }> = [
 ]
 
 export function CommunityPage() {
-  const [activeTab, setActiveTab] = useState<CommunityTab>('feed')
+  const { search } = useLocation()
+  const [activeTab, setActiveTab] = useState<CommunityTab>(() => getTabFromSearch(search))
   const [activeFilter, setActiveFilter] = useState<FeedFilter>('all')
   const [meetupFilter, setMeetupFilter] = useState<MeetupFilter>('all')
   const [chatSearchOpen, setChatSearchOpen] = useState(false)
@@ -55,6 +58,7 @@ export function CommunityPage() {
   const [composerOpen, setComposerOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<FeedPost | null>(null)
   const [detailPost, setDetailPost] = useState<FeedPost | null>(null)
+  const [previewCourseId, setPreviewCourseId] = useState<string | null>(null)
   const [meetups, setMeetups] = useState<Meetup[]>([])
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([])
   const [selectedMeetup, setSelectedMeetup] = useState<Meetup | null>(null)
@@ -63,6 +67,10 @@ export function CommunityPage() {
   const [applicantsMeetupId, setApplicantsMeetupId] = useState<string | null>(null)
   const [selectedChatRoom, setSelectedChatRoom] = useState<ChatRoom | null>(null)
   const [requestSuccessMeetup, setRequestSuccessMeetup] = useState<Meetup | null>(null)
+
+  useEffect(() => {
+    setActiveTab(getTabFromSearch(search))
+  }, [search])
 
   useEffect(() => {
     let active = true
@@ -484,6 +492,7 @@ export function CommunityPage() {
                       setComposerOpen(true)
                     }}
                     onOpenDetail={(target) => setDetailPost(target)}
+                    onOpenCourse={setPreviewCourseId}
                   />
                 ))
               : null}
@@ -552,6 +561,14 @@ export function CommunityPage() {
             setEditingPost(target)
             setComposerOpen(true)
           }}
+          onOpenCourse={setPreviewCourseId}
+        />
+      ) : null}
+
+      {previewCourseId ? (
+        <CoursePreviewModal
+          courseId={previewCourseId}
+          onClose={() => setPreviewCourseId(null)}
         />
       ) : null}
 
@@ -589,6 +606,7 @@ export function CommunityPage() {
           }}
           onDelete={handleDeleteMeetup}
           onShare={(meetup) => handleShare('번개', `https://runningolle.app/community/meetups/${meetup.id}`)}
+          onOpenCourse={setPreviewCourseId}
         />
       ) : null}
 
@@ -666,6 +684,11 @@ function mergeChatRooms(current: ChatRoom[], incoming: ChatRoom[]) {
 
 function getDateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function getTabFromSearch(search: string): CommunityTab {
+  const tab = new URLSearchParams(search).get('tab')
+  return tab === 'meetup' || tab === 'chat' ? tab : 'feed'
 }
 
 function getConsecutiveDateKeys(startDate: Date, days: number) {

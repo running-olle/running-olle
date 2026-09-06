@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface RunningRecordRepository extends JpaRepository<RunningRecord, UUID> {
 
+    @EntityGraph(attributePaths = {"course", "trip"})
     Optional<RunningRecord> findByIdAndUserId(UUID id, UUID userId);
     List<RunningRecord> findTop10ByUserIdOrderByStartedAtDesc(UUID userId);
     List<RunningRecord> findByUserId(UUID userId);

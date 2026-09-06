@@ -22,6 +22,8 @@ import com.runningolle.domain.meetup.enums.ParticipantStatus;
 import com.runningolle.domain.meetup.repository.MeetupParticipantRepository;
 import com.runningolle.domain.meetup.repository.MeetupRepository;
 import com.runningolle.domain.meetup.repository.MeetupThemeRepository;
+import com.runningolle.domain.notification.enums.NotificationType;
+import com.runningolle.domain.notification.service.NotificationService;
 import com.runningolle.domain.running.entity.RunningRecord;
 import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.user.entity.Theme;
@@ -69,6 +71,7 @@ public class MeetupService {
     private final UserRepository userRepository;
     private final ThemeRepository themeRepository;
     private final RunningRecordRepository runningRecordRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public List<MeetupResponse> getMeetups(UUID userId) {
@@ -144,6 +147,15 @@ public class MeetupService {
                 request.joinMethod()
         );
         syncTheme(meetup, request.themeCode());
+        meetupParticipantRepository.findByMeetupIdAndStatus(meetupId, ParticipantStatus.ACCEPTED).stream()
+                .filter(participant -> !participant.getUser().getId().equals(userId))
+                .forEach(participant -> notificationService.createMeetup(
+                        participant.getUser(),
+                        NotificationType.MEETUP_UPDATED,
+                        "참여 중인 번개 일정이 변경됐어요",
+                        "‘" + meetup.getTitle() + "’의 일정과 장소를 확인해 주세요.",
+                        "MEETUP_UPDATED:" + meetupId + ":" + meetup.getUpdatedAt() + ":" + participant.getUser().getId()
+                ));
         refreshMeetupStatus(meetup);
         return toResponse(meetup, userId);
     }
@@ -188,6 +200,15 @@ public class MeetupService {
         if (status == ParticipantStatus.ACCEPTED) {
             ensureGroupChat(meetup, user);
         }
+
+        notificationService.createMeetup(
+                meetup.getOrganizer(),
+                status == ParticipantStatus.PENDING ? NotificationType.MEETUP_JOIN_REQUEST : NotificationType.MEETUP_JOINED,
+                status == ParticipantStatus.PENDING ? "새 번개 참여 요청이 있어요" : "새 러너가 번개에 참여했어요",
+                user.getNickname() + "님이 ‘" + meetup.getTitle() + "’에 "
+                        + (status == ParticipantStatus.PENDING ? "참여를 요청했습니다." : "참여했습니다."),
+                "MEETUP_JOIN:" + meetupId + ":" + userId + ":" + participant.getRequestedAt()
+        );
 
         refreshMeetupStatus(meetup);
         return toResponse(meetup, userId);
@@ -238,6 +259,14 @@ public class MeetupService {
             );
         }
 
+        notificationService.createMeetup(
+                participant.getUser(),
+                accept ? NotificationType.MEETUP_JOIN_ACCEPTED : NotificationType.MEETUP_JOIN_REJECTED,
+                accept ? "번개 참여가 확정됐어요" : "번개 참여 요청 결과가 도착했어요",
+                "‘" + meetup.getTitle() + "’ 참여 요청이 " + (accept ? "승인되었습니다." : "거절되었습니다."),
+                "MEETUP_RESPONSE:" + meetupId + ":" + participantId + ":" + accept + ":" + participant.getRequestedAt()
+        );
+
         refreshMeetupStatus(meetup);
         return toResponse(meetup, organizerId);
     }
@@ -248,6 +277,15 @@ public class MeetupService {
         if (!meetup.getOrganizer().getId().equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the organizer can delete this meetup.");
         }
+        meetupParticipantRepository.findByMeetupIdAndStatus(meetupId, ParticipantStatus.ACCEPTED).stream()
+                .filter(participant -> !participant.getUser().getId().equals(userId))
+                .forEach(participant -> notificationService.createMeetup(
+                        participant.getUser(),
+                        NotificationType.MEETUP_CANCELLED,
+                        "참여 중인 번개가 취소됐어요",
+                        "‘" + meetup.getTitle() + "’ 번개가 취소되었습니다.",
+                        "MEETUP_CANCELLED:" + meetupId + ":" + participant.getUser().getId()
+                ));
         appendGroupSystemMessage(meetup, meetup.getOrganizer(), "번개가 취소되었습니다.");
         meetup.delete();
     }

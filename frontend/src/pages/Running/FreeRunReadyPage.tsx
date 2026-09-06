@@ -6,11 +6,12 @@ import type { CourseDetail } from '../../features/course/types'
 import { FreeRunningMap } from '../../features/running/FreeRunningMap'
 import { RunningIcon } from '../../features/running/RunningIcon'
 import { getLocationErrorMessage, GPS_OPTIONS, positionToPoint } from '../../features/running/runningUtils'
-import type { GeoPoint } from '../../features/running/types'
+import type { GeoPoint, RunningMode } from '../../features/running/types'
 
 type CourseRunState = {
   courseId: string
   courseName: string
+  runningMode?: RunningMode
 }
 
 export function FreeRunReadyPage() {
@@ -67,6 +68,7 @@ export function FreeRunReadyPage() {
           startPosition: position,
           courseId: selectedCourse?.courseId,
           courseName: selectedCourse?.courseName,
+          runningMode: selectedCourse?.runningMode ?? (selectedCourse ? 'COURSE_SELECT' : 'FREE_RUN'),
         },
       })
       return
@@ -121,8 +123,10 @@ function readCourseRunState(value: unknown): CourseRunState | null {
   if (!value || typeof value !== 'object') return null
   const state = value as Record<string, unknown>
   if (typeof state.courseId !== 'string' || typeof state.courseName !== 'string') return null
+  const runningMode = state.runningMode === 'COURSE_CREATE' ? 'COURSE_CREATE' : 'COURSE_SELECT'
   return {
     courseId: state.courseId,
     courseName: state.courseName,
+    runningMode,
   }
 }

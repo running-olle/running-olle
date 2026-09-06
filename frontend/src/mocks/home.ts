@@ -1,3 +1,5 @@
+import type { Weather } from '../features/home/types'
+
 export type Difficulty = 'easy' | 'medium'
 
 export type CourseImageTone = 'beach' | 'oreum' | 'forest'
@@ -6,14 +8,6 @@ export type HomeUser = {
   id: string
   nickname: string
   location: string
-}
-
-export type Weather = {
-  headline: string
-  temperatureCelsius: number
-  condition: string
-  windSpeedMeterPerSecond: number
-  runningNowCount: number
 }
 
 export type RecommendedCourse = {

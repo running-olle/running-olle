@@ -3,11 +3,23 @@ import { getKakaoMapAppKey, loadKakaoMapSdk } from '../map/kakaoMaps'
 import type { KakaoCustomOverlay, KakaoMap, KakaoPolyline } from '../map/kakaoMaps'
 import type { CourseRouteCoordinate, CourseWaypoint } from './types'
 
+type CourseRouteMapFitTarget = 'all' | 'planned' | 'recorded'
+type CourseRouteLineStyle = {
+  strokeWeight?: number
+  strokeColor?: string
+  strokeOpacity?: number
+  strokeStyle?: string
+}
+
 type CourseRouteMapProps = {
   routeCoordinates: CourseRouteCoordinate[]
   waypoints: CourseWaypoint[]
   currentPosition?: CourseRouteCoordinate | null
   recordedPath?: CourseRouteCoordinate[]
+  fitTarget?: CourseRouteMapFitTarget
+  plannedRouteStyle?: CourseRouteLineStyle
+  recordedRouteStyle?: CourseRouteLineStyle
+  showCurrentPositionMarker?: boolean
   className?: string
   showZoomControls?: boolean
 }
@@ -19,6 +31,10 @@ export function CourseRouteMap({
   waypoints,
   currentPosition = null,
   recordedPath = [],
+  fitTarget = 'all',
+  plannedRouteStyle,
+  recordedRouteStyle,
+  showCurrentPositionMarker = true,
   className = '',
   showZoomControls = false,
 }: CourseRouteMapProps) {
@@ -40,7 +56,9 @@ export function CourseRouteMap({
       .then(() => {
         if (disposed || !containerRef.current || !window.kakao) return
         const maps = window.kakao.maps
-        const center = routeCoordinates[0] ?? waypoints[0] ?? currentPosition ?? JEJU_CENTER
+        const center = getFitPoints(fitTarget, routeCoordinates, recordedPath, waypoints)[0]
+          ?? currentPosition
+          ?? JEJU_CENTER
         const map = new maps.Map(containerRef.current, {
           center: new maps.LatLng(center.lat, center.lng),
           level: 5,
@@ -48,18 +66,18 @@ export function CourseRouteMap({
         plannedRouteRef.current = new maps.Polyline({
           map,
           path: [],
-          strokeWeight: 6,
-          strokeColor: '#FF6F0F',
-          strokeOpacity: 0.96,
-          strokeStyle: 'solid',
+          strokeWeight: plannedRouteStyle?.strokeWeight ?? 6,
+          strokeColor: plannedRouteStyle?.strokeColor ?? '#FF6F0F',
+          strokeOpacity: plannedRouteStyle?.strokeOpacity ?? 0.96,
+          strokeStyle: plannedRouteStyle?.strokeStyle ?? 'solid',
         })
         recordedRouteRef.current = new maps.Polyline({
           map,
           path: [],
-          strokeWeight: 5,
-          strokeColor: '#1D9A45',
-          strokeOpacity: 0.85,
-          strokeStyle: 'solid',
+          strokeWeight: recordedRouteStyle?.strokeWeight ?? 5,
+          strokeColor: recordedRouteStyle?.strokeColor ?? '#1D9A45',
+          strokeOpacity: recordedRouteStyle?.strokeOpacity ?? 0.85,
+          strokeStyle: recordedRouteStyle?.strokeStyle ?? 'solid',
         })
         mapRef.current = map
         setReady(true)
@@ -98,7 +116,11 @@ export function CourseRouteMap({
   }, [ready, waypoints])
 
   useEffect(() => {
-    if (!ready || !mapRef.current || !window.kakao || !currentPosition) return
+    if (!ready || !mapRef.current || !window.kakao || !showCurrentPositionMarker || !currentPosition) {
+      currentOverlayRef.current?.setMap(null)
+      currentOverlayRef.current = null
+      return
+    }
     const position = new window.kakao.maps.LatLng(currentPosition.lat, currentPosition.lng)
     if (!currentOverlayRef.current) {
       currentOverlayRef.current = new window.kakao.maps.CustomOverlay({
@@ -110,11 +132,11 @@ export function CourseRouteMap({
     } else {
       currentOverlayRef.current.setPosition(position)
     }
-  }, [currentPosition, ready])
+  }, [currentPosition, ready, showCurrentPositionMarker])
 
   useEffect(() => {
     if (!ready || !mapRef.current || !window.kakao) return
-    const points = [...routeCoordinates, ...waypoints.map(({ lat, lng }) => ({ lat, lng }))]
+    const points = getFitPoints(fitTarget, routeCoordinates, recordedPath, waypoints)
     if (points.length === 0) return
     if (points.length === 1) {
       mapRef.current.setCenter(new window.kakao.maps.LatLng(points[0].lat, points[0].lng))
@@ -123,7 +145,7 @@ export function CourseRouteMap({
     const bounds = new window.kakao.maps.LatLngBounds()
     points.forEach((point) => bounds.extend(new window.kakao!.maps.LatLng(point.lat, point.lng)))
     window.setTimeout(() => mapRef.current?.setBounds(bounds), 0)
-  }, [ready, routeCoordinates, waypoints])
+  }, [fitTarget, ready, recordedPath, routeCoordinates, waypoints])
 
   function zoomBy(delta: number) {
     if (!mapRef.current) return
@@ -158,4 +180,20 @@ export function CourseRouteMap({
 function toKakaoPath(coordinates: CourseRouteCoordinate[]) {
   if (!window.kakao) return []
   return coordinates.map((coordinate) => new window.kakao!.maps.LatLng(coordinate.lat, coordinate.lng))
+}
+
+function getFitPoints(
+  fitTarget: CourseRouteMapFitTarget,
+  routeCoordinates: CourseRouteCoordinate[],
+  recordedPath: CourseRouteCoordinate[],
+  waypoints: CourseWaypoint[],
+) {
+  const plannedPoints = [...routeCoordinates, ...waypoints.map(({ lat, lng }) => ({ lat, lng }))]
+  if (fitTarget === 'planned') {
+    return plannedPoints.length > 0 ? plannedPoints : recordedPath
+  }
+  if (fitTarget === 'recorded') {
+    return recordedPath.length > 0 ? recordedPath : plannedPoints
+  }
+  return [...plannedPoints, ...recordedPath]
 }

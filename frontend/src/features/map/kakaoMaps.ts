@@ -31,6 +31,19 @@ export type KakaoCircle = {
   setRadius(radius: number): void
 }
 
+type KakaoRegionCodeResult = {
+  address_name: string
+  region_type: 'B' | 'H'
+}
+
+type KakaoGeocoder = {
+  coord2RegionCode(
+    longitude: number,
+    latitude: number,
+    callback: (result: KakaoRegionCodeResult[], status: string) => void,
+  ): void
+}
+
 type KakaoMapOptions = {
   center: KakaoLatLng
   level: number
@@ -72,6 +85,10 @@ export type KakaoMapsNamespace = {
   Polyline: new (options: KakaoPolylineOptions) => KakaoPolyline
   CustomOverlay: new (options: KakaoCustomOverlayOptions) => KakaoCustomOverlay
   Circle: new (options: KakaoCircleOptions) => KakaoCircle
+  services: {
+    Status: { OK: string }
+    Geocoder: new () => KakaoGeocoder
+  }
   event: {
     addListener(target: object, type: string, handler: () => void): void
   }
@@ -104,12 +121,12 @@ function isUsableKakaoMapKey(value: string | undefined) {
 }
 
 export function loadKakaoMapSdk(appKey: string) {
-  if (window.kakao?.maps) return Promise.resolve()
+  if (window.kakao?.maps?.services) return Promise.resolve()
   if (kakaoMapLoader) return kakaoMapLoader
 
   kakaoMapLoader = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false&libraries=services`
     script.async = true
     script.onload = () => window.kakao?.maps
       ? window.kakao.maps.load(resolve)

@@ -5,7 +5,8 @@ import { RunningEventList } from '../../features/home/RunningEventList'
 import { WeatherCard } from '../../features/home/WeatherCard'
 import { homeService } from '../../features/home/homeService'
 import { toRecommendedCourseCardViewModel, type RecommendedCourseCardViewModel } from '../../features/home/homeViewModels'
-import { events, popularCourses, weather } from '../../mocks/home'
+import { useCurrentWeather } from '../../features/home/useCurrentWeather'
+import { events, popularCourses } from '../../mocks/home'
 
 type OptionalPosition = {
   latitude: number
@@ -13,6 +14,7 @@ type OptionalPosition = {
 } | null
 
 export function HomePage() {
+  const { refreshWeather, weather, weatherError, weatherStatus } = useCurrentWeather()
   const [recommendedCourses, setRecommendedCourses] = useState<RecommendedCourseCardViewModel[]>([])
   const [recommendationError, setRecommendationError] = useState<string | null>(null)
   const [loadingRecommendations, setLoadingRecommendations] = useState(true)
@@ -32,7 +34,7 @@ export function HomePage() {
         setRecommendedCourses(recommendations.map(toRecommendedCourseCardViewModel))
       } catch {
         if (!active) return
-        setRecommendationError('추천 코스를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
+        setRecommendationError('추천 코스를 불러오지 못했어요. 잠시 후 다시 시도해주세요.')
         setRecommendedCourses([])
       } finally {
         if (active) setLoadingRecommendations(false)
@@ -48,7 +50,7 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <WeatherCard weather={weather} />
+      <WeatherCard weather={weather} status={weatherStatus} errorMessage={weatherError} onRetry={refreshWeather} />
       <RecommendedCourseList
         courses={recommendedCourses}
         isLoading={loadingRecommendations}

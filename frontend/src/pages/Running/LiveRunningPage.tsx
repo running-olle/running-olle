@@ -7,7 +7,7 @@ import { FreeRunningMap } from '../../features/running/FreeRunningMap'
 import { RunningIcon } from '../../features/running/RunningIcon'
 import { saveRunningRecord } from '../../features/running/runningRecordService'
 import { distanceBetween, formatDistance, formatDuration, formatPace, getLocationErrorMessage, GPS_OPTIONS, positionToPoint } from '../../features/running/runningUtils'
-import type { GeoPoint, RunningPhase } from '../../features/running/types'
+import type { GeoPoint, RunningMode, RunningPhase } from '../../features/running/types'
 
 const MIN_SEGMENT_METERS = 3
 const MAX_SEGMENT_METERS = 200
@@ -17,6 +17,7 @@ type RunningNavigationState = {
   startPosition?: GeoPoint
   courseId?: string
   courseName?: string
+  runningMode: RunningMode
 }
 
 export function LiveRunningPage() {
@@ -117,6 +118,9 @@ export function LiveRunningPage() {
       ? finalDuration / 60 / (distanceMeters / 1_000)
       : null
     const record = await saveRunningRecord({
+      courseId: navigationState?.courseId ?? null,
+      courseName: navigationState?.courseName ?? courseDetail?.name ?? null,
+      runningMode: navigationState?.runningMode ?? 'FREE_RUN',
       route: finalRoute,
       distanceMeters,
       durationSeconds: finalDuration,
@@ -185,7 +189,15 @@ function readRunningNavigationState(value: unknown): RunningNavigationState | nu
   const startPosition = isGeoPoint(state.startPosition) ? state.startPosition : undefined
   const courseId = typeof state.courseId === 'string' ? state.courseId : undefined
   const courseName = typeof state.courseName === 'string' ? state.courseName : undefined
-  return { startPosition, courseId, courseName }
+  const runningMode = readRunningMode(state.runningMode, courseId)
+  return { startPosition, courseId, courseName, runningMode }
+}
+
+function readRunningMode(value: unknown, courseId: string | undefined): RunningMode {
+  if (value === 'COURSE_SELECT' || value === 'COURSE_CREATE' || value === 'FREE_RUN') {
+    if (courseId || value === 'FREE_RUN') return value
+  }
+  return courseId ? 'COURSE_SELECT' : 'FREE_RUN'
 }
 
 function isGeoPoint(value: unknown): value is GeoPoint {

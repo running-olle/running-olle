@@ -214,7 +214,7 @@ export function OnboardingPage() {
           </div>
           <hr /><h2 className="notification-title">알림 설정</h2>
           <div className="notification-box">
-            {([['recommendedCourse', '추천 코스 알림'], ['weather', '날씨 알림'], ['meetupInvite', '번개 초대 알림'], ['commentLike', '댓글·좋아요 알림']] as const).map(([key, label]) => <div key={key}><span>{label}</span><Toggle checked={form.notifications[key]} onChange={() => setNotification(key)} /></div>)}
+            {([['meetupInvite', '번개 참여·일정 알림'], ['commentLike', '댓글·좋아요 알림']] as const).map(([key, label]) => <div key={key}><span>{label}</span><Toggle checked={form.notifications[key]} onChange={() => setNotification(key)} /></div>)}
           </div>
         </>}
         {error && <p className="form-error">{error}</p>}

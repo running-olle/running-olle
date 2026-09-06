@@ -1,11 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { FeedPost } from './api'
-import {
-  createCommentWithPost,
-  deleteCommentWithPost,
-  deletePostById,
-  toggleLikeWithOptimistic,
-} from './feedPostMutations'
+import { deletePostById, toggleLikeWithOptimistic } from './feedPostMutations'
 import {
   buildAvatarGradient,
   buildImageGridClass,
@@ -19,14 +14,11 @@ type FeedPostCardProps = {
   onChange: (post: FeedPost | null) => void
   onEdit: (post: FeedPost) => void
   onOpenDetail: (post: FeedPost) => void
+  onOpenCourse: (courseId: string) => void
 }
 
-export function FeedPostCard({ post, onChange, onEdit, onOpenDetail }: FeedPostCardProps) {
-  const [comment, setComment] = useState('')
-  const [pending, setPending] = useState(false)
-  const [showAllComments, setShowAllComments] = useState(false)
+export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCourse }: FeedPostCardProps) {
   const createdLabel = useMemo(() => formatRelativeTime(post.createdAt), [post.createdAt])
-  const visibleComments = showAllComments ? post.comments : post.comments.slice(0, 2)
 
   const handleLike = async () => {
     const current = { ...post }
@@ -35,41 +27,6 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail }: FeedPostC
       const { optimistic, confirmed } = await toggleLikeWithOptimistic(current)
       onChange(optimistic)
       onChange(confirmed)
-    } catch {
-      onChange(current)
-    }
-  }
-
-  const handleCommentSubmit = async () => {
-    if (!comment.trim() || pending) {
-      return
-    }
-
-    setPending(true)
-
-    try {
-      const nextPost = await createCommentWithPost(post, comment.trim())
-      onChange(nextPost)
-      setComment('')
-      setShowAllComments(true)
-    } finally {
-      setPending(false)
-    }
-  }
-
-  const handleDeleteComment = async (commentId: string) => {
-    const current = { ...post }
-    const optimistic = {
-      ...post,
-      commentCount: Math.max(0, post.commentCount - 1),
-      comments: post.comments.filter((item) => item.id !== commentId),
-    }
-
-    onChange(optimistic)
-
-    try {
-      const nextPost = await deleteCommentWithPost(current, commentId)
-      onChange(nextPost)
     } catch {
       onChange(current)
     }
@@ -123,7 +80,13 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail }: FeedPostC
       {post.runningRecord ? (
         <button
           type="button"
-          onClick={() => onOpenDetail(post)}
+          onClick={() => {
+            if (post.course) {
+              onOpenCourse(post.course.id)
+              return
+            }
+            onOpenDetail(post)
+          }}
           className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
             post.course?.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
           }`}
@@ -144,6 +107,33 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail }: FeedPostC
               <span>{formatPace(post.runningRecord.distanceKm, post.runningRecord.durationSeconds)}</span>
             </div>
           </div>
+          {post.course ? <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span> : null}
+        </button>
+      ) : null}
+
+      {!post.runningRecord && post.course ? (
+        <button
+          type="button"
+          onClick={() => onOpenCourse(post.course!.id)}
+          className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
+            post.course.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+          }`}
+        >
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+            style={{
+              background: post.course.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+            }}
+          >
+            {post.course.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-bold text-[#261912]">{post.course.name}</div>
+            <div className="mt-1 text-[11px] font-bold text-[#594136]">
+              {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
+            </div>
+          </div>
+          <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span>
         </button>
       ) : null}
 
@@ -185,59 +175,10 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail }: FeedPostC
           <span>{post.commentCount}</span>
         </button>
         {post.course ? (
-          <button type="button" onClick={() => onOpenDetail(post)} className="ml-auto text-[12px] font-bold text-[#FF6F0F]">
+          <button type="button" onClick={() => onOpenCourse(post.course!.id)} className="ml-auto text-[12px] font-bold text-[#FF6F0F]">
             태그 코스 보기
           </button>
         ) : null}
-      </div>
-
-      {post.comments.length > 0 ? (
-        <div className="mt-4 space-y-2">
-          {visibleComments.map((item) => (
-            <div key={item.id} className="rounded-[12px] bg-[#FFF8F6] px-3 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[12px] font-bold text-[#261912]">{item.nickname}</div>
-                {item.mine ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteComment(item.id)}
-                    className="text-[10px] font-bold text-[#8D7164]"
-                  >
-                    삭제
-                  </button>
-                ) : null}
-              </div>
-              <div className="mt-1 text-[12px] leading-5 text-[#594136]">{item.content}</div>
-            </div>
-          ))}
-
-          {post.comments.length > 2 ? (
-            <button
-              type="button"
-              onClick={() => setShowAllComments((prev) => !prev)}
-              className="text-[12px] font-bold text-[#A04100]"
-            >
-              {showAllComments ? '댓글 접기' : `댓글 ${post.comments.length - 2}개 더보기`}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex gap-2">
-        <input
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          placeholder="댓글을 입력해 주세요."
-          className="h-11 flex-1 rounded-full border border-[#E1BFB1] bg-[#FFF8F6] px-4 text-[13px] text-[#261912] outline-none"
-        />
-        <button
-          type="button"
-          onClick={handleCommentSubmit}
-          disabled={pending || !comment.trim()}
-          className="h-11 rounded-full bg-[linear-gradient(135deg,#FF6F0F_0%,#FD934C_100%)] px-4 text-[13px] font-bold text-white disabled:opacity-40"
-        >
-          등록
-        </button>
       </div>
     </article>
   )

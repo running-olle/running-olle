@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Button } from '../ui/Button'
+import { NotificationCenter } from '../../features/notifications/NotificationCenter'
 
 export type HeaderProps = {
   leftSlot?: ReactNode
@@ -8,7 +8,7 @@ export type HeaderProps = {
 
 export function Header({
   leftSlot = <span>제주 제주시 구좌읍</span>,
-  rightSlot = <Button icon={<span className="text-[18px] leading-none">◔</span>} label="알림" />,
+  rightSlot = <NotificationCenter />,
 }: HeaderProps) {
   return (
     <header className="fixed left-0 right-0 top-0 z-30 h-14 border-b border-[#E1BFB1] bg-[#FFF8F6]">

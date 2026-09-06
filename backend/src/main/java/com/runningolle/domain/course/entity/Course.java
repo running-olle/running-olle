@@ -144,4 +144,13 @@ public class Course extends BaseTimeEntity {
         course.isPublic = isPublic;
         return course;
     }
+
+    public void increaseCompletionCount() {
+        this.completionCount = (this.completionCount == null ? 0 : this.completionCount) + 1;
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

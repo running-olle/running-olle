@@ -91,9 +91,65 @@ public class RunningRecord extends BaseCreatedAtEntity {
             LocalDateTime startedAt,
             LocalDateTime endedAt
     ) {
+        return create(
+                user,
+                null,
+                RunningMode.FREE_RUN,
+                route,
+                totalDistanceKm,
+                totalDurationSeconds,
+                averagePace,
+                calories,
+                startedAt,
+                endedAt
+        );
+    }
+
+    public static RunningRecord createCourseRun(
+            User user,
+            Course course,
+            RunningMode runningMode,
+            LineString route,
+            BigDecimal totalDistanceKm,
+            int totalDurationSeconds,
+            BigDecimal averagePace,
+            BigDecimal calories,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt
+    ) {
+        if (course == null || runningMode == RunningMode.FREE_RUN) {
+            throw new IllegalArgumentException("코스 러닝 기록에는 코스와 코스 러닝 모드가 필요합니다.");
+        }
+        return create(
+                user,
+                course,
+                runningMode,
+                route,
+                totalDistanceKm,
+                totalDurationSeconds,
+                averagePace,
+                calories,
+                startedAt,
+                endedAt
+        );
+    }
+
+    private static RunningRecord create(
+            User user,
+            Course course,
+            RunningMode runningMode,
+            LineString route,
+            BigDecimal totalDistanceKm,
+            int totalDurationSeconds,
+            BigDecimal averagePace,
+            BigDecimal calories,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt
+    ) {
         RunningRecord record = new RunningRecord();
         record.user = user;
-        record.runningMode = RunningMode.FREE_RUN;
+        record.course = course;
+        record.runningMode = runningMode;
         record.route = route;
         record.totalDistanceKm = totalDistanceKm;
         record.totalDurationSeconds = totalDurationSeconds;
@@ -106,5 +162,13 @@ public class RunningRecord extends BaseCreatedAtEntity {
 
     public void assignToTrip(Trip trip) {
         this.trip = trip;
+    }
+
+    public void attachCreatedCourse(Course course) {
+        if (this.course != null || this.runningMode != RunningMode.FREE_RUN) {
+            throw new IllegalStateException("자유 러닝 기록에만 새 코스를 연결할 수 있습니다.");
+        }
+        this.course = course;
+        this.runningMode = RunningMode.COURSE_CREATE;
     }
 }

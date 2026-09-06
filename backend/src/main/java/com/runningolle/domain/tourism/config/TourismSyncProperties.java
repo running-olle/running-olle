@@ -16,8 +16,8 @@ public class TourismSyncProperties {
     private String areaCode = "39";
     private List<String> contentTypeIds = new ArrayList<>(List.of("12", "14", "28"));
     private int pageSize = 100;
+    private boolean bootstrapEnabled = true;
     private boolean schedulerEnabled = false;
-    private boolean manualSyncEnabled = false;
     private String cron = "0 0 4 * * *";
     private String zone = "Asia/Seoul";
 }
