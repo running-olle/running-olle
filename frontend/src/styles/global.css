@@ -176,7 +176,31 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .complete-stats { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 18px; padding: 18px 8px; border-radius: 18px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.05); }
 .complete-stats div { display: flex; flex-direction: column; align-items: center; }.complete-stats div + div { border-left: 1px solid #eee0da; }
 .complete-stats strong { font-size: 18px; }.complete-stats span { margin-top: 5px; color: #75665f; font-size: 10px; }
-.record-sync-notice { margin: 14px 0 0; color: #a04100; text-align: center; font-size: 11px; }.complete-home-button { margin-top: 20px; }
+.record-sync-notice { margin: 14px 0 0; color: #a04100; text-align: center; font-size: 11px; }.complete-home-button { margin-top: 12px; }
+.complete-course-save-button { width: 100%; min-height: 56px; margin-top: 20px; border: 1px solid #ff6f0f; border-radius: 16px; color: #e85f05; background: #fff; font-size: 16px; font-weight: 900; }
+.complete-course-saved { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; padding: 14px 16px; border-radius: 16px; color: #176b35; background: #eef8f1; }
+.complete-course-saved strong { min-width: 0; overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.complete-course-saved button { flex: 0 0 auto; color: #fff; background: #16833a; min-height: 36px; padding: 0 12px; border-radius: 11px; font-size: 12px; font-weight: 900; }
+.running-course-save-modal { width: min(calc(100% - 32px), 398px); margin: auto; padding: 24px; border-radius: 24px; background: #fff; text-align: left; }
+.running-course-save-modal h2 { margin: 0; color: #111827; font-size: 20px; }
+.running-course-save-modal > p { margin: 8px 0 20px; color: #6b7280; font-size: 13px; line-height: 1.55; }
+.running-course-save-modal label { position: relative; display: grid; gap: 8px; color: #594136; font-size: 12px; font-weight: 900; }
+.running-course-save-modal label input { width: 100%; min-height: 52px; padding: 0 58px 0 14px; border: 1px solid #e5e7eb; border-radius: 13px; outline: none; color: #111827; background: #fbfcfd; font-size: 14px; }
+.running-course-save-modal label input:focus { border-color: #ff6f0f; box-shadow: 0 0 0 3px rgba(255,111,15,.12); }
+.running-course-save-modal label > small { position: absolute; right: 13px; bottom: 18px; color: #9ca3af; font-size: 10px; }
+.running-course-public-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 16px; padding: 13px 14px; border-radius: 13px; background: #f7f8fc; text-align: left; }
+.running-course-public-toggle span strong, .running-course-public-toggle span small { display: block; }
+.running-course-public-toggle span strong { color: #111827; font-size: 13px; }
+.running-course-public-toggle span small { margin-top: 3px; color: #6b7280; font-size: 10px; font-weight: 600; }
+.running-course-public-toggle > i { position: relative; width: 42px; height: 24px; border-radius: 999px; background: #d1d5db; }
+.running-course-public-toggle > i.on { background: #ff6f0f; }
+.running-course-public-toggle > i em { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .18s ease; }
+.running-course-public-toggle > i.on em { transform: translateX(18px); }
+.running-course-save-error { margin: 12px 0 0 !important; padding: 10px 12px; border-radius: 11px; color: #b91c1c !important; background: #fff0ee; }
+.running-course-save-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.running-course-save-actions button { min-height: 48px; border-radius: 13px; color: #594136; background: #f7f2ef; font-size: 13px; font-weight: 900; }
+.running-course-save-actions button:last-child { color: #fff; background: #ff6f0f; }
+.running-course-save-actions button:disabled { color: #9ca3af; background: #e5e7eb; }
 
 @media (max-width: 370px) {
   .running-option-card { grid-template-columns: 92px 1fr 22px; gap: 13px; min-height: 130px; }
