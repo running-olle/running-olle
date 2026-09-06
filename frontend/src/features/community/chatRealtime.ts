@@ -79,7 +79,7 @@ export function connectChatListRealtime(
 }
 
 function buildWebSocketUrl(roomId: string, token: string) {
-  const url = new URL(resolveApiBaseUrl())
+  const url = new URL(resolveApiBaseUrl(), window.location.origin)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = `/ws/community/chats/${roomId}`
   url.searchParams.set('token', token)
@@ -87,7 +87,7 @@ function buildWebSocketUrl(roomId: string, token: string) {
 }
 
 function buildWebSocketBaseUrl(token: string) {
-  const url = new URL(resolveApiBaseUrl())
+  const url = new URL(resolveApiBaseUrl(), window.location.origin)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = '/ws/community/chat-list'
   url.searchParams.set('token', token)
