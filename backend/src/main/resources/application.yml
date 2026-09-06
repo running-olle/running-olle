@@ -54,13 +54,13 @@ app:
 
 tourism:
   sync:
-    area-code: "39"
-    content-type-ids: [ "12", "14", "28" ]
-    page-size: 100
-    scheduler-enabled: false
-    manual-sync-enabled: false
-    cron: "0 0 4 * * *"
-    zone: Asia/Seoul
+    area-code: ${TOURISM_SYNC_AREA_CODE:39}
+    content-type-ids: ${TOURISM_SYNC_CONTENT_TYPE_IDS:12,14,28}
+    page-size: ${TOURISM_SYNC_PAGE_SIZE:100}
+    bootstrap-enabled: ${TOURISM_SYNC_BOOTSTRAP_ENABLED:true}
+    scheduler-enabled: ${TOURISM_SYNC_SCHEDULER_ENABLED:true}
+    cron: "${TOURISM_SYNC_CRON:0 0 4 ? * MON}"
+    zone: ${TOURISM_SYNC_ZONE:Asia/Seoul}
 
 jwt:
   secret: ${JWT_SECRET}

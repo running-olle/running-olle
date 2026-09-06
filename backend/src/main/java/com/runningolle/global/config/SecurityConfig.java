@@ -39,9 +39,6 @@ public class SecurityConfig {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    @Value("${tourism.sync.manual-sync-enabled:false}")
-    private boolean tourismManualSyncEnabled;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -65,9 +62,6 @@ public class SecurityConfig {
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/public/**").permitAll();
                     auth.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
-                    if (tourismManualSyncEnabled) {
-                        auth.requestMatchers(HttpMethod.POST, "/api/admin/tourism/sync/jeju").permitAll();
-                    }
                     auth.anyRequest().authenticated();
                 })
                 .oauth2Login(oauth2 -> oauth2
