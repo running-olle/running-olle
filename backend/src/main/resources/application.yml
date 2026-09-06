@@ -80,3 +80,10 @@ logging:
     org.hibernate.SQL: ${SQL_LOG_LEVEL:info}
     org.hibernate.orm.jdbc.bind: ${SQL_BIND_LOG_LEVEL:off}
     org.springframework.security: info
+
+external-api:
+  kakao-map-api-key: ${EXTERNAL_API_KAKAO_MAP_API_KEY}
+  tour-api-key: ${EXTERNAL_API_TOUR_API_KEY}
+  open-route-service-key: ${EXTERNAL_API_OPEN_ROUTE_SERVICE_KEY}
+  tour-mobile-os: ${EXTERNAL_API_TOUR_MOBILE_OS}
+  tour-mobile-app: ${EXTERNAL_API_TOUR_MOBILE_APP}
