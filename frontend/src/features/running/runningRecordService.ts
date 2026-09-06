@@ -66,3 +66,14 @@ export async function saveRunningRecord(input: RecordInput) {
     return pending
   }
 }
+
+export function saveRunningRouteAsCourse(
+  recordId: string,
+  input: { name: string; description?: string | null; isPublic: boolean },
+) {
+  return axiosInstance.post<{ courseId: string }>(`/running-records/${recordId}/course`, {
+    name: input.name,
+    description: input.description ?? null,
+    isPublic: input.isPublic,
+  }).then(({ data }) => data)
+}
