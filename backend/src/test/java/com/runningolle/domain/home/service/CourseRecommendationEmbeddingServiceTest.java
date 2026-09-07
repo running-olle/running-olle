@@ -123,6 +123,36 @@ class CourseRecommendationEmbeddingServiceTest {
     }
 
     @Test
+    void skipsWhenDocumentWasAlreadySyncedWithSameEmbeddingModel() {
+        UUID courseId = UUID.randomUUID();
+        UUID documentId = UUID.randomUUID();
+        HomeRecommendationProperties properties = new HomeRecommendationProperties();
+        properties.setEmbeddingSyncEnabled(true);
+        CourseRecommendationEmbeddingService service = new CourseRecommendationEmbeddingService(
+                courseRecommendationDocumentRepository,
+                properties,
+                vectorStoreProvider
+        );
+        ReflectionTestUtils.setField(service, "embeddingModel", "openai");
+
+        CourseRecommendationDocument document = document(courseId, documentId, "Coast route", false);
+        document.markEmbeddingCompleted("openai", java.time.LocalDateTime.now());
+
+        given(vectorStoreProvider.getIfAvailable()).willReturn(vectorStore);
+        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
+                courseId,
+                RecommendationDocumentSourceType.COURSE_DESCRIPTION,
+                "course-description"
+        )).willReturn(Optional.of(document));
+
+        CourseRecommendationEmbeddingService.SyncResult result = service.syncCourseDescriptionEmbedding(courseId);
+
+        assertThat(result).isEqualTo(CourseRecommendationEmbeddingService.SyncResult.SKIPPED_ALREADY_SYNCED);
+        verify(vectorStore, never()).delete(List.of(documentId.toString()));
+        verify(vectorStore, never()).add(anyList());
+    }
+
+    @Test
     void marksFailureWhenVectorStoreAddFails() {
         UUID courseId = UUID.randomUUID();
         UUID documentId = UUID.randomUUID();

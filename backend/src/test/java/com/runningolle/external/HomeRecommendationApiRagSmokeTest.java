@@ -337,13 +337,25 @@ class HomeRecommendationApiRagSmokeTest {
             jdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS hstore");
             jdbcTemplate.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"");
             jdbcTemplate.execute("DROP TABLE IF EXISTS " + VECTOR_TABLE);
+            jdbcTemplate.execute(String.format("""
+                    CREATE TABLE IF NOT EXISTS public.%s (
+                        id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+                        content text,
+                        metadata json,
+                        embedding vector(3)
+                    )
+                    """, VECTOR_TABLE));
+            jdbcTemplate.execute(String.format("""
+                    CREATE INDEX IF NOT EXISTS %s_hnsw_idx
+                        ON public.%s USING HNSW (embedding vector_cosine_ops)
+                    """, VECTOR_TABLE, VECTOR_TABLE));
 
             PgVectorStore vectorStore = PgVectorStore.builder(jdbcTemplate, new FixedEmbeddingModel())
                     .vectorTableName(VECTOR_TABLE)
                     .dimensions(3)
                     .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
-                    .indexType(PgVectorStore.PgIndexType.NONE)
-                    .initializeSchema(true)
+                    .indexType(PgVectorStore.PgIndexType.HNSW)
+                    .initializeSchema(false)
                     .build();
             vectorStore.afterPropertiesSet();
             return vectorStore;

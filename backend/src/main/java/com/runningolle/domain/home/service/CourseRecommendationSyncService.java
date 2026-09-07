@@ -50,7 +50,7 @@ public class CourseRecommendationSyncService {
             case CREATED -> stats.documentCreatedCount++;
             case UPDATED -> stats.documentUpdatedCount++;
             case DELETED_EMPTY_CONTENT -> stats.documentDeletedCount++;
-            case SKIPPED_EMPTY_CONTENT, SKIPPED_COURSE_NOT_FOUND -> stats.documentSkippedCount++;
+            case SKIPPED_EMPTY_CONTENT, SKIPPED_UNCHANGED, SKIPPED_COURSE_NOT_FOUND -> stats.documentSkippedCount++;
         }
     }
 
@@ -65,7 +65,8 @@ public class CourseRecommendationSyncService {
         switch (result) {
             case SYNCED -> stats.embeddingSyncedCount++;
             case DELETED_FROM_VECTOR_STORE -> stats.embeddingDeletedCount++;
-            case SKIPPED_EMBEDDING_SYNC_DISABLED, SKIPPED_VECTOR_STORE_UNAVAILABLE, SKIPPED_DOCUMENT_NOT_FOUND ->
+            case SKIPPED_EMBEDDING_SYNC_DISABLED, SKIPPED_VECTOR_STORE_UNAVAILABLE, SKIPPED_DOCUMENT_NOT_FOUND,
+                 SKIPPED_ALREADY_SYNCED ->
                     stats.embeddingSkippedCount++;
             case FAILED -> stats.embeddingFailedCount++;
         }

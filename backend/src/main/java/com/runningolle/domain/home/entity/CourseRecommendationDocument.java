@@ -20,6 +20,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -130,6 +131,10 @@ public class CourseRecommendationDocument extends BaseTimeEntity {
     }
 
     public void updateContent(String title, String content, JsonNode metadata) {
+        if (hasSameActiveContent(title, content, metadata)) {
+            return;
+        }
+
         this.title = title;
         this.content = content;
         this.metadata = metadata;
@@ -143,5 +148,12 @@ public class CourseRecommendationDocument extends BaseTimeEntity {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean hasSameActiveContent(String title, String content, JsonNode metadata) {
+        return !Boolean.TRUE.equals(this.isDeleted)
+                && Objects.equals(this.title, title)
+                && Objects.equals(this.content, content)
+                && Objects.equals(this.metadata, metadata);
     }
 }

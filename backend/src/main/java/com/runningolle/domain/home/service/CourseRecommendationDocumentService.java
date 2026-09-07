@@ -48,22 +48,27 @@ public class CourseRecommendationDocumentService {
 
         Course course = courseOptional.get();
         Optional<CourseRecommendationDocument> existingDocument =
-                courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKeyAndIsDeletedFalse(
+                courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
                         courseId,
                         COURSE_DESCRIPTION_SOURCE_TYPE,
                         COURSE_DESCRIPTION_SOURCE_KEY
                 );
 
         if (!StringUtils.hasText(course.getDescription())) {
-            existingDocument.ifPresent(CourseRecommendationDocument::softDelete);
-            return existingDocument.isPresent()
-                    ? SyncResult.DELETED_EMPTY_CONTENT
-                    : SyncResult.SKIPPED_EMPTY_CONTENT;
+            if (existingDocument.isPresent() && !Boolean.TRUE.equals(existingDocument.get().getIsDeleted())) {
+                existingDocument.get().softDelete();
+                return SyncResult.DELETED_EMPTY_CONTENT;
+            }
+            return SyncResult.SKIPPED_EMPTY_CONTENT;
         }
 
+        String content = course.getDescription().trim();
         ObjectNode metadata = buildCourseMetadata(course);
         if (existingDocument.isPresent()) {
-            existingDocument.get().updateContent(course.getName(), course.getDescription().trim(), metadata);
+            if (existingDocument.get().hasSameActiveContent(course.getName(), content, metadata)) {
+                return SyncResult.SKIPPED_UNCHANGED;
+            }
+            existingDocument.get().updateContent(course.getName(), content, metadata);
             return SyncResult.UPDATED;
         }
 
@@ -72,7 +77,7 @@ public class CourseRecommendationDocumentService {
                 COURSE_DESCRIPTION_SOURCE_TYPE,
                 COURSE_DESCRIPTION_SOURCE_KEY,
                 course.getName(),
-                course.getDescription().trim(),
+                content,
                 metadata
         ));
         return SyncResult.CREATED;
@@ -108,11 +113,10 @@ public class CourseRecommendationDocumentService {
         }
 
         for (CourseRecommendationDocument existingDocument : existingDocumentsBySourceKey.values()) {
-            if (!activeReviewSourceKeys.contains(existingDocument.getSourceKey())) {
-                if (!Boolean.TRUE.equals(existingDocument.getIsDeleted())) {
-                    existingDocument.softDelete();
-                    stats.deletedCount++;
-                }
+            if (!activeReviewSourceKeys.contains(existingDocument.getSourceKey())
+                    && !Boolean.TRUE.equals(existingDocument.getIsDeleted())) {
+                existingDocument.softDelete();
+                stats.deletedCount++;
             }
         }
 
@@ -131,6 +135,7 @@ public class CourseRecommendationDocumentService {
             ReviewSyncStats stats
     ) {
         String sourceKey = reviewSourceKey(review.getId());
+        String title = reviewTitle(course);
         String content = reviewContent(review);
         ObjectNode metadata = buildReviewMetadata(course, review);
         CourseRecommendationDocument existingDocument = existingDocumentsBySourceKey.get(sourceKey);
@@ -139,7 +144,7 @@ public class CourseRecommendationDocumentService {
                     course,
                     COURSE_REVIEW_SOURCE_TYPE,
                     sourceKey,
-                    course.getName() + " 후기",
+                    title,
                     content,
                     metadata
             ));
@@ -147,7 +152,12 @@ public class CourseRecommendationDocumentService {
             return sourceKey;
         }
 
-        existingDocument.updateContent(course.getName() + " 후기", content, metadata);
+        if (existingDocument.hasSameActiveContent(title, content, metadata)) {
+            stats.skippedCount++;
+            return sourceKey;
+        }
+
+        existingDocument.updateContent(title, content, metadata);
         stats.updatedCount++;
         return sourceKey;
     }
@@ -176,8 +186,12 @@ public class CourseRecommendationDocumentService {
         return "course-review-" + reviewId;
     }
 
+    private String reviewTitle(Course course) {
+        return course.getName() + " \uD6C4\uAE30";
+    }
+
     private String reviewContent(CourseReview review) {
-        return "평점 " + review.getRating() + "점. " + review.getContent().trim();
+        return "\uD3C9\uC810 " + review.getRating() + "\uC810: " + review.getContent().trim();
     }
 
     public enum SyncResult {
@@ -185,6 +199,7 @@ public class CourseRecommendationDocumentService {
         UPDATED,
         DELETED_EMPTY_CONTENT,
         SKIPPED_EMPTY_CONTENT,
+        SKIPPED_UNCHANGED,
         SKIPPED_COURSE_NOT_FOUND
     }
 

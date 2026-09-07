@@ -33,12 +33,25 @@ class RagPgVectorSmokeTest {
 
         String tableName = "recommendation_vector_smoke_" + UUID.randomUUID().toString().replace("-", "");
         try {
+            jdbcTemplate.execute(String.format("""
+                    CREATE TABLE IF NOT EXISTS public.%s (
+                        id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+                        content text,
+                        metadata json,
+                        embedding vector(3)
+                    )
+                    """, tableName));
+            jdbcTemplate.execute(String.format("""
+                    CREATE INDEX IF NOT EXISTS %s_hnsw_idx
+                        ON public.%s USING HNSW (embedding vector_cosine_ops)
+                    """, tableName, tableName));
+
             PgVectorStore vectorStore = PgVectorStore.builder(jdbcTemplate, new FixedEmbeddingModel())
                     .vectorTableName(tableName)
                     .dimensions(3)
                     .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
-                    .indexType(PgVectorStore.PgIndexType.NONE)
-                    .initializeSchema(true)
+                    .indexType(PgVectorStore.PgIndexType.HNSW)
+                    .initializeSchema(false)
                     .build();
             vectorStore.afterPropertiesSet();
 

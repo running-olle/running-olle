@@ -10,20 +10,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.runningolle.domain.home.config.HomeRecommendationProperties;
 import com.runningolle.domain.home.dto.CourseRecommendationSyncResponse;
 import com.runningolle.domain.home.service.CourseRecommendationSyncService;
-import com.runningolle.global.security.jwt.JwtAuthenticationFilter;
+import com.runningolle.global.config.SecurityConfig;
+import com.runningolle.global.security.jwt.JwtTokenProvider;
 import com.runningolle.global.security.oauth.CustomOAuth2UserService;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationFailureHandler;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationSuccessHandler;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(CourseRecommendationSyncController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfig.class)
 class CourseRecommendationSyncControllerTest {
 
     @Autowired
@@ -36,7 +38,7 @@ class CourseRecommendationSyncControllerTest {
     private HomeRecommendationProperties homeRecommendationProperties;
 
     @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtTokenProvider jwtTokenProvider;
 
     @MockBean
     private CustomOAuth2UserService customOAuth2UserService;
@@ -48,6 +50,7 @@ class CourseRecommendationSyncControllerTest {
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void syncsCourseRecommendations() throws Exception {
         given(homeRecommendationProperties.isManualSyncEnabled()).willReturn(true);
         given(courseRecommendationSyncService.syncPublicCourseRecommendations())
@@ -74,9 +77,27 @@ class CourseRecommendationSyncControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void rejectsSyncWhenManualSyncIsDisabled() throws Exception {
         given(homeRecommendationProperties.isManualSyncEnabled()).willReturn(false);
 
+        mockMvc.perform(post("/api/admin/home/recommendations/sync/courses"))
+                .andExpect(status().isForbidden());
+
+        then(courseRecommendationSyncService).should(never()).syncPublicCourseRecommendations();
+    }
+
+    @Test
+    void rejectsSyncWhenUnauthenticated() throws Exception {
+        mockMvc.perform(post("/api/admin/home/recommendations/sync/courses"))
+                .andExpect(status().isUnauthorized());
+
+        then(courseRecommendationSyncService).should(never()).syncPublicCourseRecommendations();
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void rejectsSyncWhenNotAdmin() throws Exception {
         mockMvc.perform(post("/api/admin/home/recommendations/sync/courses"))
                 .andExpect(status().isForbidden());
 

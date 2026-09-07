@@ -42,9 +42,6 @@ public class SecurityConfig {
     @Value("${tourism.sync.manual-sync-enabled:false}")
     private boolean tourismManualSyncEnabled;
 
-    @Value("${home.recommendation.manual-sync-enabled:false}")
-    private boolean homeRecommendationManualSyncEnabled;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -71,9 +68,7 @@ public class SecurityConfig {
                     if (tourismManualSyncEnabled) {
                         auth.requestMatchers(HttpMethod.POST, "/api/admin/tourism/sync/jeju").permitAll();
                     }
-                    if (homeRecommendationManualSyncEnabled) {
-                        auth.requestMatchers(HttpMethod.POST, "/api/admin/home/recommendations/sync/courses").permitAll();
-                    }
+                    auth.requestMatchers(HttpMethod.POST, "/api/admin/home/recommendations/sync/courses").hasRole("ADMIN");
                     auth.anyRequest().authenticated();
                 })
                 .oauth2Login(oauth2 -> oauth2

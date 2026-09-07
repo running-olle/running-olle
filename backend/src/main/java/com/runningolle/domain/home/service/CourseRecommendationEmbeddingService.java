@@ -2,6 +2,7 @@ package com.runningolle.domain.home.service;
 
 import com.runningolle.domain.home.config.HomeRecommendationProperties;
 import com.runningolle.domain.home.entity.CourseRecommendationDocument;
+import com.runningolle.domain.home.entity.RecommendationDocumentEmbeddingStatus;
 import com.runningolle.domain.home.repository.CourseRecommendationDocumentRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -84,14 +85,19 @@ public class CourseRecommendationEmbeddingService {
             CourseRecommendationDocument document
     ) {
         try {
-            vectorStore.delete(List.of(document.getId().toString()));
-
             if (Boolean.TRUE.equals(document.getIsDeleted()) || !StringUtils.hasText(document.getContent())) {
+                vectorStore.delete(List.of(document.getId().toString()));
                 return SyncResult.DELETED_FROM_VECTOR_STORE;
             }
 
+            String resolvedEmbeddingModel = resolveEmbeddingModel();
+            if (isAlreadySynced(document, resolvedEmbeddingModel)) {
+                return SyncResult.SKIPPED_ALREADY_SYNCED;
+            }
+
+            vectorStore.delete(List.of(document.getId().toString()));
             vectorStore.add(List.of(toDocument(document)));
-            document.markEmbeddingCompleted(resolveEmbeddingModel(), LocalDateTime.now());
+            document.markEmbeddingCompleted(resolvedEmbeddingModel, LocalDateTime.now());
             return SyncResult.SYNCED;
         } catch (RuntimeException exception) {
             document.markEmbeddingFailed(exception.getMessage());
@@ -103,6 +109,12 @@ public class CourseRecommendationEmbeddingService {
             );
             return SyncResult.FAILED;
         }
+    }
+
+    private boolean isAlreadySynced(CourseRecommendationDocument document, String resolvedEmbeddingModel) {
+        return document.getEmbeddingStatus() == RecommendationDocumentEmbeddingStatus.COMPLETED
+                && document.getEmbeddedAt() != null
+                && resolvedEmbeddingModel.equals(document.getEmbeddingModel());
     }
 
     private Document toDocument(CourseRecommendationDocument document) {
@@ -148,6 +160,7 @@ public class CourseRecommendationEmbeddingService {
         SKIPPED_EMBEDDING_SYNC_DISABLED,
         SKIPPED_VECTOR_STORE_UNAVAILABLE,
         SKIPPED_DOCUMENT_NOT_FOUND,
+        SKIPPED_ALREADY_SYNCED,
         FAILED
     }
 }

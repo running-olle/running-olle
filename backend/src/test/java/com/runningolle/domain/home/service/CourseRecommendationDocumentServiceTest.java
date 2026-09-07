@@ -70,7 +70,7 @@ class CourseRecommendationDocumentServiceTest {
         given(courseRepository.findByIdAndIsDeletedFalse(courseId)).willReturn(Optional.of(course));
         given(courseThemeRepository.findAllByCourse_IdIn(List.of(courseId)))
                 .willReturn(List.of(CourseTheme.of(course, coast), CourseTheme.of(course, photo)));
-        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKeyAndIsDeletedFalse(
+        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
                 courseId,
                 RecommendationDocumentSourceType.COURSE_DESCRIPTION,
                 "course-description"
@@ -112,7 +112,7 @@ class CourseRecommendationDocumentServiceTest {
 
         given(courseRepository.findByIdAndIsDeletedFalse(courseId)).willReturn(Optional.of(course));
         given(courseThemeRepository.findAllByCourse_IdIn(List.of(courseId))).willReturn(List.of());
-        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKeyAndIsDeletedFalse(
+        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
                 courseId,
                 RecommendationDocumentSourceType.COURSE_DESCRIPTION,
                 "course-description"
@@ -124,6 +124,45 @@ class CourseRecommendationDocumentServiceTest {
         verify(courseRecommendationDocumentRepository, never()).save(any());
         assertThat(existing.getContent()).isEqualTo("Updated description");
         assertThat(existing.getTitle()).isEqualTo("Forest Loop");
+    }
+
+    @Test
+    void skipsExistingDescriptionDocumentWhenContentIsUnchanged() {
+        UUID courseId = UUID.randomUUID();
+        Course course = course(courseId, "Forest Loop", "Same description");
+        ObjectMapper objectMapper = new ObjectMapper();
+        CourseRecommendationDocument existing = CourseRecommendationDocument.create(
+                course,
+                RecommendationDocumentSourceType.COURSE_DESCRIPTION,
+                "course-description",
+                "Forest Loop",
+                "Same description",
+                objectMapper.createObjectNode()
+                        .put("courseId", courseId.toString())
+                        .put("courseName", "Forest Loop")
+                        .put("type", "RUNNING_COURSE")
+                        .set("themeCodes", objectMapper.createArrayNode())
+        );
+        CourseRecommendationDocumentService service = new CourseRecommendationDocumentService(
+                courseRepository,
+                courseReviewRepository,
+                courseThemeRepository,
+                courseRecommendationDocumentRepository,
+                objectMapper
+        );
+
+        given(courseRepository.findByIdAndIsDeletedFalse(courseId)).willReturn(Optional.of(course));
+        given(courseThemeRepository.findAllByCourse_IdIn(List.of(courseId))).willReturn(List.of());
+        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
+                courseId,
+                RecommendationDocumentSourceType.COURSE_DESCRIPTION,
+                "course-description"
+        )).willReturn(Optional.of(existing));
+
+        CourseRecommendationDocumentService.SyncResult result = service.syncCourseDescriptionDocument(courseId);
+
+        assertThat(result).isEqualTo(CourseRecommendationDocumentService.SyncResult.SKIPPED_UNCHANGED);
+        verify(courseRecommendationDocumentRepository, never()).save(any());
     }
 
     @Test
@@ -147,7 +186,7 @@ class CourseRecommendationDocumentServiceTest {
         );
 
         given(courseRepository.findByIdAndIsDeletedFalse(courseId)).willReturn(Optional.of(course));
-        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKeyAndIsDeletedFalse(
+        given(courseRecommendationDocumentRepository.findByCourse_IdAndSourceTypeAndSourceKey(
                 courseId,
                 RecommendationDocumentSourceType.COURSE_DESCRIPTION,
                 "course-description"
@@ -214,7 +253,7 @@ class CourseRecommendationDocumentServiceTest {
         CourseRecommendationDocument saved = captor.getValue();
         assertThat(saved.getSourceType()).isEqualTo(RecommendationDocumentSourceType.COURSE_REVIEW);
         assertThat(saved.getSourceKey()).isEqualTo("course-review-" + reviewId);
-        assertThat(saved.getContent()).isEqualTo("평점 5점. 바다 전망이 좋고 사진 찍기 좋은 코스였어요.");
+        assertThat(saved.getContent()).isEqualTo("평점 5점: 바다 전망이 좋고 사진 찍기 좋은 코스였어요.");
         assertThat(saved.getMetadata().get("reviewId").asText()).isEqualTo(reviewId.toString());
         assertThat(saved.getMetadata().get("rating").asInt()).isEqualTo(5);
         assertThat(saved.getMetadata().get("themeCodes")).extracting(node -> node.asText())
