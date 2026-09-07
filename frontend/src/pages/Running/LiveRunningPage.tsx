@@ -8,6 +8,7 @@ import { RunningIcon } from '../../features/running/RunningIcon'
 import { saveRunningRecord } from '../../features/running/runningRecordService'
 import { distanceBetween, formatDistance, formatDuration, formatPace, getLocationErrorMessage, GPS_OPTIONS, positionToPoint } from '../../features/running/runningUtils'
 import type { GeoPoint, RunningMode, RunningPhase } from '../../features/running/types'
+import { Button, Icon } from '../../components/ui'
 
 const MIN_SEGMENT_METERS = 3
 const MAX_SEGMENT_METERS = 200
@@ -155,10 +156,10 @@ export function LiveRunningPage() {
       <div className={`recording-status ${phase === 'paused' ? 'is-paused' : ''}`}><span />{phase === 'paused' ? '일시정지' : '기록 중'}</div>
       {locationError && <div className="live-location-error">{locationError}</div>}
       <div className="place-category-bar" aria-label="주변 장소 범례">
-        <span><i className="place-camera"><RunningIcon name="camera" size={14} /></i>관광지</span>
-        <span><i className="place-food">♨</i>맛집</span>
-        <span><i className="place-cafe">▣</i>카페</span>
-        <span><i className="place-store">▤</i>편의시설</span>
+        <span><i className="place-camera"><Icon name="landmark" size={14} /></i>관광지</span>
+        <span><i className="place-food"><Icon name="food" size={14} /></i>맛집</span>
+        <span><i className="place-cafe"><Icon name="coffee" size={14} /></i>카페</span>
+        <span><i className="place-store"><Icon name="store" size={14} /></i>편의시설</span>
       </div>
       <section className="live-controls" aria-label="러닝 조작">
         <button className="round-control lock-control" type="button" aria-label="화면 잠금" onClick={() => setLocked(true)}><RunningIcon name="lock" /></button>
@@ -175,7 +176,7 @@ export function LiveRunningPage() {
             <span className="sheet-handle" />
             <h2 id="end-title">러닝을 종료할까요?</h2>
             <p>지금까지 달린 코스와 기록이 저장돼요.</p>
-            <div><button type="button" disabled={saving} onClick={() => setShowEndSheet(false)}>계속 달리기</button><button type="button" disabled={saving} onClick={finishRun}>{saving ? '저장 중…' : '종료 및 저장'}</button></div>
+            <div><Button variant="secondary" disabled={saving} onClick={() => setShowEndSheet(false)}>계속 달리기</Button><Button variant="danger" loading={saving} onClick={finishRun}>종료 및 저장</Button></div>
           </section>
         </div>
       )}

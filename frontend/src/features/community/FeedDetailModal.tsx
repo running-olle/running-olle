@@ -127,10 +127,10 @@ export function FeedDetailModal({
   return (
     <div className="fixed inset-0 z-30 bg-[rgba(38,25,18,0.45)]" onClick={onClose}>
       <div
-        className="mx-auto flex h-dvh max-w-[430px] flex-col bg-[#FFF8F6]"
+        className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-[#E1BFB1] bg-[#FFF8F6] px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-border-subtle bg-surface px-5 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -151,7 +151,7 @@ export function FeedDetailModal({
           <article className="rounded-[18px] bg-white px-5 py-4 shadow-[0px_2px_12px_rgba(0,0,0,0.06)]">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#FF6F0F,#FF954E)] text-[14px] font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-[14px] font-bold text-white">
                   {post.nickname.slice(0, 1)}
                 </div>
                 <div>
@@ -277,7 +277,7 @@ export function FeedDetailModal({
                 onKeyDown={handleCommentKeyDown}
                 placeholder="댓글을 입력해 주세요."
                 rows={1}
-                className="min-h-11 flex-1 resize-none rounded-[22px] border border-[#E1BFB1] bg-[#FFF8F6] px-4 py-3 text-[13px] leading-5 text-[#261912] outline-none"
+                className="min-h-11 flex-1 resize-none rounded-[22px] border border-border-default bg-surface px-4 py-3 text-[13px] leading-5 text-ink outline-none"
               />
               <button
                 type="button"
@@ -291,12 +291,12 @@ export function FeedDetailModal({
 
             <div className="mt-3 space-y-3">
               {post.comments.length === 0 ? (
-                <div className="rounded-[12px] bg-[#FFF8F6] px-4 py-4 text-[12px] text-[#8D7164]">
+                <div className="rounded-[12px] bg-surface-subtle px-4 py-4 text-[12px] text-ink-tertiary">
                   아직 댓글이 없습니다.
                 </div>
               ) : (
                 post.comments.map((item) => (
-                  <div key={item.id} className="rounded-[12px] bg-[#FFF8F6] px-4 py-3">
+                  <div key={item.id} className="rounded-[12px] bg-surface-subtle px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-[12px] font-bold text-[#261912]">{item.nickname}</div>

@@ -1,16 +1,17 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { BottomNavigation } from './BottomNavigation'
 import { Header, type HeaderProps } from './Header'
+import { PageContainer } from './PageContainer'
 
 export function AppLayout({ leftSlot, rightSlot }: HeaderProps) {
   const { pathname } = useLocation()
   const isMyPage = pathname.startsWith('/mypage') || pathname.startsWith('/dev/mypage')
   return (
-    <div className="h-dvh overflow-hidden bg-[#FFF8F6] text-[#261912]">
+    <div className="app-viewport">
       {!isMyPage && <Header leftSlot={leftSlot} rightSlot={rightSlot} />}
-      <main className={`mx-auto h-full max-w-[430px] overflow-y-auto ${isMyPage ? 'pb-[83px]' : 'px-5 pb-[107px] pt-20'}`}>
+      <PageContainer withHeader={!isMyPage} withBottomNavigation flush={isMyPage}>
         <Outlet />
-      </main>
+      </PageContainer>
       <BottomNavigation />
     </div>
   )

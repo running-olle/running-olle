@@ -182,7 +182,7 @@ function Badge({
 function AvatarBubble({ index, label }: { index: number; label: string }) {
   return (
     <div
-      className={`flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-white bg-[linear-gradient(135deg,#FF6F0F,#FF954E)] text-[11px] text-white ${
+      className={`flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-white bg-brand-500 text-[11px] text-white ${
         index === 0 ? '' : '-ml-1.5'
       }`}
     >

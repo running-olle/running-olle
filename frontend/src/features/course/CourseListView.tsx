@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CourseRouteMap } from './CourseRouteMap'
 import { courseService } from './courseService'
 import type { CourseDifficulty, CourseListFilter, CourseListItem, CourseListScope, CourseType } from './types'
+import { Badge, Chip, Icon } from '../../components/ui'
 
 const FILTER_OPTIONS: { value: CourseListFilter; label: string }[] = [
   { value: 'ALL', label: '전체' },
@@ -208,7 +209,6 @@ export function CourseListView({
       {showHeader && (
         <div className="course-library-head">
           <div>
-            <span>{kicker}</span>
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </div>
@@ -219,7 +219,7 @@ export function CourseListView({
       {showSearch && (
         <label className="course-library-search">
           <span aria-hidden="true">
-            <SearchIcon />
+            <Icon name="search" />
           </span>
           <input
             value={searchInput}
@@ -228,7 +228,7 @@ export function CourseListView({
           />
           {searchInput && (
             <button type="button" aria-label="검색어 지우기" onClick={() => setSearchInput('')}>
-              ×
+              <Icon name="close" size={16} />
             </button>
           )}
         </label>
@@ -244,14 +244,13 @@ export function CourseListView({
 
       <div className="course-library-filters" aria-label="코스 필터">
         {filterOptions.map((option) => (
-          <button
-            className={filter === option.value ? 'active' : ''}
+          <Chip
+            selected={filter === option.value}
             key={option.value}
-            type="button"
             onClick={() => setFilter(option.value)}
           >
             {option.label}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -350,7 +349,7 @@ function CourseListCard({
           showCurrentPositionMarker={false}
           plannedRouteStyle={{ strokeWeight: 5 }}
         />
-        <em>{courseTypeLabel[course.courseType]}</em>
+        <Badge variant={course.courseType === 'SPOT_COURSE' ? 'spot' : 'success'} className="course-library-type-badge">{courseTypeLabel[course.courseType]}</Badge>
         {showBookmarkButton && (
           <button
             className={`course-library-bookmark ${course.bookmarkedByMe ? 'is-saved' : ''}`}
@@ -360,15 +359,15 @@ function CourseListCard({
             disabled={isSavingBookmark}
             onClick={onToggleBookmark}
           >
-            <BookmarkIcon filled={course.bookmarkedByMe || isSavingBookmark} />
+            <Icon name="bookmark" fill={course.bookmarkedByMe || isSavingBookmark ? 'currentColor' : 'none'} />
           </button>
         )}
       </div>
       <div className="course-library-card-body">
         <div className="course-library-card-badges">
-          {course.createdByMe && <span>{createdBadgeLabel}</span>}
-          {!course.isPublic && <span>비공개</span>}
-          {course.bookmarkedByMe && <span>저장됨</span>}
+          {course.createdByMe && <Badge variant="brand">{createdBadgeLabel}</Badge>}
+          {!course.isPublic && <Badge variant="neutral">비공개</Badge>}
+          {course.bookmarkedByMe && <Badge variant="warning">저장됨</Badge>}
         </div>
         <h2>{course.name}</h2>
         {showDescription && course.description && <p className="course-library-description">{course.description}</p>}
@@ -399,28 +398,5 @@ function CourseListCard({
         </div>
       </div>
     </article>
-  )
-}
-
-function BookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7 4.75A2.25 2.25 0 0 1 9.25 2.5h5.5A2.25 2.25 0 0 1 17 4.75v15.1a.65.65 0 0 1-1.02.53L12 17.6l-3.98 2.78A.65.65 0 0 1 7 19.85V4.75Z"
-        fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
   )
 }

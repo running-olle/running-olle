@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { courseService } from '../../features/course/courseService'
 import type { CourseDetail, CourseDifficulty, CourseType } from '../../features/course/types'
+import { Badge, Icon } from '../../components/ui'
 
 const courseTypeLabel: Record<CourseType, string> = {
   RUNNING_COURSE: '러닝 코스',
@@ -108,7 +109,7 @@ export function CourseDetailPage() {
   return (
     <section className="course-detail-page">
       <div className="course-detail-title">
-        <span>{courseTypeLabel[course.courseType]}</span>
+        <Badge variant={course.courseType === 'SPOT_COURSE' ? 'spot' : 'success'}>{courseTypeLabel[course.courseType]}</Badge>
         <h1>{course.name}</h1>
         {course.description && <p>{course.description}</p>}
       </div>
@@ -123,9 +124,9 @@ export function CourseDetailPage() {
       </div>
 
       <div className="course-detail-badges">
-        {course.createdByMe && <span>내가 만든 코스</span>}
-        {course.bookmarkedByMe && <span>저장됨</span>}
-        {!course.isPublic && <span>비공개</span>}
+        {course.createdByMe && <Badge variant="brand">내가 만든 코스</Badge>}
+        {course.bookmarkedByMe && <Badge variant="warning">저장됨</Badge>}
+        {!course.isPublic && <Badge variant="neutral">비공개</Badge>}
       </div>
 
       <section className="course-detail-creator">
@@ -202,7 +203,7 @@ export function CourseDetailPage() {
             onClick={toggleBookmark}
           >
             <span>
-              <DetailBookmarkIcon filled={course.bookmarkedByMe || isSavingBookmark} />
+              <Icon name="bookmark" fill={course.bookmarkedByMe || isSavingBookmark ? 'currentColor' : 'none'} />
               {isSavingBookmark ? '처리 중' : course.bookmarkedByMe ? '저장 취소' : '저장하기'}
             </span>
           </button>
@@ -218,18 +219,4 @@ function formatCreatedAt(value: string) {
     month: 'long',
     day: 'numeric',
   })
-}
-
-function DetailBookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7 4.75A2.25 2.25 0 0 1 9.25 2.5h5.5A2.25 2.25 0 0 1 17 4.75v15.1a.65.65 0 0 1-1.02.53L12 17.6l-3.98 2.78A.65.65 0 0 1 7 19.85V4.75Z"
-        fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
 }

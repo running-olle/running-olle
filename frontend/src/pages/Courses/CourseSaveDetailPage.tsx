@@ -5,6 +5,7 @@ import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftSto
 import { difficultyLabel, formatDistanceKm } from '../../features/courseBuilder/courseBuilderUtils'
 import type { CourseTagOption, CourseType, ThemeOption } from '../../features/courseBuilder/types'
 import { RunningIcon } from '../../features/running/RunningIcon'
+import { Button, Chip, Input, Textarea } from '../../components/ui'
 
 type LoadStatus = 'idle' | 'loading' | 'success' | 'error'
 type SubmitStatus = 'idle' | 'saving' | 'success' | 'error'
@@ -165,29 +166,23 @@ export function CourseSaveDetailPage() {
 
       <section className="course-save-section">
         <h2>기본 정보</h2>
-        <label>
-          <span>코스 이름</span>
-          <input value={name} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="코스 이름" />
-        </label>
-        <label>
-          <span>소개</span>
-          <textarea value={description} maxLength={500} onChange={(event) => setDescription(event.target.value)} placeholder="이 코스의 분위기나 주의할 점을 적어주세요." />
-        </label>
+        <Input label="코스 이름" value={name} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="코스 이름" count={`${name.length}/80`} />
+        <Textarea label="소개" value={description} maxLength={500} onChange={(event) => setDescription(event.target.value)} placeholder="이 코스의 분위기나 주의할 점을 적어주세요." count={`${description.length}/500`} />
       </section>
 
       <section className="course-save-section">
         <h2>코스 유형</h2>
         <div className="course-type-options">
           {COURSE_TYPE_OPTIONS.map((option) => (
-            <button
+            <Chip
               key={option.value}
-              type="button"
-              className={courseType === option.value ? 'active' : ''}
+              variant="choice"
+              selected={courseType === option.value}
               onClick={() => setCourseType(option.value)}
             >
               <strong>{option.label}</strong>
               <small>{option.description}</small>
-            </button>
+            </Chip>
           ))}
         </div>
       </section>
@@ -247,9 +242,7 @@ export function CourseSaveDetailPage() {
       {errorMessage && <p className="course-save-error">{errorMessage}</p>}
 
       <div className="course-save-footer">
-        <button type="button" disabled={!canSubmit} onClick={handleSubmit}>
-          {submitStatus === 'saving' ? '저장 중이에요...' : '코스 저장하기'}
-        </button>
+        <Button variant="primary" size="lg" fullWidth loading={submitStatus === 'saving'} disabled={!canSubmit} onClick={handleSubmit}>코스 저장하기</Button>
       </div>
 
       {submitStatus === 'success' && createdCourseId && (
@@ -292,14 +285,14 @@ function OptionSection({
       ) : (
         <div className="course-save-chips">
           {options.map((option) => (
-            <button
+            <Chip
               key={option.id}
-              type="button"
-              className={selectedIds.includes(option.id) ? 'active' : ''}
+              variant="choice"
+              selected={selectedIds.includes(option.id)}
               onClick={() => onToggle(option.id)}
             >
               {option.label}
-            </button>
+            </Chip>
           ))}
         </div>
       )}

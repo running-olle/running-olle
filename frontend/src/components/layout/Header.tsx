@@ -6,16 +6,29 @@ export type HeaderProps = {
   rightSlot?: ReactNode
 }
 
+export type AppHeaderProps = {
+  leading?: ReactNode
+  title?: ReactNode
+  trailing?: ReactNode
+  variant?: 'root' | 'detail' | 'fullscreen'
+  className?: string
+}
+
+export function AppHeader({ leading, title, trailing, variant = 'detail', className = '' }: AppHeaderProps) {
+  return (
+    <header className={`app-header app-header--${variant} ${className}`}>
+      <div className="app-header__inner">
+        <div className="app-header__leading">{leading}</div>
+        <h1 className="app-header__title">{title}</h1>
+        <div className="app-header__trailing">{trailing}</div>
+      </div>
+    </header>
+  )
+}
+
 export function Header({
   leftSlot = <span>제주 제주시 구좌읍</span>,
   rightSlot = <NotificationCenter />,
 }: HeaderProps) {
-  return (
-    <header className="fixed left-0 right-0 top-0 z-30 h-14 border-b border-[#E1BFB1] bg-[#FFF8F6]">
-      <div className="mx-auto flex h-full max-w-[430px] items-center justify-between px-5">
-        <div className="text-[15px] font-bold leading-none text-[#261912]">{leftSlot}</div>
-        <div className="flex items-center justify-end">{rightSlot}</div>
-      </div>
-    </header>
-  )
+  return <AppHeader variant="root" leading={leftSlot} trailing={rightSlot} />
 }

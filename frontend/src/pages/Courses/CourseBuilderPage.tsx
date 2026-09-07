@@ -8,6 +8,7 @@ import { JEJU_CENTER, approximateWalkingMinutes, cleanDisplayText, difficultyLab
 import { useRouteCalculation } from '../../features/courseBuilder/useRouteCalculation'
 import type { CourseWaypointDraft, DraftRoute, LatLng, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult } from '../../features/courseBuilder/types'
 import { RunningIcon } from '../../features/running/RunningIcon'
+import { Icon } from '../../components/ui'
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error'
 type SheetSnap = 'peek' | 'full'
@@ -102,12 +103,12 @@ type SheetControls = {
 }
 
 function categoryBadgeClass(categoryGroupCode: string | null) {
-  if (categoryGroupCode === 'AT4') return 'bg-[#E8F6E8] text-[#16833A]'
-  if (categoryGroupCode === 'CE7') return 'bg-[#F6EEE7] text-[#8A5431]'
-  if (categoryGroupCode === 'FD6') return 'bg-[#FFF0E5] text-[#E65E12]'
-  if (categoryGroupCode === 'CS2') return 'bg-[#EAF3FF] text-[#2563EB]'
-  if (categoryGroupCode === 'PK6') return 'bg-[#F1F5F9] text-[#475569]'
-  return 'bg-[#F4F4F5] text-[#52525B]'
+  if (categoryGroupCode === 'AT4') return 'is-tourism'
+  if (categoryGroupCode === 'CE7') return 'is-cafe'
+  if (categoryGroupCode === 'FD6') return 'is-food'
+  if (categoryGroupCode === 'CS2') return 'is-store'
+  if (categoryGroupCode === 'PK6') return 'is-parking'
+  return 'is-place'
 }
 
 function categoryLabel(place: PlaceSearchResult | null, detail?: PlaceDetail | null) {
@@ -574,14 +575,14 @@ export function CourseBuilderPage() {
 
       <section className="course-builder-search-area" aria-label="장소 검색">
         <form className="course-builder-search" onSubmit={handleSearch}>
-          <span aria-hidden="true">⌕</span>
+          <span aria-hidden="true"><Icon name="search" /></span>
           <input
             value={keyword}
             onChange={(event) => handleKeywordChange(event.target.value)}
             placeholder="관광지/맛집/숙소 검색"
             aria-label="관광지/맛집/숙소 검색"
           />
-          {keyword && <button type="button" aria-label="검색어 지우기" onClick={handleClearSearch}>×</button>}
+          {keyword && <button type="button" aria-label="검색어 지우기" onClick={handleClearSearch}><Icon name="close" size={16} /></button>}
         </form>
         {committedSearchAnchor && (
           <NearbyCategoryRail

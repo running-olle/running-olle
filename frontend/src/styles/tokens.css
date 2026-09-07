@@ -1,0 +1,150 @@
+@theme {
+  --font-sans: Pretendard, "Noto Sans KR", system-ui, sans-serif;
+
+  --color-brand-050: #fff4ec;
+  --color-brand-400: #fd934c;
+  --color-brand-500: #ff6f0f;
+  --color-brand-700: #a04100;
+  --color-canvas: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f4f5f7;
+  --color-surface-muted: #eef0f2;
+  --color-map-fallback: #e6e8ec;
+  --color-ink: #191f28;
+  --color-ink-secondary: #4e5968;
+  --color-ink-tertiary: #8b95a1;
+  --color-ink-disabled: #b0b8c1;
+  --color-border-subtle: #e5e8eb;
+  --color-border-default: #d1d6db;
+  --color-success: #168847;
+  --color-success-indicator: #4ade80;
+  --color-success-subtle: #e8f7ec;
+  --color-warning: #c2410c;
+  --color-warning-subtle: #fff0df;
+  --color-danger: #b91c1c;
+  --color-danger-subtle: #fff0ee;
+  --color-info: #2563eb;
+  --color-info-subtle: #dbeafe;
+  --color-rating: #bfac00;
+
+  --color-course-beach-sky: #d9f0f5;
+  --color-course-beach-sea: #4cb3c7;
+  --color-course-beach-deep: #2f8aa7;
+  --color-course-beach-sand: #f8e7c3;
+  --color-course-beach-field: #78a96f;
+  --color-course-oreum-sky: #86d0e9;
+  --color-course-oreum-mid: #1e6f95;
+  --color-course-oreum-deep: #124a5f;
+  --color-course-oreum-accent: #376b45;
+  --color-course-forest-light: #e2f2d5;
+  --color-course-forest-mid: #6daa6b;
+  --color-course-forest-deep: #2e5d3c;
+  --color-course-forest-accent: #a7d39a;
+  --color-course-highlight: rgb(255 255 255 / 0.15);
+
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+
+  --radius-sm: 0.5rem;
+  --radius-control: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-sheet: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-1: 0 2px 8px rgb(25 31 40 / 0.06);
+  --shadow-2: 0 6px 18px rgb(25 31 40 / 0.1);
+  --shadow-3: 0 16px 40px rgb(25 31 40 / 0.18);
+  --shadow-top: 0 -4px 16px rgb(25 31 40 / 0.08);
+  --shadow-navigation: 0 -2px 8px rgb(25 31 40 / 0.04);
+  --shadow-fab: 0 4px 12px rgb(25 31 40 / 0.14);
+
+  --text-running-display: 2.25rem;
+  --text-running-display--line-height: 2.5rem;
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.125rem;
+  --text-page-title: 1.5rem;
+  --text-page-title--line-height: 2rem;
+  --text-section-title: 1.25rem;
+  --text-section-title--line-height: 1.75rem;
+  --text-app-title: 1.125rem;
+  --text-app-title--line-height: 1.5rem;
+  --text-card-title: 1rem;
+  --text-card-title--line-height: 1.5rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.25rem;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.125rem;
+  --text-legal: 0.6875rem;
+  --text-legal--line-height: 1rem;
+}
+
+:root {
+  --font-family-sans: var(--font-sans);
+
+  --color-brand-gradient: linear-gradient(135deg, var(--color-brand-500), var(--color-brand-400));
+  --color-overlay: rgb(25 31 40 / 0.45);
+  --color-scrim-strong: rgb(16 20 28 / 0.86);
+  --color-toast: rgb(25 31 40 / 0.92);
+  --color-canvas-translucent: rgb(248 249 250 / 0.96);
+  --divider-color: var(--color-border-subtle);
+
+  --space-page: var(--spacing-5);
+  --space-section: var(--spacing-6);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --app-max-width: 430px;
+  --app-header-height: 56px;
+  --app-header-location-max-width: 280px;
+  --app-header-total-height: calc(var(--app-header-height) + var(--safe-top));
+  --bottom-nav-height: 64px;
+  --bottom-nav-total-height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+  --bottom-action-height: 76px;
+  --bottom-action-total-height: calc(var(--bottom-action-height) + var(--safe-bottom));
+
+  --z-base: 0;
+  --z-map: 0;
+  --z-map-content: 10;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-navigation: 40;
+  --z-popover: 50;
+  --z-backdrop: 100;
+  --z-dialog: 110;
+  --z-toast: 120;
+  --z-critical: 130;
+
+  --motion-press: 120ms;
+  --motion-control: 180ms;
+  --motion-sheet: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (max-width: 360px) {
+  :root {
+    --space-page: var(--spacing-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-press: 0ms;
+    --motion-control: 0ms;
+    --motion-sheet: 0ms;
+  }
+}

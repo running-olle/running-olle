@@ -47,8 +47,8 @@ export function MeetupDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-[rgba(38,25,18,0.45)]" onClick={onClose}>
-      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-[#FFF8F6]" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-center gap-3 border-b border-[#E1BFB1] bg-[#FFF8F6] px-5 py-4">
+      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center gap-3 border-b border-border-subtle bg-surface px-5 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -193,7 +193,7 @@ export function MeetupDetailModal({
                 />
               ))}
               {acceptedMembers.length === 0 ? (
-                <div className="rounded-[12px] bg-[#FFF8F6] px-4 py-4 text-[12px] text-[#8D7164]">
+                <div className="rounded-[12px] bg-surface-subtle px-4 py-4 text-[12px] text-ink-tertiary">
                   아직 확정된 참여자가 없습니다.
                 </div>
               ) : null}

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { SectionHeader } from './SectionHeader'
 
 type SectionTitleProps = {
   icon: ReactNode
@@ -7,10 +8,5 @@ type SectionTitleProps = {
 }
 
 export function SectionTitle({ icon, title, className = '' }: SectionTitleProps) {
-  return (
-    <h2 className={`flex items-center gap-2 text-[20px] font-black leading-tight text-[#261912] ${className}`}>
-      <span aria-hidden="true">{icon}</span>
-      <span>{title}</span>
-    </h2>
-  )
+  return <SectionHeader icon={icon} title={title} className={className} />
 }

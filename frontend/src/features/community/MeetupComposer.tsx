@@ -175,8 +175,8 @@ export function MeetupComposer({
 
   return (
     <div className="fixed inset-0 z-40 bg-[rgba(38,25,18,0.45)]">
-      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-[#FFF8F6]">
-        <div className="flex items-center justify-between border-b border-[#E1BFB1] bg-[#FFF8F6] px-5 py-4">
+      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas">
+        <div className="flex items-center justify-between border-b border-border-subtle bg-surface px-5 py-4">
           <button
             type="button"
             onClick={onClose}

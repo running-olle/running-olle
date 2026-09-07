@@ -1,5 +1,8 @@
 import { Card } from '../../components/ui/Card'
-import { SectionTitle } from '../../components/ui/SectionTitle'
+import { Icon } from '../../components/ui/Icon'
+import { ListRow } from '../../components/ui/ListRow'
+import { MetaList } from '../../components/ui/MetaList'
+import { SectionHeader } from '../../components/ui/SectionHeader'
 import type { Difficulty, PopularCourse } from '../../mocks/home'
 import { CourseThumbnail } from './CourseThumbnail'
 
@@ -12,32 +15,42 @@ const difficultyLabel: Record<Difficulty, string> = {
   medium: '중',
 }
 
-const rankClassName: Record<number, string> = {
-  1: 'text-[#A04100]',
-  2: 'text-[#A04100]',
-  3: 'text-[#8B7468]',
-}
-
 export function PopularCourseRank({ courses }: PopularCourseRankProps) {
   return (
-    <section>
-      <Card padding="md" shadow="section">
-        <SectionTitle icon="🔥" title="지금 인기 코스" />
-        <div className="mt-5 space-y-5">
+    <section aria-labelledby="popular-courses-title">
+      <SectionHeader
+        id="popular-courses-title"
+        icon={<Icon name="trending" size={20} />}
+        title="지금 인기 코스"
+        description="제주 러너들이 최근 많이 찾고 있어요."
+      />
+      <Card padding="none" shadow="none" className="mt-4 overflow-hidden border border-border-subtle">
+        <div>
           {courses.map((course) => (
-            <div key={course.id} className="grid grid-cols-[40px_48px_1fr_auto] items-center gap-3">
-              <div className={`text-center text-[20px] font-black ${rankClassName[course.rank] ?? 'text-[#594136]'}`}>
-                {course.rank}
-              </div>
-              <CourseThumbnail tone={course.imageTone} className="h-12 w-12" />
-              <div className="min-w-0">
-                <h3 className="truncate text-[15px] font-bold leading-tight text-[#261912]">{course.title}</h3>
-                <p className="mt-1 text-[12px] leading-none text-[#594136]">
-                  {course.distanceKm.toFixed(1)}km · 난이도 {difficultyLabel[course.difficulty]}
-                </p>
-              </div>
-              <div className="whitespace-nowrap text-[16px] font-bold text-[#A04100]">🏃 {course.participantCount}명</div>
-            </div>
+            <ListRow
+              key={course.id}
+              leading={(
+                <div className="flex items-center gap-3">
+                  <strong className="w-5 text-center text-section-title font-extrabold tabular-nums text-brand-700">{course.rank}</strong>
+                  <CourseThumbnail tone={course.imageTone} className="h-12 w-12" />
+                </div>
+              )}
+              title={course.title}
+              description={(
+                <MetaList
+                  ariaLabel={`${course.title} 요약`}
+                  items={[
+                    { icon: <Icon name="route" size={16} />, label: `${course.distanceKm.toFixed(1)}km` },
+                    { label: `난이도 ${difficultyLabel[course.difficulty]}` },
+                  ]}
+                />
+              )}
+              trailing={(
+                <span className="inline-flex items-center gap-1 whitespace-nowrap text-label font-bold text-brand-700">
+                  <Icon name="runners" size={16} />{course.participantCount}명
+                </span>
+              )}
+            />
           ))}
         </div>
       </Card>

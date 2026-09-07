@@ -12,10 +12,10 @@ export function MeetupJoinRequestModal({
   return (
     <div className="fixed inset-0 z-40 bg-[rgba(38,25,18,0.45)]" onClick={onClose}>
       <div
-        className="mx-auto flex h-dvh max-w-[430px] flex-col bg-[#FFF8F6]"
+        className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-[#E1BFB1] bg-[#FFF8F6] px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-border-subtle bg-surface px-5 py-4">
           <button
             type="button"
             onClick={onClose}
