@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CourseRouteMap } from './CourseRouteMap'
 import { courseService } from './courseService'
 import type { CourseDifficulty, CourseListFilter, CourseListItem, CourseListScope, CourseType } from './types'
-import { Badge, Chip, Icon } from '../../components/ui'
+import { Badge, Chip, HorizontalScroller, Icon } from '../../components/ui'
 
 const FILTER_OPTIONS: { value: CourseListFilter; label: string }[] = [
   { value: 'ALL', label: '전체' },
@@ -242,7 +242,7 @@ export function CourseListView({
         </div>
       )}
 
-      <div className="course-library-filters" aria-label="코스 필터">
+      <HorizontalScroller aria-label="코스 필터">
         {filterOptions.map((option) => (
           <Chip
             selected={filter === option.value}
@@ -252,7 +252,7 @@ export function CourseListView({
             {option.label}
           </Chip>
         ))}
-      </div>
+      </HorizontalScroller>
 
       {hasError && (
         <p className="course-library-error">코스 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>

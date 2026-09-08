@@ -359,6 +359,8 @@
 ### 13.1 Empty
 
 - **[추가]** section empty는 padding 32px 20px, page empty는 최소 240px 높이와 padding 48px 20px.
+- **[추가]** empty state는 지정된 상태 영역 안에서 가로·세로 중앙 정렬한다. header, tab, filter, BottomNavigation 등 고정 UI를 제외한 실제 콘텐츠 영역을 정렬 기준으로 삼고, 상·하 padding은 동일하게 유지한다.
+- **[추가]** icon이 없는 empty state의 첫 제목에는 상단 여백을 두지 않는다. icon·title·description·action 사이의 간격만 요소 간 gap으로 적용해 콘텐츠 묶음이 세로 중심에서 밀리지 않게 한다.
 - **[추가]** 48–56px muted icon, 16px/700 title, 13–14px secondary description, 필요할 때 하나의 primary/secondary action.
 - **[추가]** dashed border는 사용자가 무언가 추가할 수 있는 creation empty에만 사용한다. 단순 결과 없음에는 borderless surface를 사용한다.
 

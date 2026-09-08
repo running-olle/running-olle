@@ -13,11 +13,7 @@
 .course-library-search input { color: var(--color-ink); font-size: var(--text-body); font-weight: 500; }
 .course-library-search input::placeholder { color: var(--color-ink-tertiary); }
 .course-library-search button { width: 36px; height: 36px; color: var(--color-ink-secondary); background: var(--color-surface-subtle); }
-.course-library-filters { gap: var(--spacing-2); margin: 0 calc(-1 * var(--space-page)); padding: 0 var(--space-page) var(--spacing-1); overscroll-behavior-inline: contain; scrollbar-width: none; }
-.course-library-filters::-webkit-scrollbar { display: none; }
-.course-library-filters .ui-chip { min-height: 40px; border-color: var(--color-border-default); color: var(--color-ink-secondary); background: var(--color-surface); font-size: var(--text-label); font-weight: 700; }
-.course-library-filters .ui-chip[aria-pressed="true"] { border-color: var(--color-brand-500); color: white; background: var(--color-brand-500); }
-
+.course-library > .ui-horizontal-scroller { padding-block: 0; }
 .course-library-summary { border-color: var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: none; }
 .course-library-summary div { min-height: 76px; }
 .course-library-summary div + div { border-left-color: var(--color-border-subtle); }
@@ -57,7 +53,7 @@
 .course-library.is-compact .course-library-card-image { height: 138px; }
 .course-library.is-compact .course-library-card-body { padding: var(--spacing-4); }
 .course-library.is-compact .course-library-card h2 { font-size: var(--text-card-title); }
-.course-library-empty { min-height: 260px; padding: var(--spacing-10) var(--spacing-5); border-color: var(--color-border-default); border-radius: var(--radius-lg); color: var(--color-ink); background: var(--color-surface); }
+.course-library-empty { justify-content: center; min-height: 260px; padding: var(--spacing-10) var(--spacing-5); border-color: var(--color-border-default); border-radius: var(--radius-lg); color: var(--color-ink); background: var(--color-surface); }
 .course-library-empty strong { color: var(--color-ink); font-size: var(--text-card-title); }
 .course-library-empty p { color: var(--color-ink-secondary); font-size: var(--text-body-sm); }
 .course-library-empty a { min-height: 44px; border-radius: var(--radius-control); background: var(--color-brand-500); font-size: var(--text-label); font-weight: 700; }

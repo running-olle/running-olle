@@ -198,7 +198,7 @@
 - Chip/Badge: 전역 `Badge`, onboarding `Choice`, course filters/chips, mypage `.chips`, community filter와 private `Badge` 2종이 중복된다.
 - Toggle: onboarding `.toggle`, course `.course-public-toggle`, running `.running-course-public-toggle`, mypage `.toggle-group` toggle이 각각 별도 DOM/CSS 구조다.
 - Modal/Sheet: 코스 소개/preview/save, 러닝 종료/save, 커뮤니티 composer/detail/chat/meetup 계열이 backdrop, header, close, scroll, radius, z-index를 독립 구현한다.
-- Loading/Empty/Error: `RequireAuth`, course list/detail/save, community `StateBox`, 마이 `Loading`/`Empty`, 지도 fallback이 동일 상태를 서로 다른 구조와 문구 스타일로 표시한다.
+- Loading/Empty/Error: `RequireAuth`, course list/detail/save, community `StateBox`, 마이 `Loading`/`Empty`, 지도 fallback이 동일 상태를 서로 다른 구조와 문구 스타일로 표시한다. 빈 상태 영역은 고정 UI를 제외한 실제 가용 영역을 기준으로 가로·세로 중앙 정렬하고, 동일한 상·하 padding과 요소 간 gap을 사용해야 한다. 첫 요소의 margin으로 콘텐츠 묶음이 중심에서 밀리지 않도록 한다.
 - Icon: bottom nav 문자 기호, 여러 emoji, `RunningIcon`, `MyPage`의 local SVG path map, 각 feature의 개별 SVG가 혼재한다.
 
 ### 중복/제한된 추상화
