@@ -25,7 +25,7 @@ export function Button({
   disabled,
   ...buttonProps
 }: ButtonProps) {
-  const isIconOnly = variant === 'icon' || variant === 'fab'
+  const isIconOnly = variant === 'icon' || (variant === 'fab' && children == null)
   return (
     <button
       type={type}

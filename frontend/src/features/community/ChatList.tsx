@@ -1,33 +1,17 @@
-import { Card, EmptyState, Input, SectionHeader } from '../../components/ui'
+import { Card, EmptyState, SectionHeader } from '../../components/ui'
 import type { ChatRoom } from './communityTypes'
 
 export function ChatList({
   groupChats,
   inquiryChats,
   onOpenChat,
-  searchValue,
-  onSearchChange,
-  searchOpen,
 }: {
   groupChats: ChatRoom[]
   inquiryChats: ChatRoom[]
   onOpenChat: (chat: ChatRoom) => void
-  searchValue: string
-  onSearchChange: (value: string) => void
-  searchOpen: boolean
 }) {
   return (
     <>
-      {searchOpen ? (
-        <div className="mt-4">
-          <Input aria-label="채팅방 이름이나 메시지로 검색"
-            value={searchValue}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="채팅방 이름이나 메시지로 검색"
-          />
-        </div>
-      ) : null}
-
       <SectionHeader className="mt-6" title="번개 채팅" description={`참여 중인 번개 채팅방 ${groupChats.length}개`} />
 
       <Card className="community-chat-list mt-4" padding="none" shadow="none">

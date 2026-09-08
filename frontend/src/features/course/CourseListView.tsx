@@ -23,10 +23,12 @@ const difficultyLabel: Record<CourseDifficulty, string> = {
   HIGH: '어려움',
 }
 
-type CourseListViewProps = {
+type CourseListViewHeaderProps =
+  | { showHeader?: true; title: string; subtitle: string }
+  | { showHeader: false; title?: string; subtitle?: string }
+
+type CourseListViewProps = CourseListViewHeaderProps & {
   scope: CourseListScope
-  title: string
-  subtitle: string
   emptyTitle: string
   emptyDescription: string
   kicker?: string
@@ -34,7 +36,6 @@ type CourseListViewProps = {
   createdBadgeLabel?: string
   onRemoveBookmark?: (bookmarkId: string) => Promise<void>
   onDeleteCourse?: (courseId: string) => Promise<void>
-  showHeader?: boolean
   showCreateAction?: boolean
   showCreatedFilter?: boolean
   showSummary?: boolean

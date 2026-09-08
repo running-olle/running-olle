@@ -1,4 +1,4 @@
-import { Icon, Chip, Spinner, ErrorState, EmptyState, Button, HorizontalScroller } from '../../components/ui'
+import { Icon, Chip, Spinner, ErrorState, EmptyState, Button, Fab, HorizontalScroller, Input } from '../../components/ui'
 import './community.css'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -400,39 +400,6 @@ export function CommunityPage() {
 
   return (
     <>
-      <section className="community-heading">
-
-        {activeTab === 'chat' ? (
-          <Button variant="ghost" size="sm"
-            type="button"
-            onClick={() => setChatSearchOpen((prev) => !prev)}
-            className="community-heading-action"
-            aria-label="채팅 검색"
-          >
-            <Icon name="search" />
-          </Button>
-        ) : (
-          <Button variant="primary" size="sm"
-            type="button"
-            onClick={() => {
-              if (activeTab === 'feed') {
-                setEditingPost(null)
-                setComposerOpen(true)
-                return
-              }
-              if (activeTab === 'meetup') {
-                setEditingMeetup(null)
-                setMeetupComposerOpen(true)
-              }
-            }}
-            className="community-heading-action"
-            aria-label={activeTab === 'meetup' ? '번개 만들기' : '게시글 작성'}
-          >
-            <Icon name="plus" /><span>{activeTab === 'meetup' ? '번개 만들기' : '글쓰기'}</span>
-          </Button>
-        )}
-      </section>
-
       <div className="community-tabs" aria-label="커뮤니티 메뉴">
         {tabs.map((tab) => (
           <button
@@ -513,15 +480,40 @@ export function CommunityPage() {
 
       {activeTab === 'chat' ? (
         <>
+          <div className={`community-chat-search ${chatSearchOpen ? 'is-open' : ''}`}>
+            {chatSearchOpen ? (
+              <>
+                <Input
+                  autoFocus
+                  aria-label="채팅방 이름이나 메시지로 검색"
+                  value={chatSearchValue}
+                  onChange={(event) => setChatSearchValue(event.target.value)}
+                  placeholder="채팅방 이름이나 메시지로 검색"
+                />
+                <Button
+                  variant="icon"
+                  label="채팅 검색 닫기"
+                  onClick={() => {
+                    setChatSearchOpen(false)
+                    setChatSearchValue('')
+                  }}
+                >
+                  <Icon name="close" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" label="채팅 검색" onClick={() => setChatSearchOpen(true)}>
+                <Icon name="search" />
+                <span>채팅 검색</span>
+              </Button>
+            )}
+          </div>
           {chatLoading ? <StateBox loading message="채팅 목록을 불러오는 중입니다." /> : null}
           {!chatLoading && chatError ? <StateBox message={chatError} tone="error" /> : null}
           {!chatLoading && !chatError ? (
             <ChatList
               groupChats={filteredChatRooms.filter((room) => room.type === 'group')}
               inquiryChats={filteredChatRooms.filter((room) => room.type === 'inquiry')}
-              searchOpen={chatSearchOpen}
-              searchValue={chatSearchValue}
-              onSearchChange={setChatSearchValue}
               onOpenChat={(room) => {
                 getChatRoom(room.id)
                   .then((nextRoom) => {
@@ -532,6 +524,27 @@ export function CommunityPage() {
               }}
             />
           ) : null}
+        </>
+      ) : null}
+
+      {activeTab !== 'chat' ? (
+        <>
+          <div className="floating-action-clearance" aria-hidden="true" />
+          <Fab
+            extended
+            className="page-action-fab"
+            icon={<Icon name="plus" />}
+            label={activeTab === 'meetup' ? '번개 만들기' : '글쓰기'}
+            onClick={() => {
+              if (activeTab === 'feed') {
+                setEditingPost(null)
+                setComposerOpen(true)
+                return
+              }
+              setEditingMeetup(null)
+              setMeetupComposerOpen(true)
+            }}
+          />
         </>
       ) : null}
 
