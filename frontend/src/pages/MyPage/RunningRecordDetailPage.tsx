@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { AppHeader } from '../../components/layout/Header'
+import { Badge, EmptyState, Icon, IconButton, Spinner } from '../../components/ui'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { myPageService } from '../../features/mypage/myPageService'
 import type { RunRecordDetail, RunRouteCoordinate } from '../../features/mypage/types'
@@ -55,12 +57,7 @@ export function RunningRecordDetailPage() {
       <div className="my-screen">
         <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
         <main className="my-content">
-          <div className="my-empty">
-            <span><BackIcon /></span>
-            <strong>러닝 기록을 불러오지 못했어요</strong>
-            <p>삭제되었거나 내 기록이 아닐 수 있어요.</p>
-            <Link className="primary-link" to="/mypage/history">히스토리로 돌아가기</Link>
-          </div>
+          <EmptyState className="my-empty" icon={<Icon name="history" size={28}/>} title="러닝 기록을 불러오지 못했어요" description="삭제되었거나 내 기록이 아닐 수 있어요." action={<Link className="ui-button ui-button--primary ui-button--md" to="/mypage/history">히스토리로 돌아가기</Link>}/>
         </main>
       </div>
     )
@@ -71,7 +68,7 @@ export function RunningRecordDetailPage() {
       <div className="my-screen">
         <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
         <main className="my-content">
-          <div className="my-loading"><div className="spinner" /><span>러닝 기록을 불러오는 중...</span></div>
+          <div className="my-loading"><Spinner label="러닝 기록을 불러오는 중"/><span>러닝 기록을 불러오는 중…</span></div>
         </main>
       </div>
     )
@@ -92,7 +89,7 @@ export function RunningRecordDetailPage() {
       <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
       <main className="my-content run-detail-content">
         <section className="run-detail-hero">
-          <span>{runningModeLabels[record.runningMode]}</span>
+          <Badge variant="brand">{runningModeLabels[record.runningMode]}</Badge>
           <h2>{record.courseName ?? '나만의 자유 러닝'}</h2>
           <p>{formatDateTime(record.startedAt)}</p>
         </section>
@@ -143,12 +140,12 @@ export function RunningRecordDetailPage() {
           {hasCourse ? (
             <>
               <div className="run-detail-course-summary">
-                <span>{courseTypeLabel}</span>
-                {difficultyLabel && <span>{difficultyLabel}</span>}
+                <Badge variant={record.courseType === 'SPOT_COURSE' ? 'spot' : 'neutral'}>{courseTypeLabel}</Badge>
+                {difficultyLabel && <Badge variant="neutral">{difficultyLabel}</Badge>}
               </div>
               <strong>{record.courseName}</strong>
               {record.courseDescription && <p>{record.courseDescription}</p>}
-              <Link className="outline-link" to={`/courses/${record.courseId}`}>코스 상세보기</Link>
+              <Link className="ui-button ui-button--secondary ui-button--md my-full-action" to={`/courses/${record.courseId}`}>코스 상세보기</Link>
             </>
           ) : (
             <p className="run-detail-muted">코스 없이 즉시 달리기로 저장한 기록이에요.</p>
@@ -178,21 +175,7 @@ export function RunningRecordDetailPage() {
 }
 
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <header className="my-header">
-      <button type="button" onClick={onBack} aria-label="뒤로"><BackIcon /></button>
-      <h1>{title}</h1>
-      <div />
-    </header>
-  )
-}
-
-function BackIcon() {
-  return (
-    <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  )
+  return <AppHeader className="my-header" title={title} leading={<IconButton icon={<Icon name="arrowLeft" size={22}/>} label="뒤로" onClick={onBack}/>}/>
 }
 
 function formatDateTime(value: string) {
