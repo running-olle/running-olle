@@ -1,8 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { RequireAuth } from './components/auth/RequireAuth'
 import { AppLayout } from './components/layout/AppLayout'
-import { CurrentLocationProvider } from './features/home/CurrentLocationContext'
-import { CurrentLocationLabel } from './features/home/CurrentLocationLabel'
 import { LoginPage } from './pages/Auth/LoginPage'
 import { OAuthCallbackPage } from './pages/Auth/OAuthCallbackPage'
 import { OnboardingPage } from './pages/Auth/OnboardingPage'
@@ -38,11 +36,7 @@ export default function App() {
       </Route>
 
       <Route element={<RequireAuth onboarding="required" />}>
-        <Route element={(
-          <CurrentLocationProvider>
-            <AppLayout leftSlot={<CurrentLocationLabel />} />
-          </CurrentLocationProvider>
-        )}>
+        <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />

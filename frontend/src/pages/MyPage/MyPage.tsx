@@ -29,9 +29,9 @@ function imageStyle(url: string | null) { return url ? { backgroundImage: `url($
 export function MyPage() {
   const [data, setData] = useState<Dashboard | null>(null); const [failed, setFailed] = useState(false)
   useEffect(() => { myPageService.dashboard().then(setData).catch(() => { setFailed(true); setData(EMPTY_DASHBOARD) }) }, [])
-  if (!data) return <div className="my-screen"><AppHeader className="my-header" title="마이페이지"/><main className="my-content"><Loading label="마이페이지를 불러오는 중…"/></main></div>
+  if (!data) return <div className="my-screen"><AppHeader variant="root" leading="마이페이지"/><main className="my-content"><Loading label="마이페이지를 불러오는 중…"/></main></div>
   const { profile } = data
-  return <div className="my-screen my-home"><AppHeader className="my-header" title="마이페이지" trailing={<NotificationCenter />}/><main className="my-content my-home-content">{failed && <p className="my-error" role="alert">데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>}
+  return <div className="my-screen my-home"><AppHeader variant="root" leading="마이페이지" trailing={<NotificationCenter />}/><main className="my-content my-home-content">{failed && <p className="my-error" role="alert">데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>}
     <section className="my-profile"><Link to="/mypage/settings/profile" className="avatar-edit" aria-label="프로필 편집"><Avatar profile={profile} large/><span><Icon name="edit" size={14}/></span></Link><h2>{profile.nickname}</h2><p>{profile.bio || '오늘도 나답게, 즐겁게 달려요.'}</p><Badge variant="brand"><Icon name="star" size={14}/>{typeLabels[profile.userTypes[0]] || '러닝 입문자'}</Badge></section>
     <section className="my-stats" aria-label="누적 러닝 통계"><div><span>누적 거리</span><strong>{data.totalDistanceKm.toFixed(1)}<small>km</small></strong></div><div><span>총 완주</span><strong>{data.completionCount}<small>회</small></strong></div><div><span>달린 코스</span><strong>{data.uniqueCourseCount}<small>개</small></strong></div></section>
     <nav className="my-menu" aria-label="마이페이지 메뉴"><Menu to="/mypage/history" icon="history" label="러닝 히스토리" description="완주 기록과 방문 장소"/><Menu to="/mypage/bookmarks" icon="bookmark" label="저장한 코스" description="내 코스와 북마크"/><Menu to="/mypage/reports" icon="chart" label="런트립 리포트" description="여행별 러닝 통계"/><Menu to="/mypage/settings" icon="settings" label="설정" description="계정, 프로필, 알림"/></nav>

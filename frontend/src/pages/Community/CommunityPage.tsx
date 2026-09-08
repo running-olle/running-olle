@@ -401,7 +401,7 @@ export function CommunityPage() {
   return (
     <>
       <section className="community-heading">
-        <div><h1>커뮤니티</h1><p>함께 나누는 제주 러닝</p></div>
+
         {activeTab === 'chat' ? (
           <Button variant="ghost" size="sm"
             type="button"
