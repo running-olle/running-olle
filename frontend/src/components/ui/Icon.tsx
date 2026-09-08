@@ -1,6 +1,11 @@
 import type { SVGProps } from 'react'
 
 export type IconName =
+  | 'arrowLeft'
+  | 'arrowUp'
+  | 'check'
+  | 'heart'
+  | 'share'
   | 'bookmark'
   | 'camera'
   | 'calendar'
@@ -49,6 +54,11 @@ export function Icon({ name, size = 20, ...svgProps }: IconProps) {
   }
 
   if (name === 'bookmark') return <svg {...commonProps}><path d="M7 4.75A2.25 2.25 0 0 1 9.25 2.5h5.5A2.25 2.25 0 0 1 17 4.75v15.1a.65.65 0 0 1-1.02.53L12 17.6l-3.98 2.78A.65.65 0 0 1 7 19.85V4.75Z" /></svg>
+  if (name === 'arrowLeft') return <svg {...commonProps}><path d="m11 5-7 7 7 7M4 12h16" /></svg>
+  if (name === 'arrowUp') return <svg {...commonProps}><path d="m5 11 7-7 7 7M12 4v16" /></svg>
+  if (name === 'check') return <svg {...commonProps}><path d="m5 12 4 4L19 6" /></svg>
+  if (name === 'heart') return <svg {...commonProps}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+  if (name === 'share') return <svg {...commonProps}><path d="M12 15V3m-4 4 4-4 4 4M5 12v8h14v-8" /></svg>
   if (name === 'camera') return <svg {...commonProps}><path d="M5 8h3l1.5-2h5L16 8h3a2 2 0 0 1 2 2v8H3v-8a2 2 0 0 1 2-2Z" /><circle cx="12" cy="13" r="3" /></svg>
   if (name === 'calendar') return <svg {...commonProps}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
   if (name === 'chevronRight') return <svg {...commonProps}><path d="m9 18 6-6-6-6" /></svg>

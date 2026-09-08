@@ -1,0 +1,75 @@
+.community-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); }
+.community-heading h1 { margin: 0; color: var(--color-ink); font-size: var(--text-page-title); line-height: var(--text-page-title--line-height); font-weight: 800; }
+.community-heading p { margin: var(--spacing-2) 0 0; color: var(--color-ink-secondary); font-size: var(--text-body-sm); }
+.community-heading-action { flex-shrink: 0; }
+.community-tabs { display: flex; margin-top: var(--spacing-6); border-bottom: 1px solid var(--color-border-subtle); }
+.community-tab { flex: 1; min-height: 48px; border-bottom: 2px solid transparent; color: var(--color-ink-secondary); background: transparent; font-size: var(--text-body-sm); font-weight: 700; }
+.community-tab[aria-pressed="true"] { color: var(--color-brand-700); border-bottom-color: var(--color-brand-500); }
+.community-card { border: 1px solid var(--color-border-subtle); overflow-wrap: anywhere; }
+.community-card > :first-child { flex-wrap: wrap; }
+.community-card button { min-height: 44px; }
+.community-card .ui-button__content { min-width: 0; }
+.community-card .ui-button { white-space: normal; }
+.community-card .flex { min-width: 0; }
+.community-feed-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-2); margin-top: var(--spacing-4); padding-top: var(--spacing-2); border-top: 1px solid var(--color-border-subtle); color: var(--color-ink-secondary); font-size: var(--text-label); }
+.community-feed-actions .ui-button { padding-inline: var(--spacing-2); white-space: nowrap; flex-shrink: 0; }
+.community-feed-actions .ui-button__content { white-space: nowrap; }
+.community-image-add .ui-button__content { flex-direction: column; white-space: nowrap; }
+.community-loading { display: grid; justify-items: center; gap: var(--spacing-3); padding: var(--spacing-10) var(--space-page); color: var(--color-ink-secondary); font-size: var(--text-body-sm); }
+.community-backdrop { position: fixed; inset: 0; z-index: var(--z-backdrop); background: var(--color-overlay); }
+.community-dialog.full-screen-page { display: flex; flex-direction: column; min-height: 0; height: 100vh; height: 100dvh; overflow: hidden; overflow-wrap: anywhere; }
+.community-dialog-header { display: flex; flex: 0 0 auto; align-items: center; gap: var(--spacing-3); min-height: var(--app-header-total-height); padding: calc(var(--safe-top) + var(--spacing-2)) var(--space-page) var(--spacing-2); border-bottom: 1px solid var(--color-border-subtle); background: var(--color-surface); }
+.community-dialog-header:has(> strong) { justify-content: space-between; }
+.community-dialog-header > strong { font-size: var(--text-app-title); }
+.community-dialog-header > div.flex:not(.ml-auto) { width: 100%; min-width: 0; }
+.community-dialog-header .ui-button { padding-inline: var(--spacing-3); flex-shrink: 0; }
+.community-dialog-header .ui-button__content { gap: var(--spacing-1); }
+.community-dialog-body { min-height: 0; overscroll-behavior: contain; padding-bottom: calc(var(--spacing-6) + var(--safe-bottom)); }
+.community-dialog-body .ui-input { min-width: 0; }
+.community-dialog-body select.ui-input { padding: var(--spacing-3); }
+.community-dialog-body .ui-textarea { font-size: var(--text-body); }
+.community-dialog-body button { min-height: 44px; }
+.community-dialog-body .ui-button { white-space: normal; }
+.community-dialog-footer { flex: 0 0 auto; padding: var(--spacing-3) var(--space-page) calc(var(--spacing-3) + var(--safe-bottom)); border-top: 1px solid var(--color-border-subtle); background: var(--color-surface); }
+.community-dialog-footer .ui-textarea { min-height: 48px; max-height: 144px; min-width: 0; font-size: var(--text-body); }
+.community-dialog-footer .ui-button { white-space: normal; }
+.community-dialog-footer + * { flex-shrink: 0; }
+.community-dialog :is(.whitespace-pre-wrap, p) { overflow-wrap: anywhere; }
+.community-dialog .ui-chip { white-space: normal; }
+.community-dialog button:focus-visible, .community-card button:focus-visible, .community-tab:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+.community-message { max-width: calc(100% - var(--spacing-10)); min-width: 0; }
+.community-request-body { overflow-y: auto; min-height: 0; padding-block: var(--spacing-6); justify-content: flex-start; }
+.community-chat-list { overflow: hidden; border: 1px solid var(--color-border-subtle); }
+.community-chat-list > button { background: var(--color-surface); }
+.community-chat-list > button:hover { background: var(--color-surface-subtle); }
+.community-course-preview-backdrop { z-index: var(--z-dialog); }
+.community-course-preview { position: relative; max-width: var(--app-max-width); max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - var(--spacing-8)); overflow-y: auto; overscroll-behavior: contain; padding: var(--spacing-5); }
+.community-course-preview-close { position: absolute; top: var(--spacing-3); right: var(--spacing-3); }
+.community-course-preview-title { padding-right: var(--spacing-12); }
+.community-course-preview-title h2 { margin: var(--spacing-3) 0 var(--spacing-2); font-size: var(--text-section-title); line-height: var(--text-section-title--line-height); font-weight: 800; overflow-wrap: anywhere; }
+.community-course-preview-title p { color: var(--color-ink-secondary); font-size: var(--text-caption); }
+.community-course-preview-map { height: 220px; margin-top: var(--spacing-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); }
+.community-course-preview-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--spacing-4); padding-block: var(--spacing-4); border-block: 1px solid var(--color-border-subtle); font-variant-numeric: tabular-nums; }
+.community-course-preview-stats div { display: flex; flex-direction: column; gap: var(--spacing-2); text-align: center; }
+.community-course-preview-stats div + div { border-left: 1px solid var(--color-border-subtle); }
+.community-course-preview-stats span, .community-course-preview-stats small { color: var(--color-ink-secondary); font-size: var(--text-caption); }
+.community-course-preview-stats strong { font-size: var(--text-card-title); }
+.community-course-preview-stats small { margin-left: var(--spacing-0-5); }
+.community-course-preview-description { margin-top: var(--spacing-4); font-size: var(--text-body-sm); line-height: var(--text-body-sm--line-height); color: var(--color-ink-secondary); overflow-wrap: anywhere; }
+.community-course-preview-waypoints { margin-top: var(--spacing-5); padding: var(--spacing-4); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.community-course-preview-waypoints > strong { font-size: var(--text-card-title); }
+.community-course-preview-waypoints ol { display: grid; gap: var(--spacing-3); margin-top: var(--spacing-4); list-style: none; padding: 0; }
+.community-course-preview-waypoints li { display: flex; align-items: center; gap: var(--spacing-3); }
+.community-course-preview-waypoints li > span { display: grid; place-items: center; flex: 0 0 var(--spacing-6); height: var(--spacing-6); border-radius: var(--radius-full); background: var(--color-surface); font-size: var(--text-caption); font-weight: 700; }
+.community-course-preview-waypoints p, .community-course-preview-waypoints small { color: var(--color-ink-secondary); font-size: var(--text-caption); overflow-wrap: anywhere; }
+.community-course-preview-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-3); margin-top: var(--spacing-5); }
+.community-course-preview-state { display: grid; place-items: center; gap: var(--spacing-3); min-height: 260px; padding: var(--spacing-8); color: var(--color-ink-secondary); font-size: var(--text-body-sm); text-align: center; }
+@media (max-width: 360px) {
+  .community-heading { align-items: flex-start; }
+  .community-heading p { max-width: 20ch; }
+  .community-dialog-header { gap: var(--spacing-2); flex-wrap: wrap; }
+  .community-dialog-header .ml-auto { gap: var(--spacing-1); }
+  .community-dialog-header .ui-button { padding-inline: var(--spacing-2); }
+  .community-dialog-body .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+  .community-card > .mt-4.flex { flex-wrap: wrap; gap: var(--spacing-3); }
+}

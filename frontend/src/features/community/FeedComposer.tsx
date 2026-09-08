@@ -1,3 +1,5 @@
+import { Icon, Chip, Button } from '../../components/ui'
+import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   createFeedPost,
@@ -137,30 +139,30 @@ export function FeedComposer({ editingPost, onCancel, onCreated }: FeedComposerP
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-[rgba(38,25,18,0.45)]">
-      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas">
-        <div className="flex items-center justify-between border-b border-border-subtle bg-surface px-5 py-4">
-          <button
+    <div className="community-backdrop">
+      <FullScreenPage scroll={false} role="dialog" aria-modal="true" aria-label="게시글 작성" className="community-dialog">
+        <div className="community-dialog-header">
+          <Button variant="secondary" size="sm"
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-[#E1BFB1] px-4 py-2 text-[13px] font-bold text-[#594136]"
+            className="rounded-full border border-border-subtle px-4 py-2 text-label font-bold text-ink-secondary"
           >
             취소
-          </button>
-          <strong className="text-[16px] font-bold text-[#261912]">
+          </Button>
+          <strong className="text-card-title font-bold text-ink">
             {isEditMode ? '게시글 수정' : '게시글 작성'}
           </strong>
-          <button
+          <Button variant="primary" size="sm"
             type="button"
             onClick={submit}
             disabled={submitting || uploadingImages}
-            className="rounded-full bg-[linear-gradient(135deg,#FF6F0F_0%,#FD934C_100%)] px-4 py-2 text-[13px] font-bold text-white disabled:opacity-50"
+            className="rounded-full bg-brand-500 px-4 py-2 text-label font-bold text-surface disabled:opacity-50"
           >
             {submitting ? (isEditMode ? '수정 중' : '등록 중') : isEditMode ? '수정' : '게시'}
-          </button>
+          </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="community-dialog-body flex-1 overflow-y-auto px-5 py-5">
           <div className="grid gap-4">
             <OptionSection
               title="러닝 기록 연결"
@@ -185,19 +187,19 @@ export function FeedComposer({ editingPost, onCancel, onCreated }: FeedComposerP
           </div>
 
           <div className="mt-5">
-            <label className="mb-2 block text-[13px] font-bold text-[#261912]">내용</label>
-            <textarea
+            <label className="mb-2 block text-label font-bold text-ink">내용</label>
+            <textarea aria-label="오늘의 러닝 기록이나 제주에서의 경험을 남겨 보세요."
               value={content}
               onChange={(event) => setContent(event.target.value)}
               placeholder="오늘의 러닝 기록이나 제주에서의 경험을 남겨 보세요."
-              className="min-h-[150px] w-full rounded-[12px] border border-[#E1BFB1] bg-white px-4 py-3 text-[14px] leading-6 text-[#261912] outline-none"
+              className="ui-textarea min-h-[150px] w-full rounded-control border border-border-subtle bg-surface px-4 py-3 text-body-sm leading-6 text-ink outline-none"
             />
           </div>
 
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between">
-              <label className="block text-[13px] font-bold text-[#261912]">사진</label>
-              <span className="text-[11px] text-[#594136]">{selectedImages.length} / 10</span>
+              <label className="block text-label font-bold text-ink">사진</label>
+              <span className="text-caption text-ink-secondary">{selectedImages.length} / 10</span>
             </div>
             <input
               ref={fileInputRef}
@@ -208,26 +210,26 @@ export function FeedComposer({ editingPost, onCancel, onCreated }: FeedComposerP
               onChange={handleFileChange}
             />
             <div className="flex gap-3 overflow-x-auto pb-1">
-              <button
+              <Button variant="secondary" size="sm"
                 type="button"
                 onClick={openFilePicker}
                 disabled={remainingCount <= 0 || uploadingImages}
-                className="flex h-[72px] w-[72px] shrink-0 flex-col items-center justify-center rounded-[12px] border border-dashed border-[#E1BFB1] bg-white text-[11px] font-bold text-[#594136] disabled:opacity-40"
+                className="community-image-add flex h-18 w-18 shrink-0 flex-col items-center justify-center rounded-control border border-dashed border-border-subtle bg-surface text-caption font-bold text-ink-secondary disabled:opacity-40"
               >
-                <span className="text-[22px] leading-none">+</span>
+                <span className="text-section-title leading-none">+</span>
                 {uploadingImages ? '업로드 중' : '추가'}
-              </button>
+              </Button>
               {selectedImages.map((imageUrl, index) => (
                 <button
                   key={`${imageUrl}-${index}`}
                   type="button"
                   onClick={() => removeImage(index)}
-                  className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-[12px] bg-cover bg-center"
+                  className="relative h-18 w-18 shrink-0 overflow-hidden rounded-control bg-cover bg-center"
                   style={{ backgroundImage: `url(${imageUrl})` }}
                   aria-label="이미지 제거"
                 >
-                  <span className="absolute right-1 top-1 rounded-full bg-[rgba(38,25,18,0.7)] px-1.5 text-[10px] text-white">
-                    ×
+                  <span className="absolute right-1 top-1 rounded-full bg-(--color-overlay) px-1.5 text-caption text-surface">
+                    <Icon name="close" />
                   </span>
                 </button>
               ))}
@@ -242,21 +244,21 @@ export function FeedComposer({ editingPost, onCancel, onCreated }: FeedComposerP
           <button
             type="button"
             onClick={() => setPhotoTagged((prev) => !prev)}
-            className={`mt-4 flex w-full items-center justify-between rounded-[12px] border px-4 py-3 text-left ${
-              photoTagged ? 'border-[#FF6F0F] bg-[#FFF1EA]' : 'border-[#E1BFB1] bg-white'
+            className={`mt-4 flex w-full items-center justify-between rounded-control border px-4 py-3 text-left ${
+              photoTagged ? 'border-brand-500 bg-surface-subtle' : 'border-border-subtle bg-surface'
             }`}
           >
             <div>
-              <div className="text-[13px] font-bold text-[#261912]">포토 태그</div>
-              <div className="mt-1 text-[11px] text-[#594136]">
+              <div className="text-label font-bold text-ink">포토 태그</div>
+              <div className="mt-1 text-caption text-ink-secondary">
                 사진 중심 피드 필터에서 바로 노출됩니다.
               </div>
             </div>
-            <span className="text-[12px] font-bold text-[#A04100]">{photoTagged ? 'ON' : 'OFF'}</span>
+            <span className="text-caption font-bold text-brand-700">{photoTagged ? 'ON' : 'OFF'}</span>
           </button>
 
           {(selectedRunningRecord || selectedCourse) && !loadingOptions ? (
-            <div className="mt-4 rounded-[12px] bg-[#FFF1EA] p-4 text-[12px] text-[#594136]">
+            <div className="mt-4 rounded-control bg-surface-subtle p-4 text-caption text-ink-secondary">
               {selectedRunningRecord ? (
                 <div>
                   러닝 기록: {selectedRunningRecord.label}
@@ -272,9 +274,9 @@ export function FeedComposer({ editingPost, onCancel, onCreated }: FeedComposerP
             </div>
           ) : null}
 
-          {error ? <p className="mt-4 rounded-[12px] bg-[#FFF1EE] px-4 py-3 text-[12px] text-[#B91C1C]">{error}</p> : null}
+          {error ? <p className="mt-4 rounded-control bg-danger-subtle px-4 py-3 text-caption text-danger">{error}</p> : null}
         </div>
-      </div>
+      </FullScreenPage>
     </div>
   )
 }
@@ -299,14 +301,14 @@ function OptionSection({
   disabled?: boolean
 }) {
   return (
-    <div className="rounded-[16px] bg-[#FFF1EA] p-4 shadow-[0px_4px_12px_rgba(0,0,0,0.05)]">
-      <div className="text-[14px] font-bold text-[#261912]">{title}</div>
-      <div className="mt-1 text-[12px] text-[#594136]">{helper}</div>
-      <select
+    <div className="rounded-md bg-surface-subtle p-4 shadow-none">
+      <div className="text-body-sm font-bold text-ink">{title}</div>
+      <div className="mt-1 text-caption text-ink-secondary">{helper}</div>
+      <select aria-label={title}
         value={selectedId}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="mt-3 w-full rounded-[12px] border border-[#E1BFB1] bg-white px-4 py-3 text-[13px] text-[#261912] outline-none disabled:opacity-60"
+        className="ui-input mt-3 w-full rounded-control border border-border-subtle bg-surface px-4 py-3 text-label text-ink outline-none disabled:opacity-60"
       >
         <option value="">{loading ? '불러오는 중...' : emptyLabel}</option>
         {options.map((option) => (
@@ -320,17 +322,7 @@ function OptionSection({
 }
 
 function ToggleChoice({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-[12px] border px-4 py-3 text-[13px] font-bold ${
-        active ? 'border-[#FF6F0F] bg-[#FFF1EA] text-[#A04100]' : 'border-[#E1BFB1] bg-white text-[#594136]'
-      }`}
-    >
-      {label}
-    </button>
-  )
+  return <Chip variant="choice" selected={active} onClick={onClick}>{label}</Chip>
 }
 
 function buildOptionLabel(option: FeedSelectionOption) {

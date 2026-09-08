@@ -1,3 +1,5 @@
+import { Card, Icon, Button } from '../../components/ui'
+import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useState } from 'react'
 import { getFeedPost, type FeedPost } from './api'
 import {
@@ -125,49 +127,49 @@ export function FeedDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-30 bg-[rgba(38,25,18,0.45)]" onClick={onClose}>
-      <div
-        className="mx-auto flex h-dvh max-w-[430px] flex-col bg-canvas"
+    <div className="community-backdrop" onClick={onClose}>
+      <FullScreenPage
+        scroll={false} role="dialog" aria-modal="true" aria-label="피드 상세" className="community-dialog"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-border-subtle bg-surface px-5 py-4">
-          <button
+        <div className="community-dialog-header">
+          <Button variant="ghost" size="sm"
             type="button"
             onClick={onClose}
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-[#F5F5F5] text-[17px] text-[#261912]"
+            className="flex h-11 w-11 items-center justify-center rounded-control bg-surface-subtle text-app-title text-ink"
             aria-label="닫기"
           >
-            ←
-          </button>
+            <Icon name="arrowLeft" />
+          </Button>
           <div className="min-w-0">
-            <div className="text-[17px] font-bold text-[#261912]">피드 상세</div>
-            <div className="mt-0.5 text-[11px] text-[#8D7164]">
+            <div className="text-app-title font-bold text-ink">피드 상세</div>
+            <div className="mt-0.5 text-caption text-ink-secondary">
               {post.nickname} · {post.region}
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#F5F5F5] px-5 py-4">
-          <article className="rounded-[18px] bg-white px-5 py-4 shadow-[0px_2px_12px_rgba(0,0,0,0.06)]">
+        <div className="community-dialog-body flex-1 overflow-y-auto bg-surface-subtle px-5 py-4">
+          <Card as="article" shadow="none" className="community-card">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-[14px] font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-body-sm font-bold text-surface">
                   {post.nickname.slice(0, 1)}
                 </div>
                 <div>
-                  <div className="text-[14px] font-bold text-[#261912]">{post.nickname}</div>
-                  <div className="mt-1 text-[11px] text-[#8D7164]">{formatFullDate(post.createdAt)}</div>
+                  <div className="text-body-sm font-bold text-ink">{post.nickname}</div>
+                  <div className="mt-1 text-caption text-ink-secondary">{formatFullDate(post.createdAt)}</div>
                 </div>
               </div>
 
               {post.mine ? (
-                <div className="flex items-center gap-3 text-[12px] font-bold text-[#8D7164]">
-                  <button type="button" onClick={() => onEdit(post)}>
+                <div className="flex items-center gap-3 text-caption font-bold text-ink-secondary">
+                  <Button variant="ghost" size="sm" type="button" onClick={() => onEdit(post)}>
                     수정
-                  </button>
-                  <button type="button" onClick={handleDeletePost}>
+                  </Button>
+                  <Button variant="danger" size="sm" type="button" onClick={handleDeletePost}>
                     삭제
-                  </button>
+                  </Button>
                 </div>
               ) : null}
             </div>
@@ -181,27 +183,27 @@ export function FeedDetailModal({
                   }
                 }}
                 disabled={!post.course}
-                className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 ${
-                  post.course?.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+                className={`mt-4 flex w-full items-center gap-3 rounded-control px-3 py-3 ${
+                  post.course?.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
                 }`}
               >
                 <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
                   style={{
-                    background: post.course?.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+                    background: post.course?.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
                   }}
                 >
                   {post.course?.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
                 </div>
                 <div className="min-w-0 text-left">
-                  <div className="truncate text-[13px] font-bold text-[#261912]">{post.course?.name ?? '러닝 기록'}</div>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#594136]">
+                  <div className="truncate text-label font-bold text-ink">{post.course?.name ?? '러닝 기록'}</div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-caption text-ink-secondary">
                     <span>거리 {post.runningRecord.distanceKm.toFixed(2)}km</span>
                     <span>시간 {formatDuration(post.runningRecord.durationSeconds)}</span>
                     <span>{formatPace(post.runningRecord.distanceKm, post.runningRecord.durationSeconds)}</span>
                   </div>
                 </div>
-                {post.course ? <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span> : null}
+                {post.course ? <span className="ml-auto shrink-0 text-caption font-bold text-brand-500">코스 보기</span> : null}
               </button>
             ) : null}
 
@@ -209,117 +211,118 @@ export function FeedDetailModal({
               <button
                 type="button"
                 onClick={() => onOpenCourse(post.course!.id)}
-                className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
-                  post.course.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+                className={`mt-4 flex w-full items-center gap-3 rounded-control px-3 py-3 text-left ${
+                  post.course.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
                 }`}
               >
                 <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
                   style={{
-                    background: post.course.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+                    background: post.course.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
                   }}
                 >
                   {post.course.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate text-[13px] font-bold text-[#261912]">{post.course.name}</div>
-                  <div className="mt-1 text-[11px] font-bold text-[#594136]">
+                  <div className="truncate text-label font-bold text-ink">{post.course.name}</div>
+                  <div className="mt-1 text-caption font-bold text-ink-secondary">
                     {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
                   </div>
                 </div>
-                <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span>
+                <span className="ml-auto shrink-0 text-caption font-bold text-brand-500">코스 보기</span>
               </button>
             ) : null}
 
-            <div className="mt-4 whitespace-pre-wrap text-[14px] leading-[1.7] text-[#261912]">{post.content}</div>
+            <div className="mt-4 whitespace-pre-wrap text-body-sm leading-relaxed text-ink">{post.content}</div>
 
             {post.imageUrls.length > 0 ? (
               <div className="mt-4 grid grid-cols-1 gap-2">
                 {post.imageUrls.map((imageUrl, index) => (
                   <div
                     key={`${imageUrl}-${index}`}
-                    className="aspect-[4/3] rounded-[12px] bg-cover bg-center"
+                    className="aspect-[4/3] rounded-control bg-cover bg-center"
                     style={{ backgroundImage: `url(${imageUrl})` }}
                   />
                 ))}
               </div>
             ) : null}
 
-            <div className="mt-4 flex items-center gap-4 border-t border-[#F5E7E1] pt-3 text-[13px] font-medium text-[#8D7164]">
-              <button
+            <div className="community-feed-actions">
+              <Button variant="ghost" size="sm"
                 type="button"
                 onClick={handleLike}
-                className={`flex items-center gap-1 ${post.likedByMe ? 'text-[#FF3B30]' : ''}`}
+          aria-label="좋아요" aria-pressed={post.likedByMe}
+                className={`flex items-center gap-1 ${post.likedByMe ? 'text-danger' : ''}`}
               >
-                <span>{post.likedByMe ? '♥' : '♡'}</span>
+                <Icon name="heart" fill={post.likedByMe ? 'currentColor' : 'none'} />
                 <span>{post.likeCount}</span>
-              </button>
+              </Button>
               <span>댓글 {post.commentCount}</span>
               {post.course ? (
-                <button
+                <Button variant="ghost" size="sm"
                   type="button"
                   onClick={() => onOpenCourse(post.course!.id)}
-                  className="ml-auto text-[12px] font-bold text-[#FF6F0F]"
+                  className="ml-auto text-caption font-bold text-brand-500"
                 >
                   {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
-                </button>
+                </Button>
               ) : null}
             </div>
-          </article>
+          </Card>
 
-          <section className="mt-3 rounded-[18px] bg-white px-5 py-4 shadow-[0px_2px_12px_rgba(0,0,0,0.06)]">
-            <div className="text-[14px] font-bold text-[#261912]">댓글 {post.commentCount}</div>
+          <section className="mt-3 rounded-md bg-surface px-5 py-4 shadow-none">
+            <div className="text-body-sm font-bold text-ink">댓글 {post.commentCount}</div>
 
             <div className="mt-4 flex gap-2">
-              <textarea
+              <textarea aria-label="댓글을 입력해 주세요."
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
                 onKeyDown={handleCommentKeyDown}
                 placeholder="댓글을 입력해 주세요."
                 rows={1}
-                className="min-h-11 flex-1 resize-none rounded-[22px] border border-border-default bg-surface px-4 py-3 text-[13px] leading-5 text-ink outline-none"
+                className="ui-textarea min-h-11 flex-1 resize-none rounded-lg border border-border-default bg-surface px-4 py-3 text-label leading-5 text-ink outline-none"
               />
-              <button
+              <Button variant="primary" size="sm"
                 type="button"
                 onClick={handleCommentSubmit}
                 disabled={pending || !comment.trim()}
-                className="h-11 rounded-full bg-[linear-gradient(135deg,#FF6F0F_0%,#FD934C_100%)] px-4 text-[13px] font-bold text-white disabled:opacity-40"
+                className="h-11 rounded-full bg-brand-500 px-4 text-label font-bold text-surface disabled:opacity-40"
               >
                 등록
-              </button>
+              </Button>
             </div>
 
             <div className="mt-3 space-y-3">
               {post.comments.length === 0 ? (
-                <div className="rounded-[12px] bg-surface-subtle px-4 py-4 text-[12px] text-ink-tertiary">
+                <div className="rounded-control bg-surface-subtle px-4 py-4 text-caption text-ink-tertiary">
                   아직 댓글이 없습니다.
                 </div>
               ) : (
                 post.comments.map((item) => (
-                  <div key={item.id} className="rounded-[12px] bg-surface-subtle px-4 py-3">
+                  <div key={item.id} className="rounded-control bg-surface-subtle px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-[12px] font-bold text-[#261912]">{item.nickname}</div>
-                        <div className="mt-0.5 text-[10px] text-[#8D7164]">{formatRelativeTime(item.createdAt)}</div>
+                        <div className="text-caption font-bold text-ink">{item.nickname}</div>
+                        <div className="mt-0.5 text-caption text-ink-secondary">{formatRelativeTime(item.createdAt)}</div>
                       </div>
                       {item.mine ? (
-                        <button
+                        <Button variant="danger" size="sm"
                           type="button"
                           onClick={() => handleDeleteComment(item.id)}
-                          className="text-[10px] font-bold text-[#8D7164]"
+                          className="text-caption font-bold text-ink-secondary"
                         >
                           삭제
-                        </button>
+                        </Button>
                       ) : null}
                     </div>
-                    <div className="mt-1 whitespace-pre-wrap text-[12px] leading-5 text-[#594136]">{item.content}</div>
+                    <div className="mt-1 whitespace-pre-wrap text-caption leading-5 text-ink-secondary">{item.content}</div>
                   </div>
                 ))
               )}
             </div>
           </section>
         </div>
-      </div>
+      </FullScreenPage>
     </div>
   )
 }

@@ -65,7 +65,7 @@
 .ui-badge--info, .ui-badge--spot { color: var(--color-info); background: var(--color-info-subtle); }
 .ui-badge--neutral { color: var(--color-ink-secondary); background: var(--color-surface-muted); }
 
-.ui-chip { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: var(--spacing-1); padding: 0 14px; border: 1px solid var(--color-border-default); border-radius: var(--radius-full); color: var(--color-ink-secondary); background: var(--color-surface); font-size: var(--text-label); line-height: 1; font-weight: 700; transition: background-color var(--motion-control) var(--ease-standard), border-color var(--motion-control) var(--ease-standard), color var(--motion-control) var(--ease-standard); }
+.ui-chip { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; gap: var(--spacing-1); padding: 0 14px; border: 1px solid var(--color-border-default); border-radius: var(--radius-full); color: var(--color-ink-secondary); background: var(--color-surface); font-size: var(--text-label); line-height: 1; font-weight: 700; transition: background-color var(--motion-control) var(--ease-standard), border-color var(--motion-control) var(--ease-standard), color var(--motion-control) var(--ease-standard); }
 .ui-chip:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
 .ui-chip--filter[aria-pressed="true"] { color: white; background: var(--color-brand-500); border-color: var(--color-brand-500); }
 .ui-chip--choice { min-height: 44px; padding-inline: var(--spacing-4); }
@@ -151,7 +151,8 @@
 .ui-state--error { background: var(--color-danger-subtle); }
 .ui-state__icon { display: inline-flex; width: 56px; height: 56px; align-items: center; justify-content: center; border-radius: var(--radius-full); color: var(--color-brand-500); background: var(--color-brand-050); }
 .ui-state--error .ui-state__icon { color: var(--color-danger); background: white; }
-.ui-state__title { margin: var(--spacing-4) 0 0; font-size: var(--text-card-title); line-height: 1.5rem; font-weight: 700; }
+.ui-state__title { margin: 0; font-size: var(--text-card-title); line-height: 1.5rem; font-weight: 700; }
+.ui-state__icon + .ui-state__title { margin-top: var(--spacing-4); }
 .ui-state__description { max-width: 280px; margin: var(--spacing-2) 0 0; color: var(--color-ink-secondary); font-size: var(--text-body-sm); line-height: 1.25rem; }
 .ui-state__action { margin-top: var(--spacing-4); }
 
