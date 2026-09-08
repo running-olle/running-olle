@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { courseService } from '../../features/course/courseService'
 import type { CourseDetail, CourseDifficulty, CourseType } from '../../features/course/types'
-import { Badge, Icon } from '../../components/ui'
+import { Badge, Button, ErrorState, Icon, Modal, Spinner } from '../../components/ui'
 
 const courseTypeLabel: Record<CourseType, string> = {
   RUNNING_COURSE: '러닝 코스',
@@ -85,11 +85,13 @@ export function CourseDetailPage() {
   if (hasError) {
     return (
       <section className="course-detail-page">
-        <div className="course-detail-empty">
-          <strong>코스를 불러오지 못했어요</strong>
-          <p>삭제되었거나 볼 수 없는 코스일 수 있어요.</p>
-          <Link to="/courses">코스 탐색으로</Link>
-        </div>
+        <ErrorState
+          className="course-detail-empty"
+          icon={<Icon name="course" />}
+          title="코스를 불러오지 못했어요"
+          description="삭제되었거나 볼 수 없는 코스일 수 있어요."
+          action={<Link to="/courses">코스 탐색으로</Link>}
+        />
       </section>
     )
   }
@@ -97,7 +99,7 @@ export function CourseDetailPage() {
   if (!course) {
     return (
       <section className="course-detail-page">
-        <div className="course-library-loading"><div className="spinner" /><span>코스를 불러오는 중이에요</span></div>
+        <div className="course-library-loading"><Spinner label="코스를 불러오는 중" /><span>코스를 불러오는 중이에요</span></div>
       </section>
     )
   }
@@ -136,7 +138,7 @@ export function CourseDetailPage() {
           <strong>{creatorName}</strong>
           <p>{formatCreatedAt(course.createdAt)} 등록 · {course.isPublic ? '공개 코스' : '비공개 코스'}</p>
         </div>
-        <button type="button" onClick={() => setIsInfoOpen(true)}>소개 보기</button>
+        <Button variant="tertiary" size="sm" onClick={() => setIsInfoOpen(true)}>소개 보기</Button>
       </section>
 
       <section className="course-detail-stats" aria-label="코스 통계">
@@ -177,28 +179,28 @@ export function CourseDetailPage() {
         <p className="course-detail-action-error">코스 저장 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.</p>
       )}
 
-      {isInfoOpen && (
-        <div className="course-detail-info-backdrop" role="dialog" aria-modal="true" aria-labelledby="course-detail-info-title" onClick={() => setIsInfoOpen(false)}>
-          <div className="course-detail-info-modal" onClick={(event) => event.stopPropagation()}>
-            <button type="button" aria-label="닫기" onClick={() => setIsInfoOpen(false)}>×</button>
-            <span>{courseTypeLabel[course.courseType]}</span>
-            <h2 id="course-detail-info-title">코스 소개</h2>
-            <p>{course.description || '작성자가 아직 코스 소개를 남기지 않았어요.'}</p>
-            <dl>
-              <div><dt>작성자</dt><dd>{creatorName}</dd></div>
-              <div><dt>저장 상태</dt><dd>{course.bookmarkedByMe ? '저장됨' : course.createdByMe ? '내 코스' : '미저장'}</dd></div>
-              <div><dt>완주 수</dt><dd>{course.completionCount}회</dd></div>
-              <div><dt>평점</dt><dd>{course.ratingAvg.toFixed(1)}</dd></div>
-            </dl>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={isInfoOpen}
+        title="코스 소개"
+        description={course.description || '작성자가 아직 코스 소개를 남기지 않았어요.'}
+        onClose={() => setIsInfoOpen(false)}
+        className="course-detail-info-modal"
+      >
+        <Badge variant={course.courseType === 'SPOT_COURSE' ? 'spot' : 'success'}>{courseTypeLabel[course.courseType]}</Badge>
+        <dl>
+          <div><dt>작성자</dt><dd>{creatorName}</dd></div>
+          <div><dt>저장 상태</dt><dd>{course.bookmarkedByMe ? '저장됨' : course.createdByMe ? '내 코스' : '미저장'}</dd></div>
+          <div><dt>완주 수</dt><dd>{course.completionCount}회</dd></div>
+          <div><dt>평점</dt><dd>{course.ratingAvg.toFixed(1)}</dd></div>
+        </dl>
+      </Modal>
 
       <div className="course-detail-footer" data-has-bookmark={showBookmarkAction}>
         {showBookmarkAction && (
-          <button
+          <Button
+            variant="secondary"
+            size="lg"
             className="course-detail-bookmark"
-            type="button"
             disabled={isSavingBookmark}
             onClick={toggleBookmark}
           >
@@ -206,9 +208,9 @@ export function CourseDetailPage() {
               <Icon name="bookmark" fill={course.bookmarkedByMe || isSavingBookmark ? 'currentColor' : 'none'} />
               {isSavingBookmark ? '처리 중' : course.bookmarkedByMe ? '저장 취소' : '저장하기'}
             </span>
-          </button>
+          </Button>
         )}
-        <button className="course-detail-start" type="button" onClick={startCourseRun}>이 코스로 달리기</button>
+        <Button variant="primary" size="lg" className="course-detail-start" onClick={startCourseRun}>이 코스로 달리기</Button>
       </div>
     </section>
   )

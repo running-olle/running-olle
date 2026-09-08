@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CourseRouteMap } from './CourseRouteMap'
 import { courseService } from './courseService'
 import type { CourseDifficulty, CourseListFilter, CourseListItem, CourseListScope, CourseType } from './types'
-import { Badge, Chip, HorizontalScroller, Icon } from '../../components/ui'
+import { Badge, Chip, EmptyState, ErrorState, HorizontalScroller, Icon, Spinner } from '../../components/ui'
 
 const FILTER_OPTIONS: { value: CourseListFilter; label: string }[] = [
   { value: 'ALL', label: '전체' },
@@ -254,12 +254,16 @@ export function CourseListView({
         ))}
       </HorizontalScroller>
 
-      {hasError && (
-        <p className="course-library-error">코스 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>
-      )}
-
-      {courses === null ? (
-        <div className="course-library-loading"><div className="spinner" /><span>코스를 불러오는 중이에요</span></div>
+      {hasError ? (
+        <ErrorState
+          compact
+          className="course-library-error"
+          icon={<Icon name="course" />}
+          title="코스 목록을 불러오지 못했어요"
+          description="잠시 후 다시 화면을 열어 주세요."
+        />
+      ) : courses === null ? (
+        <div className="course-library-loading"><Spinner label="코스를 불러오는 중" /><span>코스를 불러오는 중이에요</span></div>
       ) : courses.length > 0 ? (
         <div className="course-library-list">
           {courses.map((course) => (
@@ -283,11 +287,14 @@ export function CourseListView({
           ))}
         </div>
       ) : (
-        <div className="course-library-empty">
-          <strong>{emptyTitle}</strong>
-          <p>{emptyDescription}</p>
-          {showCreateAction && <Link to="/courses/create">{createActionLabel}</Link>}
-        </div>
+        <EmptyState
+          creation={showCreateAction}
+          className="course-library-empty"
+          icon={<Icon name="routeAdd" />}
+          title={emptyTitle}
+          description={emptyDescription}
+          action={showCreateAction ? <Link to="/courses/create">{createActionLabel}</Link> : undefined}
+        />
       )}
     </section>
   )
