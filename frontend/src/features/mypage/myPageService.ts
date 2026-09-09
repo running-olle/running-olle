@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, Trip, Visit } from './types'
+import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, ThemeOption, Trip, Visit } from './types'
 export const myPageService = {
+  themes: () => axiosInstance.get<ThemeOption[]>('/themes').then(({ data }) => data),
   dashboard: () => axiosInstance.get<Dashboard>('/mypage').then(({ data }) => data),
   runs: () => axiosInstance.get<RunRecord[]>('/mypage/runs').then(({ data }) => data),
   run: (id: string) => axiosInstance.get<RunRecordDetail>(`/mypage/runs/${id}`).then(({ data }) => data),

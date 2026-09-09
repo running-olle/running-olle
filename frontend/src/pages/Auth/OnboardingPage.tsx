@@ -2,10 +2,21 @@ import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosInstance } from '../../api/axiosInstance'
 import { Button, Chip, Icon, IconButton, Input, Switch, Textarea } from '../../components/ui'
+import type { ThemeOption } from '../../features/mypage/types'
 
 type UserType = 'ACTIVE_RUNNER' | 'RELAXED_TRAVELER' | 'JEJU_RESIDENT'
 type Distance = 'UNDER_3KM' | 'FROM_5_TO_10KM' | 'OVER_10KM'
 type Difficulty = 'EASY' | 'NORMAL' | 'HARD'
+
+const themeLabels: Record<string, string> = {
+  COAST: '해안',
+  FOREST: '숲길·곶자왈',
+  OREUM: '오름',
+  FOOD: '맛집',
+  PHOTO: '포토 스팟',
+  TRADITION: '전통 마을',
+  URBAN: '도심',
+}
 
 const initialForm = {
   nickname: '',
@@ -14,6 +25,7 @@ const initialForm = {
   userTypes: [] as UserType[],
   preferredDistance: '' as Distance | '',
   preferredDifficulty: '' as Difficulty | '',
+  themeIds: [] as string[],
   terms: { service: false, privacy: false, location: false, marketing: false },
   notifications: { recommendedCourse: true, weather: true, meetupInvite: true, commentLike: false },
 }
@@ -43,9 +55,16 @@ export function OnboardingPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(initialForm)
+  const [themes, setThemes] = useState<ThemeOption[]>([])
   const [nicknameStatus, setNicknameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    axiosInstance.get<ThemeOption[]>('/themes')
+      .then(({ data }) => setThemes(data))
+      .catch(() => setThemes([]))
+  }, [])
 
   useEffect(() => {
     if (form.nickname.trim().length < 2) {
@@ -81,11 +100,20 @@ export function OnboardingPage() {
     }))
   }
 
+  const toggleTheme = (themeId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      themeIds: prev.themeIds.includes(themeId)
+        ? prev.themeIds.filter((id) => id !== themeId)
+        : [...prev.themeIds, themeId],
+    }))
+  }
+
   const selectPhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     if (file.size > 3 * 1024 * 1024) {
-      setError('프로필 사진은 3MB 이하만 선택할 수 있어요.')
+      setError('프로필 사진은 3MB 이하만 선택할 수 있습니다.')
       return
     }
 
@@ -133,12 +161,12 @@ export function OnboardingPage() {
       <Progress step={step} />
       <section className="onboarding-content">
         {step === 1 && <>
-          <div className="account-card"><span className="kakao-account-icon">K</span><div><strong>카카오 계정 연결됨 <b>✓</b></strong><small>카카오 계정으로 안전하게 연결했어요</small></div></div>
-          <p className="eyebrow">프로필 설정</p><h1>러닝올레에서 어떻게 불릴까요?</h1>
+          <div className="account-card"><span className="kakao-account-icon">K</span><div><strong>카카오 계정 연결 완료</strong><small>카카오 계정으로 안전하게 연결되었습니다.</small></div></div>
+          <p className="eyebrow">프로필 설정</p><h1>러닝올레에서 어떻게 불러드릴까요?</h1>
           <label className="photo-picker">
             <input type="file" accept="image/*" onChange={selectPhoto} />
-            <span className="photo-preview" style={form.profileImageUrl ? { backgroundImage: `url(${form.profileImageUrl})` } : undefined}>{!form.profileImageUrl && '🏃'}</span>
-            <em>📷</em><b>사진 선택</b>
+            <span className="photo-preview" style={form.profileImageUrl ? { backgroundImage: `url(${form.profileImageUrl})` } : undefined}>{!form.profileImageUrl && 'O'}</span>
+            <em>+</em><b>사진 선택</b>
           </label>
           <Input
             label="닉네임"
@@ -160,30 +188,40 @@ export function OnboardingPage() {
         </>}
 
         {step === 2 && <>
-          <p className="eyebrow">러닝 취향</p><h1>어떤 스타일로 달리세요? 🏃</h1>
-          <div className="choice-group"><h2>주로 어떤 러너인가요? <small>복수 선택</small></h2><div className="choices">
-            <Choice value="ACTIVE_RUNNER" emoji="🏅" label="활동적인 러너" selected={form.userTypes.includes('ACTIVE_RUNNER')} onClick={toggleUserType} />
-            <Choice value="RELAXED_TRAVELER" emoji="🌊" label="여유로운 여행자" selected={form.userTypes.includes('RELAXED_TRAVELER')} onClick={toggleUserType} />
-            <Choice value="JEJU_RESIDENT" emoji="🍊" label="제주 거주민" selected={form.userTypes.includes('JEJU_RESIDENT')} onClick={toggleUserType} />
+          <p className="eyebrow">러닝 취향</p><h1>어떤 스타일로 달리시나요?</h1>
+          <div className="choice-group"><h2>사용자 유형 <small>복수 선택</small></h2><div className="choices">
+            <Choice value="ACTIVE_RUNNER" emoji="A" label="활동적인 러너" selected={form.userTypes.includes('ACTIVE_RUNNER')} onClick={toggleUserType} />
+            <Choice value="RELAXED_TRAVELER" emoji="T" label="여유로운 여행자" selected={form.userTypes.includes('RELAXED_TRAVELER')} onClick={toggleUserType} />
+            <Choice value="JEJU_RESIDENT" emoji="J" label="제주 거주민" selected={form.userTypes.includes('JEJU_RESIDENT')} onClick={toggleUserType} />
           </div></div>
-          <div className="choice-group"><h2>선호하는 러닝 거리</h2><div className="choices">
+          <div className="choice-group"><h2>선호 거리</h2><div className="choices">
             <Choice value="UNDER_3KM" label="3km 이하" selected={form.preferredDistance === 'UNDER_3KM'} onClick={(value) => setForm({ ...form, preferredDistance: value })} />
             <Choice value="FROM_5_TO_10KM" label="5~10km" selected={form.preferredDistance === 'FROM_5_TO_10KM'} onClick={(value) => setForm({ ...form, preferredDistance: value })} />
             <Choice value="OVER_10KM" label="10km 이상" selected={form.preferredDistance === 'OVER_10KM'} onClick={(value) => setForm({ ...form, preferredDistance: value })} />
           </div></div>
-          <div className="choice-group"><h2>선호하는 코스 난이도</h2><div className="choices">
+          <div className="choice-group"><h2>선호 난이도</h2><div className="choices">
             <Choice value="EASY" label="쉬움" selected={form.preferredDifficulty === 'EASY'} onClick={(value) => setForm({ ...form, preferredDifficulty: value })} />
             <Choice value="NORMAL" label="보통" selected={form.preferredDifficulty === 'NORMAL'} onClick={(value) => setForm({ ...form, preferredDifficulty: value })} />
             <Choice value="HARD" label="어려움" selected={form.preferredDifficulty === 'HARD'} onClick={(value) => setForm({ ...form, preferredDifficulty: value })} />
           </div></div>
-          <div className="excluded-note">관심 테마 설정은 데이터 모델 정비 후 추가할 예정이에요.</div>
+          <div className="choice-group"><h2>관심 테마 <small>복수 선택</small></h2><div className="choices">
+            {themes.map((theme) => (
+              <Choice
+                key={theme.id}
+                value={theme.id}
+                label={themeLabels[theme.code] || theme.name}
+                selected={form.themeIds.includes(theme.id)}
+                onClick={toggleTheme}
+              />
+            ))}
+          </div></div>
         </>}
 
         {step === 3 && <>
-          <p className="eyebrow">마지막 단계</p><h1>약관 동의 및 알림 설정 🎉</h1>
-          <button className={`agree-all ${allTerms ? 'checked' : ''}`} onClick={() => { const nextValue = !allTerms; setForm((prev) => ({ ...prev, terms: { service: nextValue, privacy: nextValue, location: nextValue, marketing: nextValue } })) }}><i>✓</i> 전체 동의하기</button>
+          <p className="eyebrow">마지막 단계</p><h1>약관 동의와 알림 설정</h1>
+          <button className={`agree-all ${allTerms ? 'checked' : ''}`} onClick={() => { const nextValue = !allTerms; setForm((prev) => ({ ...prev, terms: { service: nextValue, privacy: nextValue, location: nextValue, marketing: nextValue } })) }}><i>✓</i> 전체 동의</button>
           <div className="term-list">
-            {([['service', '(필수) 서비스 이용약관 동의'], ['privacy', '(필수) 개인정보 수집 및 이용 동의'], ['location', '(필수) 위치기반 서비스 이용 동의'], ['marketing', '(선택) 마케팅 정보 수신 동의']] as const).map(([key, label]) => <button key={key} onClick={() => setTerm(key, !form.terms[key])}><i className={form.terms[key] ? 'checked' : ''}>✓</i><span>{label}</span><b>›</b></button>)}
+            {([['service', '(필수) 서비스 이용약관 동의'], ['privacy', '(필수) 개인정보 처리 동의'], ['location', '(필수) 위치정보 이용 동의'], ['marketing', '(선택) 마케팅 수신 동의']] as const).map(([key, label]) => <button key={key} onClick={() => setTerm(key, !form.terms[key])}><i className={form.terms[key] ? 'checked' : ''}>✓</i><span>{label}</span><b>›</b></button>)}
           </div>
           <hr /><h2 className="notification-title">알림 설정</h2>
           <div className="notification-box">

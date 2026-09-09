@@ -13,18 +13,22 @@ import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.running.repository.RunningWaypointVisitRepository;
 import com.runningolle.domain.trip.entity.Trip;
 import com.runningolle.domain.trip.repository.TripRepository;
+import com.runningolle.domain.user.entity.Theme;
 import com.runningolle.domain.user.entity.User;
 import com.runningolle.domain.user.entity.UserNotificationSetting;
+import com.runningolle.domain.user.entity.UserTheme;
 import com.runningolle.domain.user.entity.UserType;
 import com.runningolle.domain.user.enums.AccountStatus;
 import com.runningolle.domain.user.enums.UserTypeCode;
+import com.runningolle.domain.user.repository.ThemeRepository;
 import com.runningolle.domain.user.repository.UserNotificationSettingRepository;
 import com.runningolle.domain.user.repository.UserRepository;
+import com.runningolle.domain.user.repository.UserThemeRepository;
 import com.runningolle.domain.user.repository.UserTypeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
 import com.runningolle.domain.user.entity.UserUserType;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.UUID;
@@ -40,6 +44,8 @@ public class MyPageService {
     private final UserRepository userRepository;
     private final UserUserTypeRepository userUserTypeRepository;
     private final UserTypeRepository userTypeRepository;
+    private final ThemeRepository themeRepository;
+    private final UserThemeRepository userThemeRepository;
     private final UserNotificationSettingRepository notificationRepository;
     private final RunningRecordRepository runningRecordRepository;
     private final RunningWaypointVisitRepository visitRepository;
@@ -87,6 +93,9 @@ public class MyPageService {
                         .orElseGet(() -> userTypeRepository.save(UserType.of(code, value.getDisplayName())));
                 userUserTypeRepository.save(UserUserType.of(user, type));
             }
+        }
+        if (request.themeIds() != null) {
+            syncUserThemes(user, request.themeIds());
         }
         return profile(userId);
     }
@@ -232,6 +241,40 @@ public class MyPageService {
         return new MyPageDtos.NotificationSettings(s.getRecommendedCourse(), s.getWeather(), s.getSavedCourseUpdate(),
                 s.getMeetupInvite(), s.getCommentLike(), s.getTierChange(), s.getEventChallenge());
     }
+    private void syncUserThemes(User user, List<UUID> themeIds) {
+        userThemeRepository.deleteAllByUserId(user.getId());
+        List<UUID> distinctThemeIds = distinctIds(themeIds);
+        if (distinctThemeIds.isEmpty()) {
+            return;
+        }
+
+        List<Theme> themes = themeRepository.findAllById(distinctThemeIds);
+        if (themes.size() != distinctThemeIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some selected themes do not exist.");
+        }
+
+        List<UserTheme> userThemes = new ArrayList<>(themes.size());
+        for (Theme theme : themes) {
+            userThemes.add(UserTheme.of(user, theme));
+        }
+        userThemeRepository.saveAll(userThemes);
+    }
+
+    private List<UUID> distinctIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<UUID> distinctIds = new LinkedHashSet<>();
+        for (UUID id : ids) {
+            if (id == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Theme id is required.");
+            }
+            distinctIds.add(id);
+        }
+        return new ArrayList<>(distinctIds);
+    }
+
     private User activeUser(UUID id) { return userRepository.findById(id).filter(u -> u.getAccountStatus() == AccountStatus.ACTIVE)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.")); }
     private String trim(String value) { return value == null || value.isBlank() ? null : value.trim(); }

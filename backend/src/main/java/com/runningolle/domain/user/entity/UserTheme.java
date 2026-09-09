@@ -45,4 +45,11 @@ public class UserTheme {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "theme_id", nullable = false)
     private Theme theme;
+
+    public static UserTheme of(User user, Theme theme) {
+        UserTheme userTheme = new UserTheme();
+        userTheme.user = user;
+        userTheme.theme = theme;
+        return userTheme;
+    }
 }

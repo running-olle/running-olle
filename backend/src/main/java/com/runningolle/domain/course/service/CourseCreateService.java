@@ -15,6 +15,8 @@ import com.runningolle.domain.course.repository.CourseTagMapRepository;
 import com.runningolle.domain.course.repository.CourseTagRepository;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
+import com.runningolle.domain.home.service.CourseRecommendationDocumentService;
+import com.runningolle.domain.home.service.CourseRecommendationEmbeddingService;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient.OrsRouteResult;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient.SurfaceBreakdown;
@@ -67,6 +69,8 @@ public class CourseCreateService {
     private final OpenRouteServiceClient openRouteServiceClient;
     private final TourApiClient tourApiClient;
     private final ObjectMapper objectMapper;
+    private final CourseRecommendationDocumentService courseRecommendationDocumentService;
+    private final CourseRecommendationEmbeddingService courseRecommendationEmbeddingService;
 
     @Transactional
     public CourseCreateResponse createCourse(UUID creatorId, CourseCreateRequest request) {
@@ -98,6 +102,8 @@ public class CourseCreateService {
         courseWaypointRepository.saveAll(toCourseWaypoints(course, resolvedWaypoints, routeResult.segmentDistanceKm()));
         courseThemeRepository.saveAll(toCourseThemes(course, themes));
         courseTagMapRepository.saveAll(toCourseTagMaps(course, courseTags));
+        courseRecommendationDocumentService.syncCourseDescriptionDocument(course.getId());
+        courseRecommendationEmbeddingService.syncCourseRecommendationEmbeddings(course.getId());
 
         return new CourseCreateResponse(course.getId());
     }
