@@ -61,7 +61,8 @@ public class SecurityConfig {
                             "/h2-console/**",
                             "/api/login/**",
                             "/api/oauth2/**",
-                            "/actuator/health"
+                            "/actuator/health",
+                            "/actuator/prometheus"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.GET, "/api/public/**").permitAll();
                     auth.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
