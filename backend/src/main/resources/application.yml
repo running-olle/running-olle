@@ -61,6 +61,16 @@ tourism:
     scheduler-enabled: ${TOURISM_SYNC_SCHEDULER_ENABLED:true}
     cron: "${TOURISM_SYNC_CRON:0 0 4 ? * MON}"
     zone: ${TOURISM_SYNC_ZONE:Asia/Seoul}
+  event-sync:
+    area-code: ${TOURISM_EVENT_SYNC_AREA_CODE:39}
+    page-size: ${TOURISM_EVENT_SYNC_PAGE_SIZE:100}
+    look-back-days: ${TOURISM_EVENT_SYNC_LOOK_BACK_DAYS:30}
+    look-ahead-days: ${TOURISM_EVENT_SYNC_LOOK_AHEAD_DAYS:365}
+    bootstrap-enabled: ${TOURISM_EVENT_SYNC_BOOTSTRAP_ENABLED:true}
+    scheduler-enabled: ${TOURISM_EVENT_SYNC_SCHEDULER_ENABLED:true}
+    cron: "${TOURISM_EVENT_SYNC_CRON:0 20 4 ? * MON}"
+    zone: ${TOURISM_EVENT_SYNC_ZONE:Asia/Seoul}
+    running-keywords: ${TOURISM_EVENT_SYNC_RUNNING_KEYWORDS:마라톤,러닝,런,트레일런,트레일,레이스,달리기,걷기,워킹}
 
 jwt:
   secret: ${JWT_SECRET}

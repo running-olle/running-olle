@@ -7,6 +7,8 @@ import java.net.URLDecoder;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,7 @@ public class TourApiClient {
     private static final String JSON_TYPE = "json";
     private static final String TOURISM_CONTENT_TYPE_ID = "12";
     private static final int MAX_LOCATION_RADIUS_METERS = 20_000;
+    private static final DateTimeFormatter TOUR_DATE_FORMATTER = DateTimeFormatter.BASIC_ISO_DATE;
 
     private final ExternalApiProperties properties;
     private final RestClient restClient;
@@ -106,6 +109,53 @@ public class TourApiClient {
         }
     }
 
+    public TourFestivalPage searchFestival(
+            String areaCode,
+            LocalDate eventStartDate,
+            LocalDate eventEndDate,
+            int pageNo,
+            int numOfRows
+    ) {
+        validateApiKey();
+
+        try {
+            Map<String, Object> queryParams = new LinkedHashMap<>();
+            queryParams.put("serviceKey", serviceKey());
+            queryParams.put("MobileOS", properties.getTourMobileOs());
+            queryParams.put("MobileApp", properties.getTourMobileApp());
+            queryParams.put("_type", JSON_TYPE);
+            queryParams.put("numOfRows", Math.max(1, numOfRows));
+            queryParams.put("pageNo", Math.max(1, pageNo));
+            queryParams.put("arrange", "A");
+            queryParams.put("areaCode", areaCode);
+            queryParams.put("eventStartDate", TOUR_DATE_FORMATTER.format(eventStartDate));
+            if (eventEndDate != null) {
+                queryParams.put("eventEndDate", TOUR_DATE_FORMATTER.format(eventEndDate));
+            }
+
+            Map<String, Object> response = restClient.get()
+                    .uri(tourApiUri("/searchFestival2", queryParams))
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, ExternalApiRestClientSupport.errorHandler(PROVIDER))
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            validateTourApiResponse(response, "행사정보 조회");
+            return new TourFestivalPage(
+                    extractItems(response).stream()
+                            .map(TourFestivalItem::from)
+                            .toList(),
+                    Math.max(1, pageNo),
+                    Math.max(1, numOfRows),
+                    extractTotalCount(response)
+            );
+        } catch (ExternalApiException exception) {
+            throw exception;
+        } catch (RestClientException exception) {
+            throw new ExternalApiException(PROVIDER, "TourAPI 행사정보 조회에 실패했습니다.", exception);
+        }
+    }
+
     public Optional<TourCommonDetail> getCommonDetail(String contentId) {
         if (!StringUtils.hasText(contentId)) {
             return Optional.empty();
@@ -120,13 +170,6 @@ public class TourApiClient {
                             Map.entry("MobileApp", properties.getTourMobileApp()),
                             Map.entry("_type", JSON_TYPE),
                             Map.entry("contentId", contentId.trim()),
-                            Map.entry("defaultYN", "Y"),
-                            Map.entry("firstImageYN", "Y"),
-                            Map.entry("addrinfoYN", "Y"),
-                            Map.entry("mapinfoYN", "Y"),
-                            Map.entry("overviewYN", "Y"),
-                            Map.entry("areacodeYN", "Y"),
-                            Map.entry("catcodeYN", "Y"),
                             Map.entry("numOfRows", 1),
                             Map.entry("pageNo", 1)
                     )))
@@ -253,9 +296,32 @@ public class TourApiClient {
             throw new ExternalApiException(PROVIDER, operation + " 응답이 비어 있습니다.");
         }
 
+        Object openApiError = getNestedValue(
+                response,
+                "OpenAPI_ServiceResponse",
+                "cmmMsgHeader",
+                "returnAuthMsg"
+        );
+        if (openApiError != null) {
+            throw new ExternalApiException(PROVIDER, operation + " 실패: " + openApiError);
+        }
+
+        Object directResultCode = response.get("resultCode");
+        if (directResultCode != null && !"0000".equals(String.valueOf(directResultCode))) {
+            Object directResultMessage = response.get("resultMsg");
+            throw new ExternalApiException(
+                    PROVIDER,
+                    operation + " 실패: " + (directResultMessage == null ? directResultCode : directResultMessage)
+            );
+        }
+
         Object resultCode = getNestedValue(response, "response", "header", "resultCode");
-        if (resultCode == null || "0000".equals(String.valueOf(resultCode))) {
+        if ("0000".equals(String.valueOf(resultCode))) {
             return;
+        }
+
+        if (resultCode == null) {
+            throw new ExternalApiException(PROVIDER, operation + " 응답 형식이 올바르지 않습니다.");
         }
 
         Object resultMessage = getNestedValue(response, "response", "header", "resultMsg");
@@ -383,6 +449,63 @@ public class TourApiClient {
             int numOfRows,
             int totalCount
     ) {
+    }
+
+    public record TourFestivalPage(
+            List<TourFestivalItem> items,
+            int pageNo,
+            int numOfRows,
+            int totalCount
+    ) {
+    }
+
+    public record TourFestivalItem(
+            String contentId,
+            String contentTypeId,
+            String title,
+            String address,
+            String detailAddress,
+            String areaCode,
+            String sigunguCode,
+            String category1,
+            String category2,
+            String category3,
+            String tel,
+            Double lat,
+            Double lng,
+            String firstImageUrl,
+            String thumbnailImageUrl,
+            String eventStartDate,
+            String eventEndDate,
+            String createdTime,
+            String modifiedTime,
+            Map<String, Object> raw
+    ) {
+
+        private static TourFestivalItem from(Map<String, Object> raw) {
+            return new TourFestivalItem(
+                    readString(raw, "contentid"),
+                    readString(raw, "contenttypeid"),
+                    readString(raw, "title"),
+                    readString(raw, "addr1"),
+                    readString(raw, "addr2"),
+                    readString(raw, "areacode"),
+                    readString(raw, "sigungucode"),
+                    readString(raw, "cat1"),
+                    readString(raw, "cat2"),
+                    readString(raw, "cat3"),
+                    readString(raw, "tel"),
+                    readDouble(raw, "mapy"),
+                    readDouble(raw, "mapx"),
+                    readString(raw, "firstimage"),
+                    readFirstString(raw, "firstimage2", "firstimage"),
+                    readString(raw, "eventstartdate"),
+                    readString(raw, "eventenddate"),
+                    readString(raw, "createdtime"),
+                    readString(raw, "modifiedtime"),
+                    raw
+            );
+        }
     }
 
     public record TourAreaItem(
