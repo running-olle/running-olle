@@ -115,6 +115,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .running-map-fallback { display: grid; place-items: center; width: 100%; height: 100%; padding: 30px; color: #594136; background: #e6e8ec; text-align: center; line-height: 1.6; }
 .running-current-marker { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: rgba(47,128,237,.2); }
 .running-current-marker span { width: 22px; height: 22px; border: 4px solid white; border-radius: 50%; background: #2f80ed; box-shadow: 0 2px 8px rgba(0,0,0,.28); }
+.safety-map-marker { display: flex; align-items: center; gap: 6px; max-width: 148px; padding: 5px 8px 5px 5px; border: 1px solid rgba(17,24,39,.12); border-radius: 999px; color: #111827; background: rgba(255,255,255,.96); box-shadow: 0 5px 13px rgba(17,24,39,.18); font-size: 11px; font-weight: 900; white-space: nowrap; transform: translateY(-8px); }
+.safety-map-marker span { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 50%; color: #fff; background: #ef3b32; font-size: 10px; }
+.safety-map-marker b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.safety-map-marker.is-pharmacy span { background: #168847; }
+.safety-map-marker.is-convenience-store span { background: #2563eb; }
+.safety-map-marker.is-toilet span { background: #7c3aed; }
 .map-location-button { position: absolute; right: 18px; bottom: 108px; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid #eee1db; border-radius: 50%; color: #261912; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.13); }
 .ready-location-card { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.96); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
 .ready-location-card > span { flex: 0 0 10px; height: 10px; border-radius: 50%; background: #f2aa35; box-shadow: 0 0 0 5px #fff2dc; }
@@ -148,6 +154,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .place-category-bar span { display: flex; align-items: center; gap: 5px; color: #332a26; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .place-category-bar i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-style: normal; }
 .place-camera { background: #3b82f6; }.place-food { background: #ef4444; }.place-cafe { background: #f97316; }.place-store { background: #16a34a; }
+.safety-running-trigger { position: absolute; z-index: 12; right: 20px; bottom: 238px; min-width: 58px; min-height: 40px; padding: 0 14px; border: 1px solid rgba(255,255,255,.74); border-radius: 999px; color: #fff; background: rgba(17,24,39,.82); box-shadow: 0 5px 14px rgba(17,24,39,.18); font-size: 13px; font-weight: 900; backdrop-filter: blur(6px); }
+.safety-running-trigger:active { transform: translateY(1px); }
 .live-controls { position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 58px 1fr 1fr 58px; align-items: center; gap: 14px; min-height: 150px; padding: 20px 22px max(26px, env(safe-area-inset-bottom)); border-radius: 34px 34px 0 0; background: rgba(255,255,255,.98); box-shadow: 0 -4px 18px rgba(0,0,0,.08); }
 .round-control { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; }
 .lock-control, .camera-control { color: #151c2b; background: #f8f8fa; box-shadow: 0 2px 7px rgba(0,0,0,.03); }
@@ -168,6 +176,31 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .end-sheet > div { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .end-sheet button { min-height: 52px; border-radius: 14px; color: #594136; background: #f4efec; font-weight: 800; }
 .end-sheet button:last-child { color: #fff; background: #ef3b32; }.end-sheet button:disabled { opacity: .6; }
+.safety-sheet-backdrop { position: absolute; z-index: 91; inset: 0; display: flex; align-items: flex-end; background: rgba(26,18,14,.46); }
+.safety-sheet { width: 100%; max-height: min(82dvh, 660px); overflow-y: auto; overscroll-behavior: contain; padding: 12px 20px max(24px, env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; background: #fff; box-shadow: 0 -10px 28px rgba(17,24,39,.22); }
+.safety-sheet-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-top: 2px; }
+.safety-sheet-header span { display: inline-flex; align-items: center; min-height: 25px; padding: 0 9px; border-radius: 999px; color: #168847; background: #e8f7ec; font-size: 11px; font-weight: 900; }
+.safety-sheet-header h2 { margin: 10px 0 0; color: #111827; font-size: 21px; line-height: 1.25; }
+.safety-sheet-header button { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #6b7280; background: #f7f2ef; font-size: 22px; line-height: 1; }
+.safety-location-card { margin-top: 16px; padding: 14px 15px; border: 1px solid #f0ded6; border-radius: 16px; background: #fffaf8; }
+.safety-location-card strong { display: block; color: #111827; font-size: 14px; }
+.safety-location-card p { margin: 5px 0 0; color: #7a6a61; font-size: 12px; line-height: 1.45; }
+.safety-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 13px; }
+.safety-actions a, .safety-actions button, .safety-load-places, .safety-map-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 14px; font-size: 14px; font-weight: 900; text-decoration: none; }
+.safety-call-button { color: #fff; background: #ef3b32; box-shadow: 0 5px 12px rgba(239,59,50,.18); }
+.safety-actions button { color: #164d2d; background: #e8f7ec; }
+.safety-actions button:disabled, .safety-load-places:disabled { opacity: .48; cursor: not-allowed; }
+.safety-status, .safety-error, .safety-empty { margin: 10px 0 0; font-size: 12px; line-height: 1.45; text-align: center; }
+.safety-status { color: #168847; }.safety-error { color: #b91c1c; }.safety-empty { color: #8d7164; }
+.safety-load-places { width: 100%; margin-top: 14px; color: #594136; background: #f7f2ef; }
+.safety-map-toggle { width: 100%; margin-top: 8px; color: #164d2d; background: #e8f7ec; }
+.safety-map-toggle.is-on { color: #594136; background: #f7f2ef; }
+.safety-place-list { display: grid; gap: 14px; margin-top: 16px; }
+.safety-place-list section { display: grid; gap: 8px; }
+.safety-place-list h3 { margin: 0; color: #111827; font-size: 14px; }
+.safety-place-list a { display: block; padding: 12px 13px; border: 1px solid #f1e3dd; border-radius: 13px; color: inherit; background: #fffdfc; text-decoration: none; }
+.safety-place-list strong { display: block; overflow: hidden; color: #111827; font-size: 13px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.safety-place-list span { display: block; overflow: hidden; margin-top: 5px; color: #7a6a61; font-size: 11px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
 
 .running-complete-page { min-height: 100dvh; overflow-y: auto; padding: 42px 20px 28px; }
 .complete-copy { text-align: center; }.complete-copy > span { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 12px; border-radius: 50%; color: #fff; background: #249530; font-size: 27px; font-weight: 900; }
