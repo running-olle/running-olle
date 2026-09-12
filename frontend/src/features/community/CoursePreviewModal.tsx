@@ -1,3 +1,4 @@
+import { Icon, Badge, Button } from '../../components/ui'
 import { useEffect, useState } from 'react'
 import { CourseRouteMap } from '../course/CourseRouteMap'
 import { courseService } from '../course/courseService'
@@ -80,16 +81,16 @@ export function CoursePreviewModal({ courseId, onClose }: CoursePreviewModalProp
 
   return (
     <div
-      className="community-course-preview-backdrop"
+      className="ui-overlay ui-overlay--center community-course-preview-backdrop"
       role="dialog"
       aria-modal="true"
       aria-labelledby="community-course-preview-title"
       onClick={onClose}
     >
-      <section className="community-course-preview" onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="community-course-preview-close" aria-label="닫기" onClick={onClose}>
-          ×
-        </button>
+      <section className="ui-dialog community-course-preview" onClick={(event) => event.stopPropagation()}>
+        <Button variant="ghost" size="sm" type="button" className="community-course-preview-close" aria-label="닫기" onClick={onClose}>
+          <Icon name="close" />
+        </Button>
 
         {loading ? (
           <div className="community-course-preview-state">
@@ -108,7 +109,7 @@ export function CoursePreviewModal({ courseId, onClose }: CoursePreviewModalProp
         {!loading && course ? (
           <>
             <div className="community-course-preview-title">
-              <span>{courseTypeLabel[course.courseType]}</span>
+              <Badge variant={course.courseType === 'SPOT_COURSE' ? 'spot' : 'success'}>{courseTypeLabel[course.courseType]}</Badge>
               <h2 id="community-course-preview-title">{course.name}</h2>
               <p>{creatorName} · {course.isPublic ? '공개 코스' : '비공개 코스'}</p>
             </div>
@@ -153,36 +154,22 @@ export function CoursePreviewModal({ courseId, onClose }: CoursePreviewModalProp
 
             <div className="community-course-preview-actions">
               {course.createdByMe ? (
-                <button type="button" className="is-muted" disabled>
+                <Button variant="ghost" size="sm" type="button" className="is-muted" disabled>
                   내 코스
-                </button>
+                </Button>
               ) : (
-                <button type="button" className="is-secondary" disabled={bookmarkPending} onClick={toggleBookmark}>
-                  <BookmarkIcon filled={course.bookmarkedByMe || bookmarkPending} />
+                <Button variant="secondary" size="sm" type="button" disabled={bookmarkPending} onClick={toggleBookmark}>
+                  <Icon name="bookmark" fill={course.bookmarkedByMe || bookmarkPending ? 'currentColor' : 'none'} />
                   {bookmarkPending ? '처리 중' : course.bookmarkedByMe ? '저장 취소' : '저장하기'}
-                </button>
+                </Button>
               )}
-              <button type="button" className="is-primary" onClick={onClose}>
+              <Button variant="primary" size="sm" type="button" onClick={onClose}>
                 확인
-              </button>
+              </Button>
             </div>
           </>
         ) : null}
       </section>
     </div>
-  )
-}
-
-function BookmarkIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7 4.75A2.25 2.25 0 0 1 9.25 2.5h5.5A2.25 2.25 0 0 1 17 4.75v15.1a.65.65 0 0 1-1.02.53L12 17.6l-3.98 2.78A.65.65 0 0 1 7 19.85V4.75Z"
-        fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }

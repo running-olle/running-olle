@@ -1,23 +1,23 @@
 import { useNavigate } from 'react-router-dom'
-import { RunningIcon } from '../../features/running/RunningIcon'
+import { Icon, type IconName } from '../../components/ui'
 
 const options = [
   {
     title: '코스 선택 달리기',
     description: <>저장된 코스 중<br />선택해서 달려요</>,
-    icon: 'route' as const,
+    icon: 'course' as IconName,
     action: '/running/courses',
   },
   {
     title: '코스 만들고 달리기',
     description: <>나만의 코스를 만들고<br />달려요</>,
-    icon: 'make' as const,
+    icon: 'routeAdd' as IconName,
     action: '/courses/create',
   },
   {
     title: '즉시 달리기',
     description: <>준비 없이 바로<br />달리기를 시작해요</>,
-    icon: 'run' as const,
+    icon: 'run' as IconName,
     action: '/running/free',
   },
 ]
@@ -33,9 +33,9 @@ export function RunningSelectPage() {
       <div className="running-option-list">
         {options.map((option) => (
           <button className="running-option-card" type="button" key={option.title} onClick={() => navigate(option.action)}>
-            <span className={`running-option-icon running-option-icon-${option.icon}`}><RunningIcon name={option.icon} size={52} /></span>
+            <span className={`running-option-icon running-option-icon-${option.icon}`}><Icon name={option.icon} size={38} /></span>
             <span className="running-option-copy"><strong>{option.title}</strong><span>{option.description}</span></span>
-            <RunningIcon name="chevron" size={26} />
+            <Icon name="chevronRight" size={22} />
           </button>
         ))}
       </div>

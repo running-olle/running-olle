@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
-import { SectionTitle } from '../../components/ui/SectionTitle'
+import { HorizontalScroller } from '../../components/ui/HorizontalScroller'
+import { Icon } from '../../components/ui/Icon'
+import { MetaList } from '../../components/ui/MetaList'
+import { SectionHeader } from '../../components/ui/SectionHeader'
+import { Skeleton } from '../../components/ui/Feedback'
 import { CourseThumbnail } from './CourseThumbnail'
 import type { RecommendedCourseCardViewModel } from './homeViewModels'
 
@@ -29,69 +33,76 @@ export function RecommendedCourseList({
   error = null,
 }: RecommendedCourseListProps) {
   return (
-    <section>
-      <SectionTitle icon="✨" title="오늘의 맞춤 추천" />
+    <section aria-labelledby="recommended-courses-title">
+      <SectionHeader
+        id="recommended-courses-title"
+        icon={<Icon name="sparkles" size={20} />}
+        title="오늘 맞춤 추천"
+        description="지금 가볍게 달리기 좋은 제주 코스예요."
+      />
       {error ? (
-        <div className="mt-5 rounded-[16px] bg-[#FFF1EE] px-4 py-4 text-[13px] leading-6 text-[#B91C1C]">
+        <div className="mt-4 rounded-control bg-danger-subtle px-4 py-3 text-caption leading-5 text-danger" role="alert">
           {error}
         </div>
       ) : null}
-      <div className="-mx-5 mt-5 flex gap-3 overflow-x-auto px-5 pb-2">
+      <HorizontalScroller labelledBy="recommended-courses-title">
         {isLoading
           ? Array.from({ length: 3 }, (_, index) => (
-              <Card key={`recommended-loading-${index}`} padding="none" className="w-60 shrink-0 overflow-hidden">
-                <div className="h-32 animate-pulse bg-[#F7DDD3]" />
+              <Card key={`recommended-loading-${index}`} variant="media" padding="none" shadow="none" className="w-64 shrink-0 border border-border-subtle">
+                <Skeleton height={128} className="block rounded-none" />
                 <div className="space-y-3 p-4">
-                  <div className="h-4 w-20 animate-pulse rounded-full bg-[#F7DDD3]" />
-                  <div className="h-5 w-40 animate-pulse rounded-full bg-[#F7DDD3]" />
-                  <div className="h-4 w-full animate-pulse rounded-full bg-[#F7DDD3]" />
-                  <div className="h-4 w-5/6 animate-pulse rounded-full bg-[#F7DDD3]" />
+                  <Skeleton width={72} />
+                  <Skeleton width="80%" height={20} />
+                  <Skeleton width="100%" />
+                  <Skeleton width="70%" />
                 </div>
               </Card>
             ))
           : null}
 
-        {!isLoading &&
-          courses.map((course) => (
-            <Link key={course.id} to={`/courses/${course.id}`} className="block w-60 shrink-0">
-              <Card padding="none" className="h-full overflow-hidden">
-                <div className="relative">
-                  <CourseThumbnail tone={course.imageTone} className="h-32 rounded-b-none rounded-t-[16px]" />
-                  <div className="absolute right-3 top-3">
-                    <Badge variant="category">{course.category}</Badge>
-                  </div>
+        {!isLoading && courses.map((course) => (
+          <Link key={course.id} to={`/courses/${course.id}`} className="block w-64 shrink-0">
+            <Card variant="media" padding="none" shadow="none" className="h-full overflow-hidden border border-border-subtle">
+              <div className="relative">
+                <CourseThumbnail tone={course.imageTone} rounded={false} className="h-32" />
+                <div className="absolute right-3 top-3">
+                  <Badge variant="brand">{course.category}</Badge>
                 </div>
-                <div className="p-4">
-                  <h3 className="line-clamp-2 text-[16px] font-bold leading-snug text-[#261912]">{course.title}</h3>
-                  <div className="mt-3 flex items-center gap-2 text-[14px] text-[#594136]">
-                    <span>{course.distanceKm.toFixed(1)}km</span>
-                    {course.distanceFromUserKm !== null ? (
-                      <>
-                        <span>•</span>
-                        <span>{course.distanceFromUserKm.toFixed(1)}km 거리</span>
-                      </>
-                    ) : null}
-                    {course.rating !== null ? (
-                      <span className="ml-auto font-bold text-[#BFAC00]">★ {course.rating.toFixed(1)}</span>
-                    ) : null}
-                  </div>
-                  <Badge variant={difficultyVariant[course.difficulty]} className="mt-4">
-                    {difficultyLabel[course.difficulty]}
-                  </Badge>
-                  <p className="mt-4 min-h-[3.75rem] line-clamp-3 text-[12px] leading-5 text-[#594136]">
-                    {course.recommendationReason}
-                  </p>
+              </div>
+              <div className="p-4">
+                <h3 className="line-clamp-2 text-card-title font-bold text-ink">{course.title}</h3>
+                <MetaList
+                  className="mt-3"
+                  ariaLabel={`${course.title} 코스 정보`}
+                  items={[
+                    { icon: <Icon name="route" size={16} />, label: `${course.distanceKm.toFixed(1)}km` },
+                    ...(course.distanceFromUserKm !== null
+                      ? [{ icon: <Icon name="location" size={16} />, label: `${course.distanceFromUserKm.toFixed(1)}km 거리` }]
+                      : []),
+                  ]}
+                />
+                <div className="mt-4 flex items-center justify-between gap-2">
+                  <Badge variant={difficultyVariant[course.difficulty]}>{difficultyLabel[course.difficulty]}</Badge>
+                  {course.rating !== null ? (
+                    <span className="inline-flex items-center gap-1 text-caption font-bold text-rating" aria-label={`평점 ${course.rating.toFixed(1)}`}>
+                      <Icon name="star" size={16} />{course.rating.toFixed(1)}
+                    </span>
+                  ) : null}
                 </div>
-              </Card>
-            </Link>
-          ))}
+                <p className="mt-4 line-clamp-3 min-h-[3.75rem] text-caption leading-5 text-ink-secondary">
+                  {course.recommendationReason}
+                </p>
+              </div>
+            </Card>
+          </Link>
+        ))}
 
         {!isLoading && courses.length === 0 && !error ? (
-          <Card className="w-full" shadow="none">
-            <p className="text-[13px] leading-6 text-[#8D7164]">추천할 만한 코스를 아직 찾지 못했어요.</p>
+          <Card shadow="none" className="w-full border border-border-subtle">
+            <p className="text-caption leading-6 text-ink-secondary">추천할 만한 코스를 아직 찾지 못했어요.</p>
           </Card>
         ) : null}
-      </div>
+      </HorizontalScroller>
     </section>
   )
 }

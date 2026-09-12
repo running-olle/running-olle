@@ -60,20 +60,20 @@ export function KakaoPointMap({ lat, lng, label, className = '' }: KakaoPointMap
 
   if (!appKey) {
     return (
-      <div className={`grid place-items-center bg-[#F7DDD3] text-center text-[12px] font-semibold text-[#594136] ${className}`}>
+      <div className={`grid place-items-center bg-surface-subtle px-6 text-center text-caption leading-5 font-semibold text-ink-secondary ${className}`}>
         카카오맵 JavaScript 키를 설정해 주세요.
       </div>
     )
   }
 
   return (
-    <div className={`relative overflow-hidden bg-[#E6E8EC] ${className}`} aria-label={`${label} 지도`}>
+    <div className={`relative overflow-hidden bg-map-fallback ${className}`} aria-label={`${label} 지도`}>
       <div ref={containerRef} className="h-full w-full" />
-      <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-bold text-[#261912] shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
+      <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-surface px-3 py-1.5 text-caption font-bold text-ink shadow-1">
         {label}
       </div>
       {error ? (
-        <div className="absolute inset-0 grid place-items-center bg-[#E6E8EC] px-6 text-center text-[12px] leading-5 text-[#594136]">
+        <div className="absolute inset-0 grid place-items-center bg-map-fallback px-6 text-center text-caption leading-5 text-ink-secondary">
           {error}
         </div>
       ) : null}

@@ -1,3 +1,5 @@
+import { Icon, Chip, Spinner, ErrorState, EmptyState, Button, Fab, HorizontalScroller, Input } from '../../components/ui'
+import './community.css'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ChatList } from '../../features/community/ChatList'
@@ -398,40 +400,7 @@ export function CommunityPage() {
 
   return (
     <>
-      <section className="flex items-start justify-between">
-        <h1 className="text-[20px] font-black leading-[28px] text-[#261912]">커뮤니티</h1>
-        {activeTab === 'chat' ? (
-          <button
-            type="button"
-            onClick={() => setChatSearchOpen((prev) => !prev)}
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#F5F5F5] text-[16px] text-[#594136] shadow-[0px_4px_12px_rgba(0,0,0,0.04)]"
-            aria-label="채팅 검색"
-          >
-            ⌕
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              if (activeTab === 'feed') {
-                setEditingPost(null)
-                setComposerOpen(true)
-                return
-              }
-              if (activeTab === 'meetup') {
-                setEditingMeetup(null)
-                setMeetupComposerOpen(true)
-              }
-            }}
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#FF6F0F] text-[16px] text-white shadow-[0px_4px_12px_rgba(0,0,0,0.08)]"
-            aria-label={activeTab === 'meetup' ? '번개 만들기' : '게시글 작성'}
-          >
-            +
-          </button>
-        )}
-      </section>
-
-      <div className="mt-4 flex gap-[22px] border-b border-[#E1BFB1]">
+      <div className="community-tabs" aria-label="커뮤니티 메뉴">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -443,9 +412,7 @@ export function CommunityPage() {
                 setChatSearchValue('')
               }
             }}
-            className={`border-b-[2.5px] pb-3 text-[14px] font-bold ${
-              activeTab === tab.key ? 'border-[#FF6F0F] text-[#261912]' : 'border-transparent text-[#8D7164]'
-            }`}
+            className="community-tab" aria-pressed={activeTab === tab.key}
           >
             {tab.label}
           </button>
@@ -454,29 +421,25 @@ export function CommunityPage() {
 
       {activeTab === 'feed' ? (
         <>
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <HorizontalScroller aria-label="피드 필터">
             {filters.map((filter) => (
-              <button
+              <Chip selected={activeFilter === filter.key}
                 key={filter.key}
                 type="button"
                 onClick={() => setActiveFilter(filter.key)}
-                className={`shrink-0 rounded-full border px-4 py-2 text-[12px] font-bold ${
-                  activeFilter === filter.key
-                    ? 'border-[#FF6F0F] bg-[#FF6F0F] text-white'
-                    : 'border-[#E1BFB1] bg-white text-[#594136]'
-                }`}
+                className="shrink-0"
               >
                 {filter.label}
-              </button>
+              </Chip>
             ))}
-          </div>
+          </HorizontalScroller>
 
-          <div className="mt-3 rounded-[12px] border border-[#FFE4CC] bg-[#FFF5EE] px-4 py-2.5 text-[12px] font-bold text-[#A04100]">
+          <div className="mt-3 rounded-control border border-border-subtle bg-surface-subtle px-4 py-2.5 text-caption font-bold text-brand-700">
             최근 7일 이내 제주 지역 피드만 노출됩니다.
           </div>
 
-          <div className="mt-4 flex flex-col gap-2">
-            {loading ? <StateBox message="피드 목록을 불러오는 중입니다." /> : null}
+          <div className="mt-4 flex flex-col gap-4">
+            {loading ? <StateBox loading message="피드 목록을 불러오는 중입니다." /> : null}
             {!loading && error ? <StateBox message={error} tone="error" /> : null}
             {!loading && !error && filteredPosts.length === 0 ? (
               <StateBox message="조건에 맞는 피드가 없습니다." />
@@ -502,7 +465,7 @@ export function CommunityPage() {
 
       {activeTab === 'meetup' ? (
         <>
-          {meetupLoading ? <StateBox message="번개 목록을 불러오는 중입니다." /> : null}
+          {meetupLoading ? <StateBox loading message="번개 목록을 불러오는 중입니다." /> : null}
           {!meetupLoading && meetupError ? <StateBox message={meetupError} tone="error" /> : null}
           {!meetupLoading && !meetupError ? (
             <MeetupList
@@ -517,15 +480,40 @@ export function CommunityPage() {
 
       {activeTab === 'chat' ? (
         <>
-          {chatLoading ? <StateBox message="채팅 목록을 불러오는 중입니다." /> : null}
+          <div className={`community-chat-search ${chatSearchOpen ? 'is-open' : ''}`}>
+            {chatSearchOpen ? (
+              <>
+                <Input
+                  autoFocus
+                  aria-label="채팅방 이름이나 메시지로 검색"
+                  value={chatSearchValue}
+                  onChange={(event) => setChatSearchValue(event.target.value)}
+                  placeholder="채팅방 이름이나 메시지로 검색"
+                />
+                <Button
+                  variant="icon"
+                  label="채팅 검색 닫기"
+                  onClick={() => {
+                    setChatSearchOpen(false)
+                    setChatSearchValue('')
+                  }}
+                >
+                  <Icon name="close" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" label="채팅 검색" onClick={() => setChatSearchOpen(true)}>
+                <Icon name="search" />
+                <span>채팅 검색</span>
+              </Button>
+            )}
+          </div>
+          {chatLoading ? <StateBox loading message="채팅 목록을 불러오는 중입니다." /> : null}
           {!chatLoading && chatError ? <StateBox message={chatError} tone="error" /> : null}
           {!chatLoading && !chatError ? (
             <ChatList
               groupChats={filteredChatRooms.filter((room) => room.type === 'group')}
               inquiryChats={filteredChatRooms.filter((room) => room.type === 'inquiry')}
-              searchOpen={chatSearchOpen}
-              searchValue={chatSearchValue}
-              onSearchChange={setChatSearchValue}
               onOpenChat={(room) => {
                 getChatRoom(room.id)
                   .then((nextRoom) => {
@@ -536,6 +524,27 @@ export function CommunityPage() {
               }}
             />
           ) : null}
+        </>
+      ) : null}
+
+      {activeTab !== 'chat' ? (
+        <>
+          <div className="floating-action-clearance" aria-hidden="true" />
+          <Fab
+            extended
+            className="page-action-fab"
+            icon={<Icon name="plus" />}
+            label={activeTab === 'meetup' ? '번개 만들기' : '글쓰기'}
+            onClick={() => {
+              if (activeTab === 'feed') {
+                setEditingPost(null)
+                setComposerOpen(true)
+                return
+              }
+              setEditingMeetup(null)
+              setMeetupComposerOpen(true)
+            }}
+          />
         </>
       ) : null}
 
@@ -699,16 +708,6 @@ function getConsecutiveDateKeys(startDate: Date, days: number) {
   })
 }
 
-function StateBox({ message, tone = 'normal' }: { message: string; tone?: 'normal' | 'error' }) {
-  return (
-    <div
-      className={`rounded-[16px] px-4 py-5 text-[13px] font-bold ${
-        tone === 'error'
-          ? 'bg-[#FFF1EE] text-[#B91C1C]'
-          : 'bg-white text-[#594136] shadow-[0px_4px_12px_rgba(0,0,0,0.05)]'
-      }`}
-    >
-      {message}
-    </div>
-  )
+function StateBox({ message, tone = 'normal', loading = false }: { message: string; tone?: 'normal' | 'error'; loading?: boolean }) {
+  return loading ? <div className="community-loading"><Spinner /><p>{message}</p></div> : tone === 'error' ? <ErrorState compact title={message} /> : <EmptyState compact title={message} />
 }

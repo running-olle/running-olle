@@ -1,17 +1,18 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { RunningIcon } from '../../features/running/RunningIcon'
+import { Fab } from '../ui/Fab'
+import { Icon, type IconName } from '../ui/Icon'
 
 type NavigationItem = {
   label: string
   path: string
-  icon: string
+  icon: IconName
 }
 
 const navigationItems: NavigationItem[] = [
-  { label: '홈', path: '/', icon: '⌂' },
-  { label: '코스', path: '/courses', icon: '⌘' },
-  { label: '커뮤니티', path: '/community', icon: '◌' },
-  { label: '마이', path: '/mypage', icon: '◐' },
+  { label: '홈', path: '/', icon: 'home' },
+  { label: '코스', path: '/courses', icon: 'course' },
+  { label: '커뮤니티', path: '/community', icon: 'community' },
+  { label: '마이', path: '/mypage', icon: 'user' },
 ]
 
 function getIsActive(currentPath: string, itemPath: string) {
@@ -23,8 +24,8 @@ export function BottomNavigation() {
   const navigate = useNavigate()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 h-[83px] border-t border-[#E1BFB1] bg-white shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)]">
-      <div className="mx-auto grid h-full max-w-[430px] grid-cols-5 items-center px-5">
+    <nav className="bottom-navigation" aria-label="주요 메뉴">
+      <div className="bottom-navigation__inner">
         {navigationItems.slice(0, 2).map((item) => {
           const isActive = getIsActive(pathname, item.path)
 
@@ -32,25 +33,25 @@ export function BottomNavigation() {
             <NavLink
               key={item.path}
               to={item.path}
-              className={`flex h-full flex-col items-center justify-center gap-1 text-[12px] font-bold ${
-                isActive ? 'text-[#A04100]' : 'text-[#594136]'
-              }`}
+              className="bottom-navigation__item"
+              aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
             >
-              <span className="text-[22px] leading-none">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="bottom-navigation__icon"><Icon name={item.icon} size={24} /></span>
+              <span className="bottom-navigation__label">{item.label}</span>
             </NavLink>
           )
         })}
 
-        <button
-          type="button"
-          className={`-mt-8 mx-auto flex h-[62px] w-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,#FF6F0F_0%,#FD934C_100%)] leading-none text-white drop-shadow-[0px_4px_6px_rgba(0,0,0,0.2)] ${pathname.startsWith('/running') ? 'ring-4 ring-[#FFE3D5]' : ''}`}
-          aria-label="러닝 방식 선택"
-          onClick={() => navigate('/running')}
-        >
-          <RunningIcon name="run" size={34} />
-        </button>
+        <div className="bottom-navigation__fab-slot">
+          <Fab
+            className={`bottom-navigation__fab ${pathname.startsWith('/running') ? 'bottom-navigation__fab--active' : ''}`}
+            icon={<Icon name="run" size={24} />}
+            label="러닝 방식 선택"
+            onClick={() => navigate('/running')}
+          />
+          <span className="bottom-navigation__fab-label">러닝</span>
+        </div>
 
         {navigationItems.slice(2).map((item) => {
           const isActive = getIsActive(pathname, item.path)
@@ -59,13 +60,12 @@ export function BottomNavigation() {
             <NavLink
               key={item.path}
               to={item.path}
-              className={`flex h-full flex-col items-center justify-center gap-1 text-[12px] font-bold ${
-                isActive ? 'text-[#A04100]' : 'text-[#594136]'
-              }`}
+              className="bottom-navigation__item"
+              aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
             >
-              <span className="text-[22px] leading-none">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="bottom-navigation__icon"><Icon name={item.icon} size={24} /></span>
+              <span className="bottom-navigation__label">{item.label}</span>
             </NavLink>
           )
         })}

@@ -1,6 +1,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosInstance } from '../../api/axiosInstance'
+import { Button, Chip, Icon, IconButton, Input, Switch, Textarea } from '../../components/ui'
 import type { ThemeOption } from '../../features/mypage/types'
 
 type UserType = 'ACTIVE_RUNNER' | 'RELAXED_TRAVELER' | 'JEJU_RESIDENT'
@@ -47,11 +48,7 @@ function Choice<T extends string>({ value, selected, label, emoji, onClick }: {
   emoji?: string
   onClick: (value: T) => void
 }) {
-  return <button type="button" className={`choice ${selected ? 'selected' : ''}`} onClick={() => onClick(value)}>{emoji} {label}</button>
-}
-
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return <button type="button" role="switch" aria-checked={checked} className={`toggle ${checked ? 'on' : ''}`} onClick={onChange}><i /></button>
+  return <Chip variant="choice" selected={selected} onClick={() => onClick(value)}>{emoji} {label}</Chip>
 }
 
 export function OnboardingPage() {
@@ -160,7 +157,7 @@ export function OnboardingPage() {
 
   return (
     <main className="onboarding-page">
-      <header className="onboarding-header"><button aria-label="뒤로 가기" onClick={goBack}>←</button><strong>회원가입</strong><span /></header>
+      <header className="onboarding-header"><IconButton icon={<Icon name="arrowLeft" />} label="뒤로 가기" onClick={goBack} /><strong>회원가입</strong><span /></header>
       <Progress step={step} />
       <section className="onboarding-content">
         {step === 1 && <>
@@ -171,9 +168,23 @@ export function OnboardingPage() {
             <span className="photo-preview" style={form.profileImageUrl ? { backgroundImage: `url(${form.profileImageUrl})` } : undefined}>{!form.profileImageUrl && 'O'}</span>
             <em>+</em><b>사진 선택</b>
           </label>
-          <label className="field"><span>닉네임</span><input maxLength={100} value={form.nickname} onChange={(event) => setForm({ ...form, nickname: event.target.value })} placeholder="러너제주" /></label>
-          <p className={`field-help ${nicknameStatus === 'taken' ? 'invalid' : ''}`}>{nicknameStatus === 'checking' ? '닉네임을 확인하고 있습니다.' : nicknameStatus === 'taken' ? '이미 사용 중인 닉네임입니다.' : nicknameStatus === 'available' ? '사용 가능한 닉네임입니다.' : '2자 이상 입력해 주세요.'}</p>
-          <label className="field"><span>자기소개 <small>{form.bio.length} / 100</small></span><textarea maxLength={100} value={form.bio} onChange={(event) => setForm({ ...form, bio: event.target.value })} placeholder="제주 바다와 오름을 좋아하는 러너입니다." /></label>
+          <Input
+            label="닉네임"
+            maxLength={100}
+            value={form.nickname}
+            onChange={(event) => setForm({ ...form, nickname: event.target.value })}
+            placeholder="러너제주"
+            message={nicknameStatus === 'checking' ? '닉네임을 확인하고 있어요' : nicknameStatus === 'taken' ? '이미 사용 중인 닉네임이에요' : nicknameStatus === 'available' ? '✓ 사용 가능한 닉네임이에요' : '2자 이상 입력해 주세요'}
+            state={nicknameStatus === 'taken' ? 'error' : nicknameStatus === 'available' ? 'success' : 'default'}
+          />
+          <Textarea
+            label="자기소개 (선택)"
+            count={`${form.bio.length} / 100자`}
+            maxLength={100}
+            value={form.bio}
+            onChange={(event) => setForm({ ...form, bio: event.target.value })}
+            placeholder="제주의 오름과 바다를 사랑하는 러닝 여행자입니다."
+          />
         </>}
 
         {step === 2 && <>
@@ -214,12 +225,12 @@ export function OnboardingPage() {
           </div>
           <hr /><h2 className="notification-title">알림 설정</h2>
           <div className="notification-box">
-            {([['meetupInvite', '번개 참여·일정 알림'], ['commentLike', '댓글·좋아요 알림']] as const).map(([key, label]) => <div key={key}><span>{label}</span><Toggle checked={form.notifications[key]} onChange={() => setNotification(key)} /></div>)}
+            {([['meetupInvite', '번개 참여·일정 알림'], ['commentLike', '댓글·좋아요 알림']] as const).map(([key, label]) => <Switch key={key} label={label} checked={form.notifications[key]} onCheckedChange={() => setNotification(key)} />)}
           </div>
         </>}
         {error && <p className="form-error">{error}</p>}
       </section>
-      <footer className="onboarding-footer"><button disabled={!stepValid || submitting} onClick={next}>{submitting ? '저장 중...' : step === 3 ? '러닝올레 시작하기' : '다음'}</button></footer>
+      <footer className="onboarding-footer"><Button variant="primary" size="lg" fullWidth loading={submitting} disabled={!stepValid} onClick={next}>{submitting ? '가입 정보를 저장하는 중…' : step === 3 ? '러닝올레 시작하기  →' : '다음  →'}</Button></footer>
     </main>
   )
 }

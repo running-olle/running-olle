@@ -7,6 +7,7 @@ import { FreeRunningMap } from '../../features/running/FreeRunningMap'
 import { RunningIcon } from '../../features/running/RunningIcon'
 import { getLocationErrorMessage, GPS_OPTIONS, positionToPoint } from '../../features/running/runningUtils'
 import type { GeoPoint, RunningMode } from '../../features/running/types'
+import { Button } from '../../components/ui'
 
 type CourseRunState = {
   courseId: string
@@ -112,7 +113,7 @@ export function FreeRunReadyPage() {
       </section>
       <footer className="free-ready-footer">
         <p>{selectedCourse ? `${selectedCourse.courseName} 코스를 시작해요` : '안전한 장소에서 시작해 주세요'}</p>
-        <button type="button" disabled={!position || countdown !== null} onClick={() => setCountdown(3)}>러닝 시작</button>
+        <Button variant="primary" size="lg" fullWidth disabled={!position || countdown !== null} onClick={() => setCountdown(3)}>러닝 시작</Button>
       </footer>
       {countdown !== null && countdown > 0 && <div className="running-countdown" role="status"><span key={countdown}>{countdown}</span><p>준비하세요!</p></div>}
     </main>

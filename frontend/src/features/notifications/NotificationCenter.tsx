@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Button, EmptyState, Icon, Spinner } from '../../components/ui'
 import { notificationApi, type InAppNotification } from './notificationApi'
-
-export function BellIcon({ size = 22 }: { size?: number }) {
-  return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
-}
 
 export function NotificationCenter() {
   const navigate = useNavigate()
@@ -60,23 +57,35 @@ export function NotificationCenter() {
   }
 
   return <div className="notification-center" ref={rootRef}>
-    <button className="notification-bell" type="button" aria-label={`알림${unreadCount ? `, 읽지 않은 알림 ${unreadCount}개` : ''}`} aria-expanded={open} onClick={() => { const next = !open; setOpen(next); if (next) void load(true) }}>
-      <BellIcon/>{unreadCount > 0 ? <span>{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
+    <button className="notification-bell" data-unread={unreadCount > 0 || undefined} type="button" aria-label={`알림${unreadCount ? `, 읽지 않은 알림 ${unreadCount}개` : ''}`} aria-haspopup="dialog" aria-controls="notification-panel" aria-expanded={open} onClick={() => { const next = !open; setOpen(next); if (next) void load(true) }}>
+      <Icon name="bell" size={24}/>{unreadCount > 0 ? <span className="notification-badge" aria-hidden="true">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
     </button>
-    {open ? <section className="notification-panel" aria-label="알림 목록">
-      <header><div><h2>알림</h2>{unreadCount > 0 ? <span>새 알림 {unreadCount}개</span> : null}</div><div>{unreadCount > 0 ? <button type="button" onClick={markAllRead}>모두 읽음</button> : null}{items.length > 0 ? <button type="button" onClick={clear}>비우기</button> : null}</div></header>
+    {open ? <section id="notification-panel" className="notification-panel" role="dialog" aria-modal="false" aria-labelledby="notification-panel-title">
+      <header className="notification-panel-header">
+        <div className="notification-panel-heading"><h2 id="notification-panel-title">알림</h2>{unreadCount > 0 ? <span>읽지 않음 {unreadCount}개</span> : <span>모든 소식을 확인했어요</span>}</div>
+        <div className="notification-panel-actions">{unreadCount > 0 ? <Button variant="ghost" size="sm" onClick={markAllRead}>모두 읽음</Button> : null}{items.length > 0 ? <Button variant="ghost" size="sm" className="notification-clear" onClick={clear}>비우기</Button> : null}</div>
+      </header>
       <div className="notification-list">
-        {loading && items.length === 0 ? <p className="notification-state">알림을 불러오는 중이에요.</p> : null}
+        {loading && items.length === 0 ? <div className="notification-state" role="status"><Spinner size="section" label="알림을 불러오는 중"/><p>알림을 불러오는 중이에요.</p></div> : null}
         {!loading && error ? <p className="notification-state error">{error}</p> : null}
-        {!loading && !error && items.length === 0 ? <div className="notification-empty"><BellIcon size={28}/><strong>새로운 알림이 없어요</strong><span>좋아요, 댓글, 번개 소식을 여기에 모아드려요.</span></div> : null}
-        {items.map((notification) => <button className={`notification-item ${notification.read ? '' : 'unread'}`} type="button" key={notification.id} onClick={() => void openNotification(notification)}>
-          <span className={`notification-type ${notification.type.startsWith('FEED_') ? 'social' : 'meetup'}`}>{notification.type.startsWith('FEED_') ? '♥' : '⚡'}</span>
-          <span className="notification-copy"><strong>{notification.title}</strong><span>{notification.message}</span><time dateTime={notification.createdAt}>{relativeTime(notification.createdAt)}</time></span>
-          {!notification.read ? <i aria-label="읽지 않음"/> : null}
-        </button>)}
+        {!loading && !error && items.length === 0 ? <EmptyState compact className="notification-empty" icon={<Icon name="bell" size={28}/>} title="아직 도착한 알림이 없어요" description="좋아요, 댓글 소식을 이곳에 모아드릴게요."/> : null}
+        {items.map((notification) => <NotificationItem key={notification.id} notification={notification} onOpen={openNotification}/>)}
       </div>
     </section> : null}
   </div>
+}
+
+function NotificationItem({ notification, onOpen }: { notification: InAppNotification; onOpen: (notification: InAppNotification) => Promise<void> }) {
+  const isSocial = notification.type.startsWith('FEED_')
+  return <button className={`notification-item ${notification.read ? '' : 'unread'}`} type="button" onClick={() => void onOpen(notification)}>
+    <span className={`notification-type ${isSocial ? 'social' : 'meetup'}`} aria-hidden="true"><Icon name={isSocial ? 'heart' : 'runners'} size={20}/></span>
+    <span className="notification-copy">
+      <span className="notification-meta"><span>{isSocial ? '커뮤니티' : '같이 달리기'}</span><time dateTime={notification.createdAt}>{relativeTime(notification.createdAt)}</time></span>
+      <strong>{notification.title}</strong>
+      <span className="notification-message">{notification.message}</span>
+    </span>
+    {!notification.read ? <span className="notification-unread"><span className="sr-only">읽지 않음</span></span> : null}
+  </button>
 }
 
 function relativeTime(value: string) {

@@ -4,7 +4,7 @@ import { courseBuilderService } from '../../features/courseBuilder/courseBuilder
 import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftStore'
 import { difficultyLabel, formatDistanceKm } from '../../features/courseBuilder/courseBuilderUtils'
 import type { CourseTagOption, CourseType, ThemeOption } from '../../features/courseBuilder/types'
-import { RunningIcon } from '../../features/running/RunningIcon'
+import { BottomSheet, Button, Chip, Icon, IconButton, Input, SectionHeader, Switch, Textarea } from '../../components/ui'
 
 type LoadStatus = 'idle' | 'loading' | 'success' | 'error'
 type SubmitStatus = 'idle' | 'saving' | 'success' | 'error'
@@ -141,9 +141,11 @@ export function CourseSaveDetailPage() {
   return (
     <main className="course-save-page">
       <header className="course-save-header">
-        <button type="button" aria-label="뒤로 가기" onClick={() => navigate('/courses/create')}>
-          <RunningIcon name="back" />
-        </button>
+        <IconButton
+          icon={<Icon name="arrowLeft" />}
+          label="뒤로 가기"
+          onClick={() => navigate('/courses/create')}
+        />
         <strong>코스 저장</strong>
         <span />
       </header>
@@ -164,30 +166,24 @@ export function CourseSaveDetailPage() {
       </section>
 
       <section className="course-save-section">
-        <h2>기본 정보</h2>
-        <label>
-          <span>코스 이름</span>
-          <input value={name} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="코스 이름" />
-        </label>
-        <label>
-          <span>소개</span>
-          <textarea value={description} maxLength={500} onChange={(event) => setDescription(event.target.value)} placeholder="이 코스의 분위기나 주의할 점을 적어주세요." />
-        </label>
+        <SectionHeader title="기본 정보" className="course-save-section-heading" />
+        <Input label="코스 이름" value={name} maxLength={80} onChange={(event) => setName(event.target.value)} placeholder="코스 이름" count={`${name.length}/80`} />
+        <Textarea label="소개" value={description} maxLength={500} onChange={(event) => setDescription(event.target.value)} placeholder="이 코스의 분위기나 주의할 점을 적어주세요." count={`${description.length}/500`} />
       </section>
 
       <section className="course-save-section">
-        <h2>코스 유형</h2>
+        <SectionHeader title="코스 유형" className="course-save-section-heading" />
         <div className="course-type-options">
           {COURSE_TYPE_OPTIONS.map((option) => (
-            <button
+            <Chip
               key={option.value}
-              type="button"
-              className={courseType === option.value ? 'active' : ''}
+              variant="choice"
+              selected={courseType === option.value}
               onClick={() => setCourseType(option.value)}
             >
               <strong>{option.label}</strong>
               <small>{option.description}</small>
-            </button>
+            </Chip>
           ))}
         </div>
       </section>
@@ -213,24 +209,17 @@ export function CourseSaveDetailPage() {
       )}
 
       <section className="course-save-section">
-        <h2>공개 설정</h2>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isPublic}
-          className="course-public-toggle"
-          onClick={() => setIsPublic((value) => !value)}
-        >
-          <span>
-            <strong>{isPublic ? '공개 코스' : '비공개 코스'}</strong>
-            <small>{isPublic ? '다른 러너가 이 코스를 발견할 수 있어요.' : '나만 볼 수 있게 저장해요.'}</small>
-          </span>
-          <i className={isPublic ? 'on' : ''}><em /></i>
-        </button>
+        <SectionHeader title="공개 설정" className="course-save-section-heading" />
+        <Switch
+          checked={isPublic}
+          label={isPublic ? '공개 코스' : '비공개 코스'}
+          description={isPublic ? '다른 러너가 이 코스를 발견할 수 있어요.' : '나만 볼 수 있게 저장해요.'}
+          onCheckedChange={setIsPublic}
+        />
       </section>
 
       <section className="course-save-section">
-        <h2>경유지</h2>
+        <SectionHeader title="경유지" className="course-save-section-heading" />
         <ol className="course-save-waypoints">
           {waypoints.map((waypoint, index) => (
             <li key={`${waypoint.kakaoPlaceId}-${waypoint.orderIndex}`}>
@@ -247,26 +236,32 @@ export function CourseSaveDetailPage() {
       {errorMessage && <p className="course-save-error">{errorMessage}</p>}
 
       <div className="course-save-footer">
-        <button type="button" disabled={!canSubmit} onClick={handleSubmit}>
-          {submitStatus === 'saving' ? '저장 중이에요...' : '코스 저장하기'}
-        </button>
+        <Button variant="primary" size="lg" fullWidth loading={submitStatus === 'saving'} disabled={!canSubmit} onClick={handleSubmit}>코스 저장하기</Button>
       </div>
 
-      {submitStatus === 'success' && createdCourseId && (
-        <div className="course-save-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="course-save-modal-title">
-          <div className="course-save-modal">
-            <span>완료</span>
-            <h2 id="course-save-modal-title">코스를 저장했어요</h2>
-            <p>저장된 코스 ID</p>
-            <code>{createdCourseId}</code>
-            <div>
-              <button type="button" onClick={finishAndStartRun}>이 코스로 달리기</button>
-              <button type="button" onClick={finishAndCreateAnother}>새 코스 만들기</button>
-              <button type="button" onClick={finishAndGoCourses}>코스 선택으로</button>
-            </div>
+      <BottomSheet
+        open={submitStatus === 'success' && Boolean(createdCourseId)}
+        title="코스를 저장했어요"
+        description="바로 달리거나 다음 코스를 이어서 만들 수 있어요."
+        closeLabel="코스 선택으로 이동"
+        closeOnBackdrop={false}
+        closeOnEscape={false}
+        onClose={finishAndGoCourses}
+        className="course-save-success-sheet"
+        footer={(
+          <div className="course-save-success-actions">
+            <Button variant="primary" size="lg" fullWidth onClick={finishAndStartRun}>이 코스로 달리기</Button>
+            <Button variant="secondary" size="md" fullWidth onClick={finishAndCreateAnother}>새 코스 만들기</Button>
+            <Button variant="ghost" size="md" fullWidth onClick={finishAndGoCourses}>코스 선택으로</Button>
           </div>
+        )}
+      >
+        <div className="course-save-success">
+          <span><Icon name="check" size={28} /></span>
+          {/*<p>코스 ID</p>*/}
+          {/*<code>{createdCourseId}</code>*/}
         </div>
-      )}
+      </BottomSheet>
     </main>
   )
 }
@@ -286,20 +281,20 @@ function OptionSection({
 }) {
   return (
     <section className="course-save-section">
-      <h2>{title}</h2>
+      <SectionHeader title={title} className="course-save-section-heading" />
       {options.length === 0 ? (
         <p className="course-save-empty-options">{emptyText}</p>
       ) : (
         <div className="course-save-chips">
           {options.map((option) => (
-            <button
+            <Chip
               key={option.id}
-              type="button"
-              className={selectedIds.includes(option.id) ? 'active' : ''}
+              variant="choice"
+              selected={selectedIds.includes(option.id)}
               onClick={() => onToggle(option.id)}
             >
               {option.label}
-            </button>
+            </Chip>
           ))}
         </div>
       )}

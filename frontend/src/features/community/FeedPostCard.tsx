@@ -1,3 +1,4 @@
+import { Card, Icon, Button } from '../../components/ui'
 import { useMemo } from 'react'
 import type { FeedPost } from './api'
 import { deletePostById, toggleLikeWithOptimistic } from './feedPostMutations'
@@ -46,34 +47,34 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
   }
 
   return (
-    <article className="rounded-[18px] bg-white px-5 py-4 shadow-[0px_2px_12px_rgba(0,0,0,0.06)]">
+    <Card as="article" shadow="none" className="community-card">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[14px] font-bold text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-body-sm font-bold text-surface"
             style={{ backgroundImage: buildAvatarGradient(post) }}
           >
             {post.nickname.slice(0, 1)}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[14px] font-bold text-[#261912]">{post.nickname}</div>
-            <div className="mt-0.5 text-[11px] text-[#8D7164]">
+            <div className="truncate text-body-sm font-bold text-ink">{post.nickname}</div>
+            <div className="mt-0.5 text-caption text-ink-secondary">
               {createdLabel} · {post.region}
             </div>
           </div>
         </div>
 
         {post.mine ? (
-          <div className="flex items-center gap-3 text-[12px] font-bold text-[#8D7164]">
-            <button type="button" onClick={() => onEdit(post)}>
+          <div className="flex items-center gap-3 text-caption font-bold text-ink-secondary">
+            <Button variant="ghost" size="sm" type="button" onClick={() => onEdit(post)}>
               수정
-            </button>
-            <button type="button" onClick={handleDeletePost}>
+            </Button>
+            <Button variant="danger" size="sm" type="button" onClick={handleDeletePost}>
               삭제
-            </button>
+            </Button>
           </div>
         ) : (
-          <span className="text-[18px] leading-none text-[#C8A99A]">⋯</span>
+          <span className="text-app-title leading-none text-ink-tertiary">⋯</span>
         )}
       </div>
 
@@ -87,27 +88,27 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
             }
             onOpenDetail(post)
           }}
-          className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
-            post.course?.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+          className={`mt-4 flex w-full items-center gap-3 rounded-control px-3 py-3 text-left ${
+            post.course?.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
           }`}
         >
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
             style={{
-              background: post.course?.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+              background: post.course?.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
             }}
           >
             {post.course?.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-bold text-[#261912]">{post.course?.name ?? '러닝 기록'}</div>
-            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#594136]">
+            <div className="truncate text-label font-bold text-ink">{post.course?.name ?? '러닝 기록'}</div>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-caption text-ink-secondary">
               <span>거리 {post.runningRecord.distanceKm.toFixed(2)}km</span>
               <span>시간 {formatDuration(post.runningRecord.durationSeconds)}</span>
               <span>{formatPace(post.runningRecord.distanceKm, post.runningRecord.durationSeconds)}</span>
             </div>
           </div>
-          {post.course ? <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span> : null}
+          {post.course ? <span className="ml-auto shrink-0 text-caption font-bold text-brand-500">코스 보기</span> : null}
         </button>
       ) : null}
 
@@ -115,35 +116,35 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
         <button
           type="button"
           onClick={() => onOpenCourse(post.course!.id)}
-          className={`mt-4 flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left ${
-            post.course.courseType === 'SPOT_COURSE' ? 'bg-[#F0FDF4]' : 'bg-[#FFF5EE]'
+          className={`mt-4 flex w-full items-center gap-3 rounded-control px-3 py-3 text-left ${
+            post.course.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
           }`}
         >
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-[16px] text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
             style={{
-              background: post.course.courseType === 'SPOT_COURSE' ? '#34C759' : '#FF6F0F',
+              background: post.course.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
             }}
           >
             {post.course.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[13px] font-bold text-[#261912]">{post.course.name}</div>
-            <div className="mt-1 text-[11px] font-bold text-[#594136]">
+            <div className="truncate text-label font-bold text-ink">{post.course.name}</div>
+            <div className="mt-1 text-caption font-bold text-ink-secondary">
               {post.course.courseType === 'RUNNING_COURSE' ? '러닝 코스' : '스팟 코스'}
             </div>
           </div>
-          <span className="ml-auto shrink-0 text-[11px] font-bold text-[#FF6F0F]">코스 보기</span>
+          <span className="ml-auto shrink-0 text-caption font-bold text-brand-500">코스 보기</span>
         </button>
       ) : null}
 
       <button type="button" onClick={() => onOpenDetail(post)} className="mt-4 block w-full text-left">
-        <p className="whitespace-pre-wrap text-[14px] leading-[1.65] text-[#261912]">{post.content}</p>
+        <p className="whitespace-pre-wrap text-body-sm leading-relaxed text-ink">{post.content}</p>
       </button>
 
       {post.imageUrls.length > 0 ? (
         <button type="button" onClick={() => onOpenDetail(post)} className="mt-3 block w-full">
-          <div className={`grid gap-[3px] overflow-hidden rounded-[12px] ${buildImageGridClass(post.imageUrls.length)}`}>
+          <div className={`grid gap-1 overflow-hidden rounded-control ${buildImageGridClass(post.imageUrls.length)}`}>
             {post.imageUrls.slice(0, 3).map((imageUrl, index) => (
               <div
                 key={`${imageUrl}-${index}`}
@@ -151,7 +152,7 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
                 style={{ backgroundImage: `url(${imageUrl})` }}
               >
                 {index === 2 && post.imageUrls.length > 3 ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[rgba(38,25,18,0.38)] text-[18px] font-bold text-white">
+                  <div className="absolute inset-0 flex items-center justify-center bg-(--color-overlay) text-app-title font-bold text-surface">
                     +{post.imageUrls.length - 3}
                   </div>
                 ) : null}
@@ -161,25 +162,26 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
         </button>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-4 border-t border-[#F5E7E1] pt-3 text-[13px] font-medium text-[#8D7164]">
-        <button
+      <div className="community-feed-actions">
+        <Button variant="ghost" size="sm"
           type="button"
           onClick={handleLike}
-          className={`flex items-center gap-1 ${post.likedByMe ? 'text-[#FF3B30]' : ''}`}
+          aria-label="좋아요" aria-pressed={post.likedByMe}
+          className={`flex items-center gap-1 ${post.likedByMe ? 'text-danger' : ''}`}
         >
-          <span>{post.likedByMe ? '♥' : '♡'}</span>
+          <Icon name="heart" fill={post.likedByMe ? 'currentColor' : 'none'} />
           <span>{post.likeCount}</span>
-        </button>
-        <button type="button" onClick={() => onOpenDetail(post)} className="flex items-center gap-1">
+        </Button>
+        <Button variant="ghost" size="sm" type="button" onClick={() => onOpenDetail(post)} className="flex items-center gap-1">
           <span>댓글</span>
           <span>{post.commentCount}</span>
-        </button>
+        </Button>
         {post.course ? (
-          <button type="button" onClick={() => onOpenCourse(post.course!.id)} className="ml-auto text-[12px] font-bold text-[#FF6F0F]">
+          <Button variant="ghost" size="sm" type="button" onClick={() => onOpenCourse(post.course!.id)} className="ml-auto text-caption font-bold text-brand-500">
             태그 코스 보기
-          </button>
+          </Button>
         ) : null}
       </div>
-    </article>
+    </Card>
   )
 }

@@ -4,6 +4,7 @@ import { FreeRunningMap } from '../../features/running/FreeRunningMap'
 import { saveRunningRouteAsCourse } from '../../features/running/runningRecordService'
 import { formatDistance, formatDuration, formatPace } from '../../features/running/runningUtils'
 import type { SavedRunningRecord } from '../../features/running/types'
+import { Button, Input } from '../../components/ui'
 
 export function RunningCompletePage() {
   const navigate = useNavigate()
@@ -48,7 +49,7 @@ export function RunningCompletePage() {
       </section>
       {record.syncStatus === 'pending' && <p className="record-sync-notice">서버 연결에 실패해 기록을 이 기기에 임시 저장했어요.</p>}
       {canSaveCourse && !savedCourseId && (
-        <button className="complete-course-save-button" type="button" onClick={() => setShowCourseSave(true)}>달린 경로를 코스로 저장</button>
+        <Button className="complete-course-save-button" variant="secondary" size="lg" fullWidth onClick={() => setShowCourseSave(true)}>달린 경로를 코스로 저장</Button>
       )}
       {savedCourseId && (
         <section className="complete-course-saved">
@@ -56,25 +57,21 @@ export function RunningCompletePage() {
           <button type="button" onClick={() => navigate(`/courses/${savedCourseId}`)}>코스 보기</button>
         </section>
       )}
-      <button className="complete-home-button" type="button" onClick={() => navigate('/', { replace: true })}>홈으로</button>
+      <Button className="complete-home-button" variant="primary" size="lg" fullWidth onClick={() => navigate('/', { replace: true })}>홈으로</Button>
       {showCourseSave && (
         <div className="course-save-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="running-course-save-title" onClick={() => !savingCourse && setShowCourseSave(false)}>
           <section className="running-course-save-modal" onClick={(event) => event.stopPropagation()}>
             <h2 id="running-course-save-title">달린 경로를 코스로 저장</h2>
             <p>자유 러닝에서 기록한 경로가 그대로 새 코스가 돼요.</p>
-            <label>
-              <span>코스 이름</span>
-              <input autoFocus value={courseName} maxLength={200} placeholder="예: 노을 따라 해안 러닝" onChange={(event) => setCourseName(event.target.value)} />
-              <small>{courseName.length}/200</small>
-            </label>
+            <Input label="코스 이름" autoFocus value={courseName} maxLength={200} placeholder="예: 노을 따라 해안 러닝" count={`${courseName.length}/200`} onChange={(event) => setCourseName(event.target.value)} />
             <button className="running-course-public-toggle" type="button" role="switch" aria-checked={isPublic} onClick={() => setIsPublic((value) => !value)}>
               <span><strong>{isPublic ? '공개 코스' : '비공개 코스'}</strong><small>{isPublic ? '다른 러너도 이 코스를 볼 수 있어요.' : '나만 볼 수 있게 저장해요.'}</small></span>
               <i className={isPublic ? 'on' : ''}><em /></i>
             </button>
             {courseSaveError && <p className="running-course-save-error">{courseSaveError}</p>}
             <div className="running-course-save-actions">
-              <button type="button" disabled={savingCourse} onClick={() => setShowCourseSave(false)}>취소</button>
-              <button type="button" disabled={!courseName.trim() || savingCourse} onClick={handleCourseSave}>{savingCourse ? '저장 중…' : '코스 저장'}</button>
+              <Button variant="secondary" disabled={savingCourse} onClick={() => setShowCourseSave(false)}>취소</Button>
+              <Button variant="primary" loading={savingCourse} disabled={!courseName.trim()} onClick={handleCourseSave}>코스 저장</Button>
             </div>
           </section>
         </div>
