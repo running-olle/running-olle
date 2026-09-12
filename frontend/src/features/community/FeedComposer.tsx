@@ -304,19 +304,24 @@ function OptionSection({
     <div className="rounded-md bg-surface-subtle p-4 shadow-none">
       <div className="text-body-sm font-bold text-ink">{title}</div>
       <div className="mt-1 text-caption text-ink-secondary">{helper}</div>
-      <select aria-label={title}
-        value={selectedId}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="ui-input mt-3 w-full rounded-control border border-border-subtle bg-surface px-4 py-3 text-label text-ink outline-none disabled:opacity-60"
-      >
-        <option value="">{loading ? '불러오는 중...' : emptyLabel}</option>
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {buildOptionLabel(option)}
-          </option>
-        ))}
-      </select>
+      <div className="relative mt-3">
+        <select aria-label={title}
+          value={selectedId}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className="community-option-select ui-input w-full rounded-control border border-border-subtle bg-surface py-3 pl-4 text-label text-ink outline-none disabled:opacity-60"
+        >
+          <option value="">{loading ? '불러오는 중...' : emptyLabel}</option>
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {buildOptionLabel(option)}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-4 top-1/2 inline-flex -translate-y-1/2 text-ink-secondary" aria-hidden="true">
+          <Icon name="chevronRight" size={18} className="rotate-90" />
+        </span>
+      </div>
     </div>
   )
 }

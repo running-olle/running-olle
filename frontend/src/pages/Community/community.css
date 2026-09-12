@@ -27,6 +27,7 @@
 .community-dialog-body { min-height: 0; overscroll-behavior: contain; padding-bottom: calc(var(--spacing-6) + var(--safe-bottom)); }
 .community-dialog-body .ui-input { min-width: 0; }
 .community-dialog-body select.ui-input { padding: var(--spacing-3); }
+.community-dialog-body select.community-option-select { appearance: none; padding-right: var(--spacing-12); padding-left: var(--spacing-4); }
 .community-dialog-body .ui-textarea { font-size: var(--text-body); }
 .community-dialog-body button { min-height: 44px; }
 .community-dialog-body .ui-button { white-space: normal; }
