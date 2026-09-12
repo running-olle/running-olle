@@ -251,6 +251,7 @@ export function CourseListView({
           <Chip
             selected={filter === option.value}
             key={option.value}
+            className="shrink-0"
             onClick={() => setFilter(option.value)}
           >
             {option.label}
