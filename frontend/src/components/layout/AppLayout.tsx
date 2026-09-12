@@ -8,6 +8,8 @@ import { PageContainer } from './PageContainer'
 type AppLayoutProps = Pick<HeaderProps, 'rightSlot'>
 
 function getHeaderTitle(pathname: string) {
+  if (pathname === '/events') return '제주 행사'
+  if (pathname.startsWith('/events/')) return '행사 상세'
   if (pathname === '/courses') return '코스'
   if (pathname.startsWith('/courses/')) return '코스 상세'
   if (pathname === '/community') return '커뮤니티'
