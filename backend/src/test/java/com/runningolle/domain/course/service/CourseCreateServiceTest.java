@@ -22,6 +22,8 @@ import com.runningolle.domain.course.repository.CourseTagMapRepository;
 import com.runningolle.domain.course.repository.CourseTagRepository;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
+import com.runningolle.domain.home.service.CourseRecommendationDocumentService;
+import com.runningolle.domain.home.service.CourseRecommendationEmbeddingService;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient.OrsRouteResult;
 import com.runningolle.domain.routing.client.OpenRouteServiceClient.SurfaceBreakdown;
@@ -83,6 +85,12 @@ class CourseCreateServiceTest {
     @Mock
     private TourApiClient tourApiClient;
 
+    @Mock
+    private CourseRecommendationDocumentService courseRecommendationDocumentService;
+
+    @Mock
+    private CourseRecommendationEmbeddingService courseRecommendationEmbeddingService;
+
     private CourseCreateService courseCreateService;
 
     @BeforeEach
@@ -97,7 +105,9 @@ class CourseCreateServiceTest {
                 userRepository,
                 openRouteServiceClient,
                 tourApiClient,
-                new ObjectMapper()
+                new ObjectMapper(),
+                courseRecommendationDocumentService,
+                courseRecommendationEmbeddingService
         );
     }
 
@@ -186,6 +196,8 @@ class CourseCreateServiceTest {
 
         verify(courseThemeRepository).saveAll(anyList());
         verify(courseTagMapRepository).saveAll(anyList());
+        verify(courseRecommendationDocumentService).syncCourseDescriptionDocument(courseId);
+        verify(courseRecommendationEmbeddingService).syncCourseRecommendationEmbeddings(courseId);
     }
 
     @Test

@@ -1,16 +1,23 @@
 package com.runningolle.domain.user.service;
 
 import com.runningolle.domain.user.dto.OnboardingRequest;
+import com.runningolle.domain.user.entity.Theme;
 import com.runningolle.domain.user.entity.User;
 import com.runningolle.domain.user.entity.UserNotificationSetting;
+import com.runningolle.domain.user.entity.UserTheme;
 import com.runningolle.domain.user.entity.UserType;
 import com.runningolle.domain.user.entity.UserUserType;
 import com.runningolle.domain.user.enums.AccountStatus;
 import com.runningolle.domain.user.enums.UserTypeCode;
+import com.runningolle.domain.user.repository.ThemeRepository;
 import com.runningolle.domain.user.repository.UserNotificationSettingRepository;
 import com.runningolle.domain.user.repository.UserRepository;
+import com.runningolle.domain.user.repository.UserThemeRepository;
 import com.runningolle.domain.user.repository.UserTypeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,8 +30,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ThemeRepository themeRepository;
     private final UserTypeRepository userTypeRepository;
     private final UserUserTypeRepository userUserTypeRepository;
+    private final UserThemeRepository userThemeRepository;
     private final UserNotificationSettingRepository notificationSettingRepository;
 
     @Transactional(readOnly = true)
@@ -64,6 +73,7 @@ public class UserService {
                     .orElseGet(() -> userTypeRepository.save(UserType.of(code.name(), code.getDisplayName())));
             userUserTypeRepository.save(UserUserType.of(user, type));
         }
+        syncUserThemes(user, request.themeIds());
 
         notificationSettingRepository.findByUserId(userId)
                 .ifPresent(notificationSettingRepository::delete);
@@ -81,6 +91,40 @@ public class UserService {
     @Transactional
     public void withdraw(UUID userId) {
         getActiveUser(userId).withdraw();
+    }
+
+    private void syncUserThemes(User user, List<UUID> themeIds) {
+        userThemeRepository.deleteAllByUserId(user.getId());
+        List<UUID> distinctThemeIds = distinctIds(themeIds);
+        if (distinctThemeIds.isEmpty()) {
+            return;
+        }
+
+        List<Theme> themes = themeRepository.findAllById(distinctThemeIds);
+        if (themes.size() != distinctThemeIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Some selected themes do not exist.");
+        }
+
+        List<UserTheme> userThemes = new ArrayList<>(themes.size());
+        for (Theme theme : themes) {
+            userThemes.add(UserTheme.of(user, theme));
+        }
+        userThemeRepository.saveAll(userThemes);
+    }
+
+    private List<UUID> distinctIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<UUID> distinctIds = new LinkedHashSet<>();
+        for (UUID id : ids) {
+            if (id == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Theme id is required.");
+            }
+            distinctIds.add(id);
+        }
+        return new ArrayList<>(distinctIds);
     }
 
     private User getActiveUser(UUID userId) {

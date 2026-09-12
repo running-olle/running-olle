@@ -45,7 +45,13 @@ public final class MyPageDtos {
                                        @Size(max = 4_200_000) String profileImageUrl,
                                        @Size(max = 300) String bio,
                                        @Size(max = 3) List<String> userTypes,
-                                       PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty) {}
+                                       PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty,
+                                       List<UUID> themeIds) {
+        public UpdateProfileRequest(String nickname, String profileImageUrl, String bio, List<String> userTypes,
+                                    PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty) {
+            this(nickname, profileImageUrl, bio, userTypes, preferredDistance, preferredDifficulty, null);
+        }
+    }
     public record NotificationSettings(boolean recommendedCourse, boolean weather, boolean savedCourseUpdate,
                                        boolean meetupInvite, boolean commentLike, boolean tierChange, boolean eventChallenge) {}
 }

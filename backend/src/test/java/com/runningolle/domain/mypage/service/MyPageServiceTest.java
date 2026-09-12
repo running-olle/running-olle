@@ -25,8 +25,10 @@ import com.runningolle.domain.user.entity.UserType;
 import com.runningolle.domain.user.entity.UserUserType;
 import com.runningolle.domain.user.enums.PreferredDifficulty;
 import com.runningolle.domain.user.enums.PreferredDistance;
+import com.runningolle.domain.user.repository.ThemeRepository;
 import com.runningolle.domain.user.repository.UserNotificationSettingRepository;
 import com.runningolle.domain.user.repository.UserRepository;
+import com.runningolle.domain.user.repository.UserThemeRepository;
 import com.runningolle.domain.user.repository.UserTypeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
 import java.math.BigDecimal;
@@ -61,6 +63,12 @@ class MyPageServiceTest {
     private UserTypeRepository userTypeRepository;
 
     @Mock
+    private ThemeRepository themeRepository;
+
+    @Mock
+    private UserThemeRepository userThemeRepository;
+
+    @Mock
     private UserNotificationSettingRepository notificationRepository;
 
     @Mock
@@ -86,6 +94,8 @@ class MyPageServiceTest {
                 userRepository,
                 userUserTypeRepository,
                 userTypeRepository,
+                themeRepository,
+                userThemeRepository,
                 notificationRepository,
                 runningRecordRepository,
                 visitRepository,
@@ -141,7 +151,7 @@ class MyPageServiceTest {
 
         MyPageDtos.Profile profile = myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
                 "  새닉네임  ", null, "  새로운 소개  ", List.of("ACTIVE_RUNNER"),
-                PreferredDistance.FROM_5_TO_10KM, PreferredDifficulty.NORMAL
+                PreferredDistance.FROM_5_TO_10KM, PreferredDifficulty.NORMAL, null
         ));
 
         assertThat(profile.nickname()).isEqualTo("새닉네임");
