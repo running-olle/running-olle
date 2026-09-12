@@ -111,13 +111,14 @@ export function MeetupComposer({
 
   const filteredCourses = useMemo(() => {
     const keyword = courseKeyword.trim().toLowerCase()
-    const source = keyword
-      ? courseOptions.filter((course) =>
-          [course.name, course.description ?? '', ...course.waypointNames]
-            .some((value) => value.toLowerCase().includes(keyword)),
-        )
-      : courseOptions
-    return source.slice(0, 8)
+    if (!keyword) return []
+
+    return courseOptions
+      .filter((course) =>
+        [course.name, course.description ?? '', ...course.waypointNames]
+          .some((value) => value.toLowerCase().includes(keyword)),
+      )
+      .slice(0, 8)
   }, [courseKeyword, courseOptions])
 
   const submit = () => {
@@ -245,44 +246,85 @@ export function MeetupComposer({
             ) : null}
           </Field>
           <Field label="연계 코스">
-            <input aria-label="코스명 또는 경유지 검색"
-              value={courseKeyword}
-              onChange={(event) => setCourseKeyword(event.target.value)}
-              className={inputClassName}
-              placeholder="코스명 또는 경유지 검색"
-            />
-            <div className="mt-3 space-y-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCourseId('')}
-                className={`w-full rounded-control border px-4 py-3 text-left text-label font-bold ${
-                  selectedCourseId
-                    ? 'border-border-subtle bg-surface text-ink-secondary'
-                    : 'border-brand-500 bg-surface-subtle text-brand-700'
-                }`}
-              >
-                코스 없이 만들기
-              </button>
-              {courseLoading ? <StateText>코스를 불러오는 중입니다.</StateText> : null}
-              {!courseLoading && courseError ? <StateText>{courseError}</StateText> : null}
-              {!courseLoading && !courseError && filteredCourses.length === 0 ? (
-                <StateText>조건에 맞는 코스가 없습니다.</StateText>
-              ) : null}
-              {!courseLoading && !courseError
-                ? filteredCourses.map((course) => (
-                    <CourseOptionButton
-                      key={course.id}
-                      course={course}
-                      active={course.id === selectedCourseId}
-                      onClick={() => setSelectedCourseId(course.id)}
-                    />
-                  ))
-                : null}
+            <div className="relative">
+              <input
+                aria-label="코스명 또는 경유지 검색"
+                value={courseKeyword}
+                onChange={(event) => setCourseKeyword(event.target.value)}
+                disabled={courseLoading}
+                className={`${inputClassName} pr-11 disabled:opacity-60`}
+                placeholder={courseLoading ? '코스를 불러오는 중...' : '코스명 또는 경유지 검색'}
+              />
+              {courseKeyword ? (
+                <button
+                  type="button"
+                  onClick={() => setCourseKeyword('')}
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-secondary"
+                  aria-label="코스 검색어 지우기"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              ) : (
+                <span className="pointer-events-none absolute right-4 top-1/2 inline-flex -translate-y-1/2 text-ink-secondary" aria-hidden="true">
+                  <Icon name="search" size={18} />
+                </span>
+              )}
             </div>
-            {!selectedCourse && editingMeetup?.course && selectedCourseId === editingMeetup.course.id ? (
+            {!courseLoading && courseError ? <div className="mt-3"><StateText>{courseError}</StateText></div> : null}
+            {!courseLoading && !courseError && courseOptions.length === 0 ? (
+              <div className="mt-3"><StateText>선택할 수 있는 코스가 없습니다.</StateText></div>
+            ) : null}
+            {!courseLoading && !courseError && courseOptions.length > 0 && courseKeyword.trim() && filteredCourses.length === 0 ? (
+              <div className="mt-3"><StateText>조건에 맞는 코스가 없습니다.</StateText></div>
+            ) : null}
+            {!courseLoading && !courseError && filteredCourses.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {filteredCourses.map((course) => (
+                  <CourseOptionButton
+                    key={course.id}
+                    course={course}
+                    active={course.id === selectedCourseId}
+                    onClick={() => {
+                      setSelectedCourseId(course.id)
+                      setCourseKeyword('')
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {!courseKeyword.trim() && selectedCourse ? (
+              <div className="mt-3 rounded-control border border-brand-500 bg-surface-subtle px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-label font-extrabold text-ink">{selectedCourse.name}</strong>
+                    <span className="mt-1 block text-caption text-ink-secondary">
+                      {formatDistanceKm(selectedCourse.distanceKm)}km · {selectedCourse.estimatedDurationMinutes}분
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCourseId('')}
+                    className="min-h-8 shrink-0 text-caption font-bold text-brand-700"
+                  >
+                    연결 해제
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {!courseKeyword.trim() && !selectedCourseId && !courseLoading && !courseError ? (
+              <p className="mt-2 text-caption text-ink-secondary">선택하지 않으면 코스 없이 만들어집니다.</p>
+            ) : null}
+            {!courseKeyword.trim() && !selectedCourse && editingMeetup?.course && selectedCourseId === editingMeetup.course.id ? (
               <div className="mt-3 rounded-control bg-surface px-4 py-3 text-caption text-ink-secondary">
-                <strong className="block text-label text-ink">{editingMeetup.course.name}</strong>
-                <span>{editingMeetup.course.distanceKm}km · {editingMeetup.course.durationMinutes}분</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-label text-ink">{editingMeetup.course.name}</strong>
+                    <span>{editingMeetup.course.distanceKm}km · {editingMeetup.course.durationMinutes}분</span>
+                  </div>
+                  <button type="button" onClick={() => setSelectedCourseId('')} className="min-h-8 shrink-0 font-bold text-brand-700">
+                    연결 해제
+                  </button>
+                </div>
               </div>
             ) : null}
           </Field>
