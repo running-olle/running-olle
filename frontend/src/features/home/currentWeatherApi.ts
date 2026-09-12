@@ -30,7 +30,6 @@ function weatherHeadline(code: number, temperature: number, windSpeed: number) {
 
 export async function fetchCurrentWeather(
   { latitude, longitude }: Coordinates,
-  runningNowCount: number,
   signal: AbortSignal,
 ): Promise<Weather> {
   const params = new URLSearchParams({
@@ -53,6 +52,5 @@ export async function fetchCurrentWeather(
     temperatureCelsius: Math.round(temperature),
     condition: WEATHER_CONDITIONS[weatherCode] ?? '날씨 정보 확인 중',
     windSpeedMeterPerSecond: Math.round(windSpeed * 10) / 10,
-    runningNowCount,
   }
 }
