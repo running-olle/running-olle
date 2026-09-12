@@ -123,11 +123,13 @@ export function TourismEventDetailPage() {
       </section>
 
       {event.firstImageUrl && (
-        <img
-          src={event.firstImageUrl}
-          alt=""
-          className="h-56 w-full rounded-[28px] object-cover shadow-[0px_14px_28px_rgba(89,65,54,0.12)]"
-        />
+        <div className="overflow-hidden rounded-[28px] bg-[#F7F1EE] shadow-[0px_14px_28px_rgba(89,65,54,0.12)]">
+          <img
+            src={event.firstImageUrl}
+            alt=""
+            className="max-h-[72vh] w-full object-contain"
+          />
+        </div>
       )}
 
       <Card className="space-y-4">

@@ -148,9 +148,9 @@ export function TourismEventsPage() {
       </div>
 
       {loading && (
-        <div className="space-y-3">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Card key={index} className="h-36 animate-pulse bg-white" />
+        <div className="grid grid-cols-2 gap-3 min-[520px]:grid-cols-3">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Card key={index} padding="none" className="aspect-[3/4] animate-pulse bg-white" />
           ))}
         </div>
       )}
@@ -170,21 +170,32 @@ export function TourismEventsPage() {
       )}
 
       {!loading && !failed && events.length > 0 && (
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3 min-[520px]:grid-cols-3">
           {events.map((event) => (
             <Link key={event.id} to={`/events/${event.id}`} className="block text-inherit no-underline">
-              <Card padding="none" className="overflow-hidden">
-                {event.firstImageUrl && <img src={event.firstImageUrl} alt="" className="h-40 w-full object-cover" />}
-                <div className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-3 py-1 text-[11px] font-black ${event.runningRelated ? 'bg-[#E1F5E8] text-[#168847]' : 'bg-[#FFF0E8] text-[#A04100]'}`}>{event.categoryLabel}</span>
-                    <span className={`rounded-full px-3 py-1 text-[11px] font-black ${statusClassName(event)}`}>{ddayLabel(event)}</span>
+              <Card padding="none" className="h-full overflow-hidden">
+                <div className="relative aspect-[3/4] bg-[#F7F1EE]">
+                  {event.firstImageUrl ? (
+                    <img src={event.firstImageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-4 text-center text-[13px] font-black text-[#8D7164]">
+                      제주 행사
+                    </div>
+                  )}
+                  <div className="absolute left-2 top-2 flex max-w-[calc(100%-16px)] flex-wrap gap-1">
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-black shadow-[0px_4px_10px_rgba(0,0,0,0.12)] ${event.runningRelated ? 'bg-[#E1F5E8] text-[#168847]' : 'bg-[#FFF0E8] text-[#A04100]'}`}>
+                      {event.categoryLabel}
+                    </span>
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] font-black shadow-[0px_4px_10px_rgba(0,0,0,0.12)] ${statusClassName(event)}`}>
+                      {ddayLabel(event)}
+                    </span>
                   </div>
-                  <h2 className="mt-3 text-[20px] font-black leading-snug text-[#111827]">{event.title}</h2>
-                  <p className="mt-2 text-[13px] font-bold text-[#594136]">{formatDateRange(event)}</p>
-                  <p className="mt-1 text-[12px] font-semibold text-[#6B7280]">{event.venueName || event.address || '장소 정보 확인 중'}</p>
-                  {event.overview && <p className="mt-4 line-clamp-3 text-[13px] leading-relaxed text-[#4B5563]">{event.overview}</p>}
-                  <p className="mt-4 text-[11px] font-black text-[#168847]">정보 제공: {event.providerName}</p>
+                </div>
+                <div className="p-3">
+                  <h2 className="line-clamp-2 min-h-[40px] text-[15px] font-black leading-snug text-[#111827]">{event.title}</h2>
+                  <p className="mt-2 line-clamp-1 text-[11px] font-bold text-[#594136]">{formatDateRange(event)}</p>
+                  <p className="mt-1 line-clamp-1 text-[11px] font-semibold text-[#6B7280]">{event.venueName || event.address || '장소 정보 확인 중'}</p>
+                  <p className="mt-2 text-[10px] font-black text-[#168847]">정보 제공: {event.providerName}</p>
                 </div>
               </Card>
             </Link>
