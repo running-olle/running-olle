@@ -1,17 +1,43 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { CurrentLocationProvider } from '../../features/home/CurrentLocationContext'
+import { CurrentLocationLabel } from '../../features/home/CurrentLocationLabel'
 import { BottomNavigation } from './BottomNavigation'
 import { Header, type HeaderProps } from './Header'
+import { PageContainer } from './PageContainer'
 
-export function AppLayout({ leftSlot, rightSlot }: HeaderProps) {
+type AppLayoutProps = Pick<HeaderProps, 'rightSlot'>
+
+function getHeaderTitle(pathname: string) {
+  if (pathname === '/courses') return '코스'
+  if (pathname.startsWith('/courses/')) return '코스 상세'
+  if (pathname === '/community') return '커뮤니티'
+  return 'Running Olle'
+}
+
+function usesCurrentLocation(pathname: string) {
+  return pathname === '/' || pathname === '/running' || pathname.startsWith('/running/')
+}
+
+export function AppLayout({ rightSlot }: AppLayoutProps) {
   const { pathname } = useLocation()
   const isMyPage = pathname.startsWith('/mypage') || pathname.startsWith('/dev/mypage')
-  return (
-    <div className="h-dvh overflow-hidden bg-[#FFF8F6] text-[#261912]">
+  const layout = (leftSlot: HeaderProps['leftSlot']) => (
+    <div className="app-viewport">
       {!isMyPage && <Header leftSlot={leftSlot} rightSlot={rightSlot} />}
-      <main className={`mx-auto h-full max-w-[430px] overflow-y-auto ${isMyPage ? 'pb-[83px]' : 'px-5 pb-[107px] pt-20'}`}>
+      <PageContainer withHeader={!isMyPage} withBottomNavigation flush={isMyPage}>
         <Outlet />
-      </main>
+      </PageContainer>
       <BottomNavigation />
     </div>
   )
+
+  if (usesCurrentLocation(pathname)) {
+    return (
+      <CurrentLocationProvider>
+        {layout(<CurrentLocationLabel />)}
+      </CurrentLocationProvider>
+    )
+  }
+
+  return layout(getHeaderTitle(pathname))
 }

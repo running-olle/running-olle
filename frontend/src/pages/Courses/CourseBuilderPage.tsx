@@ -7,7 +7,7 @@ import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftSto
 import { JEJU_CENTER, approximateWalkingMinutes, cleanDisplayText, difficultyLabel, distanceMeters, formatDistanceKm, isInJejuBounds, kakaoSearchUrl } from '../../features/courseBuilder/courseBuilderUtils'
 import { useRouteCalculation } from '../../features/courseBuilder/useRouteCalculation'
 import type { CourseWaypointDraft, DraftRoute, LatLng, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult } from '../../features/courseBuilder/types'
-import { RunningIcon } from '../../features/running/RunningIcon'
+import { Badge, Button, Icon, IconButton, Toast } from '../../components/ui'
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error'
 type SheetSnap = 'peek' | 'full'
@@ -102,12 +102,12 @@ type SheetControls = {
 }
 
 function categoryBadgeClass(categoryGroupCode: string | null) {
-  if (categoryGroupCode === 'AT4') return 'bg-[#E8F6E8] text-[#16833A]'
-  if (categoryGroupCode === 'CE7') return 'bg-[#F6EEE7] text-[#8A5431]'
-  if (categoryGroupCode === 'FD6') return 'bg-[#FFF0E5] text-[#E65E12]'
-  if (categoryGroupCode === 'CS2') return 'bg-[#EAF3FF] text-[#2563EB]'
-  if (categoryGroupCode === 'PK6') return 'bg-[#F1F5F9] text-[#475569]'
-  return 'bg-[#F4F4F5] text-[#52525B]'
+  if (categoryGroupCode === 'AT4') return 'is-tourism'
+  if (categoryGroupCode === 'CE7') return 'is-cafe'
+  if (categoryGroupCode === 'FD6') return 'is-food'
+  if (categoryGroupCode === 'CS2') return 'is-store'
+  if (categoryGroupCode === 'PK6') return 'is-parking'
+  return 'is-place'
 }
 
 function categoryLabel(place: PlaceSearchResult | null, detail?: PlaceDetail | null) {
@@ -229,6 +229,7 @@ export function CourseBuilderPage() {
   const [isNearbyPanelOpen, setIsNearbyPanelOpen] = useState(false)
   const [detailStatus, setDetailStatus] = useState<SearchStatus>('idle')
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false)
+  const [saveNotice, setSaveNotice] = useState('')
   const searchRequestIdRef = useRef(0)
   const nearbyRequestIdRef = useRef(0)
   const detailSheetControls = useSheetControls('peek')
@@ -540,13 +541,14 @@ export function CourseBuilderPage() {
 
   function handleSave() {
     if (waypoints.length < 2) {
-      window.alert('코스를 저장하려면 경유지를 2개 이상 추가해 주세요.')
+      setSaveNotice('코스를 저장하려면 경유지를 2개 이상 추가해 주세요.')
       return
     }
     if (!draftRoute) {
-      window.alert('경로 계산이 끝난 뒤 저장할 수 있어요.')
+      setSaveNotice('경로 계산이 끝난 뒤 저장할 수 있어요.')
       return
     }
+    setSaveNotice('')
     navigate('/courses/create/save')
   }
 
@@ -565,23 +567,33 @@ export function CourseBuilderPage() {
       />
 
       <header className="course-builder-header">
-        <button type="button" aria-label="뒤로 가기" onClick={() => navigate('/running')}>
-          <RunningIcon name="back" />
-        </button>
+        <IconButton
+          className="course-builder-back"
+          icon={<Icon name="arrowLeft" />}
+          label="뒤로 가기"
+          onClick={() => navigate('/running')}
+        />
         <strong>코스 만들기</strong>
-        <button type="button" className="course-builder-save" onClick={handleSave}>저장</button>
+        <Button variant="ghost" size="sm" className="course-builder-save" onClick={handleSave}>저장</Button>
       </header>
 
       <section className="course-builder-search-area" aria-label="장소 검색">
         <form className="course-builder-search" onSubmit={handleSearch}>
-          <span aria-hidden="true">⌕</span>
+          <span aria-hidden="true"><Icon name="search" /></span>
           <input
             value={keyword}
             onChange={(event) => handleKeywordChange(event.target.value)}
             placeholder="관광지/맛집/숙소 검색"
             aria-label="관광지/맛집/숙소 검색"
           />
-          {keyword && <button type="button" aria-label="검색어 지우기" onClick={handleClearSearch}>×</button>}
+          {keyword && (
+            <IconButton
+              className="course-builder-search-clear"
+              icon={<Icon name="close" size={16} />}
+              label="검색어 지우기"
+              onClick={handleClearSearch}
+            />
+          )}
         </form>
         {committedSearchAnchor && (
           <NearbyCategoryRail
@@ -650,6 +662,14 @@ export function CourseBuilderPage() {
           onReset={resetDraft}
         />
       )}
+
+      <Toast
+        open={Boolean(saveNotice)}
+        message={saveNotice}
+        tone="error"
+        onClose={() => setSaveNotice('')}
+        className="course-builder-toast"
+      />
     </main>
   )
 }
@@ -851,7 +871,7 @@ function WaypointDetailSheet({
           <h2>{detail.name}</h2>
           <p>{detail.address || '주소 정보 없음'}</p>
         </div>
-        <button type="button" aria-label="상세 닫기" onClick={onClose}>×</button>
+        <IconButton icon={<Icon name="close" />} label="상세 닫기" onClick={onClose} />
       </div>
 
       <div className="course-place-meta">
@@ -918,9 +938,9 @@ function WaypointDetailSheet({
         {detailStatus === 'error' && <p className="course-detail-notice">카카오 상세 조회가 불안정해서 기본 정보만 표시해요.</p>}
       </div>
 
-      <button type="button" className="course-add-button" disabled={isAdded} onClick={onAdd}>
+      <Button variant="primary" size="lg" fullWidth className="course-add-button" disabled={isAdded} onClick={onAdd}>
         {isAdded ? '이미 추가된 장소' : '+ 코스에 추가하기'}
-      </button>
+      </Button>
     </section>
   )
 }
@@ -1026,6 +1046,13 @@ function CourseDraftBottomSheet({
         onPointerDown={sheetControls.onPointerDown}
         onPointerUp={sheetControls.onPointerUp}
       />
+      <div className="course-draft-heading">
+        <div>
+          <span>내 코스</span>
+          <strong>{waypoints.length > 0 ? `${waypoints.length}개 경유지` : '경유지를 추가해 주세요'}</strong>
+        </div>
+        {waypoints.length > 0 && <Badge variant="neutral">순서대로 경로 계산</Badge>}
+      </div>
       <div className="course-draft-stats">
         <Stat label="총 거리" value={distanceKm} unit="km" />
         <Stat label="예상 시간" value={String(estimatedMinutes)} unit="분" />
@@ -1043,7 +1070,11 @@ function CourseDraftBottomSheet({
       {draftRoute && <p className="course-route-status">난이도 {difficultyLabel(draftRoute.suggestedDifficulty)}</p>}
       <div className="course-waypoint-list">
         {waypoints.length === 0 && (
-          <p className="course-empty-waypoints">검색해서 러닝 코스에 넣을 장소를 추가해 주세요.</p>
+          <div className="course-empty-waypoints">
+            <span><Icon name="routeAdd" size={24} /></span>
+            <strong>첫 경유지를 찾아보세요</strong>
+            <p>장소를 검색하거나 지도에서 주변 스팟을 골라 코스에 추가할 수 있어요.</p>
+          </div>
         )}
         {waypoints.map((waypoint, index) => (
           <div key={`${waypoint.kakaoPlaceId}-${waypoint.orderIndex}`} className="course-waypoint-item">
@@ -1052,12 +1083,16 @@ function CourseDraftBottomSheet({
               <strong>{waypoint.name}</strong>
               {waypoint.categoryName && <small>{waypoint.categoryName}</small>}
             </div>
-            <button type="button" aria-label={`${waypoint.name} 삭제`} onClick={() => onRemove(waypoint.orderIndex)}>×</button>
+            <IconButton
+              icon={<Icon name="close" size={18} />}
+              label={`${waypoint.name} 삭제`}
+              onClick={() => onRemove(waypoint.orderIndex)}
+            />
           </div>
         ))}
       </div>
       {waypoints.length > 0 && (
-        <button type="button" className="course-reset-button" onClick={onReset}>경유지 모두 지우기</button>
+        <Button variant="secondary" size="sm" fullWidth className="course-reset-button" onClick={onReset}>경유지 모두 지우기</Button>
       )}
     </section>
   )

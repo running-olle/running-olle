@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getKakaoMapAppKey, loadKakaoMapSdk } from '../map/kakaoMaps'
 import type { KakaoCustomOverlay, KakaoMap, KakaoPolyline } from '../map/kakaoMaps'
 import type { CourseRouteCoordinate, CourseWaypoint } from './types'
+import { MapZoomControls } from '../../components/ui'
 
 type CourseRouteMapFitTarget = 'all' | 'planned' | 'recorded'
 type CourseRouteLineStyle = {
@@ -190,10 +191,11 @@ export function CourseRouteMap({
         </div>
       )}
       {showZoomControls && (
-        <div className="course-route-map-zoom" aria-label="지도 확대/축소">
-          <button type="button" aria-label="지도 확대" onClick={() => zoomBy(-1)}>+</button>
-          <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1)}>-</button>
-        </div>
+        <MapZoomControls
+          className="course-route-map-zoom"
+          onZoomIn={() => zoomBy(-1)}
+          onZoomOut={() => zoomBy(1)}
+        />
       )}
     </div>
   )

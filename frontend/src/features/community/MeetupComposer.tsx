@@ -1,3 +1,5 @@
+import { Icon, Chip, Button } from '../../components/ui'
+import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { courseService } from '../course/courseService'
@@ -109,13 +111,14 @@ export function MeetupComposer({
 
   const filteredCourses = useMemo(() => {
     const keyword = courseKeyword.trim().toLowerCase()
-    const source = keyword
-      ? courseOptions.filter((course) =>
-          [course.name, course.description ?? '', ...course.waypointNames]
-            .some((value) => value.toLowerCase().includes(keyword)),
-        )
-      : courseOptions
-    return source.slice(0, 8)
+    if (!keyword) return []
+
+    return courseOptions
+      .filter((course) =>
+        [course.name, course.description ?? '', ...course.waypointNames]
+          .some((value) => value.toLowerCase().includes(keyword)),
+      )
+      .slice(0, 8)
   }, [courseKeyword, courseOptions])
 
   const submit = () => {
@@ -174,27 +177,27 @@ export function MeetupComposer({
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-[rgba(38,25,18,0.45)]">
-      <div className="mx-auto flex h-dvh max-w-[430px] flex-col bg-[#FFF8F6]">
-        <div className="flex items-center justify-between border-b border-[#E1BFB1] bg-[#FFF8F6] px-5 py-4">
-          <button
+    <div className="community-backdrop">
+      <FullScreenPage scroll={false} role="dialog" aria-modal="true" aria-label="번개 작성" className="community-dialog">
+        <div className="community-dialog-header">
+          <Button variant="secondary" size="sm"
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[#E1BFB1] px-4 py-2 text-[13px] font-bold text-[#594136]"
+            className="rounded-full border border-border-subtle px-4 py-2 text-label font-bold text-ink-secondary"
           >
             취소
-          </button>
-          <strong className="text-[16px] font-bold text-[#261912]">{titleText}</strong>
-          <button
+          </Button>
+          <strong className="text-card-title font-bold text-ink">{titleText}</strong>
+          <Button variant="primary" size="sm"
             type="button"
             onClick={submit}
-            className="rounded-full bg-[#FF6F0F] px-4 py-2 text-[13px] font-bold text-white"
+            className="rounded-full bg-brand-500 px-4 py-2 text-label font-bold text-surface"
           >
             저장
-          </button>
+          </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="community-dialog-body flex-1 overflow-y-auto px-5 py-5">
           <Field label="제목">
             <input value={title} onChange={(event) => setTitle(event.target.value)} className={inputClassName} />
           </Field>
@@ -202,7 +205,7 @@ export function MeetupComposer({
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className={`${inputClassName} min-h-[120px] py-3`}
+              className="ui-textarea"
             />
           </Field>
           <Field label="일시">
@@ -215,27 +218,27 @@ export function MeetupComposer({
           </Field>
           <Field label="집결 장소">
             <div className="relative">
-              <input
+              <input aria-label="장소명 검색"
                 value={placeKeyword}
                 onChange={(event) => handlePlaceKeywordChange(event.target.value)}
                 className={inputClassName}
                 placeholder="장소명 검색"
               />
               {placeKeyword ? (
-                <button
+                <Button variant="ghost" size="sm"
                   type="button"
                   onClick={() => handlePlaceKeywordChange('')}
-                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-[#F5F5F5] text-[16px] font-bold text-[#8D7164]"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-surface-subtle text-card-title font-bold text-ink-secondary"
                   aria-label="집결 장소 검색어 지우기"
                 >
-                  ×
-                </button>
+                  <Icon name="close" />
+                </Button>
               ) : null}
             </div>
             <PlaceSearchResults places={placeResults} status={placeStatus} onSelect={selectPlace} />
             {meetingPlace && latitude !== null && longitude !== null ? (
-              <div className="mt-3 rounded-[12px] bg-white px-4 py-3 text-[12px] text-[#594136]">
-                <strong className="block text-[13px] text-[#261912]">{meetingPlace}</strong>
+              <div className="mt-3 rounded-control bg-surface px-4 py-3 text-caption text-ink-secondary">
+                <strong className="block text-label text-ink">{meetingPlace}</strong>
                 <span>
                   {latitude.toFixed(5)}, {longitude.toFixed(5)}
                 </span>
@@ -243,44 +246,85 @@ export function MeetupComposer({
             ) : null}
           </Field>
           <Field label="연계 코스">
-            <input
-              value={courseKeyword}
-              onChange={(event) => setCourseKeyword(event.target.value)}
-              className={inputClassName}
-              placeholder="코스명 또는 경유지 검색"
-            />
-            <div className="mt-3 space-y-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCourseId('')}
-                className={`w-full rounded-[12px] border px-4 py-3 text-left text-[13px] font-bold ${
-                  selectedCourseId
-                    ? 'border-[#E1BFB1] bg-white text-[#594136]'
-                    : 'border-[#FF6F0F] bg-[#FFF1EA] text-[#A04100]'
-                }`}
-              >
-                코스 없이 만들기
-              </button>
-              {courseLoading ? <StateText>코스를 불러오는 중입니다.</StateText> : null}
-              {!courseLoading && courseError ? <StateText>{courseError}</StateText> : null}
-              {!courseLoading && !courseError && filteredCourses.length === 0 ? (
-                <StateText>조건에 맞는 코스가 없습니다.</StateText>
-              ) : null}
-              {!courseLoading && !courseError
-                ? filteredCourses.map((course) => (
-                    <CourseOptionButton
-                      key={course.id}
-                      course={course}
-                      active={course.id === selectedCourseId}
-                      onClick={() => setSelectedCourseId(course.id)}
-                    />
-                  ))
-                : null}
+            <div className="relative">
+              <input
+                aria-label="코스명 또는 경유지 검색"
+                value={courseKeyword}
+                onChange={(event) => setCourseKeyword(event.target.value)}
+                disabled={courseLoading}
+                className={`${inputClassName} pr-11 disabled:opacity-60`}
+                placeholder={courseLoading ? '코스를 불러오는 중...' : '코스명 또는 경유지 검색'}
+              />
+              {courseKeyword ? (
+                <button
+                  type="button"
+                  onClick={() => setCourseKeyword('')}
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-secondary"
+                  aria-label="코스 검색어 지우기"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              ) : (
+                <span className="pointer-events-none absolute right-4 top-1/2 inline-flex -translate-y-1/2 text-ink-secondary" aria-hidden="true">
+                  <Icon name="search" size={18} />
+                </span>
+              )}
             </div>
-            {!selectedCourse && editingMeetup?.course && selectedCourseId === editingMeetup.course.id ? (
-              <div className="mt-3 rounded-[12px] bg-white px-4 py-3 text-[12px] text-[#594136]">
-                <strong className="block text-[13px] text-[#261912]">{editingMeetup.course.name}</strong>
-                <span>{editingMeetup.course.distanceKm}km · {editingMeetup.course.durationMinutes}분</span>
+            {!courseLoading && courseError ? <div className="mt-3"><StateText>{courseError}</StateText></div> : null}
+            {!courseLoading && !courseError && courseOptions.length === 0 ? (
+              <div className="mt-3"><StateText>선택할 수 있는 코스가 없습니다.</StateText></div>
+            ) : null}
+            {!courseLoading && !courseError && courseOptions.length > 0 && courseKeyword.trim() && filteredCourses.length === 0 ? (
+              <div className="mt-3"><StateText>조건에 맞는 코스가 없습니다.</StateText></div>
+            ) : null}
+            {!courseLoading && !courseError && filteredCourses.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {filteredCourses.map((course) => (
+                  <CourseOptionButton
+                    key={course.id}
+                    course={course}
+                    active={course.id === selectedCourseId}
+                    onClick={() => {
+                      setSelectedCourseId(course.id)
+                      setCourseKeyword('')
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {!courseKeyword.trim() && selectedCourse ? (
+              <div className="mt-3 rounded-control border border-brand-500 bg-surface-subtle px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-label font-extrabold text-ink">{selectedCourse.name}</strong>
+                    <span className="mt-1 block text-caption text-ink-secondary">
+                      {formatDistanceKm(selectedCourse.distanceKm)}km · {selectedCourse.estimatedDurationMinutes}분
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCourseId('')}
+                    className="min-h-8 shrink-0 text-caption font-bold text-brand-700"
+                  >
+                    연결 해제
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {!courseKeyword.trim() && !selectedCourseId && !courseLoading && !courseError ? (
+              <p className="mt-2 text-caption text-ink-secondary">선택하지 않으면 코스 없이 만들어집니다.</p>
+            ) : null}
+            {!courseKeyword.trim() && !selectedCourse && editingMeetup?.course && selectedCourseId === editingMeetup.course.id ? (
+              <div className="mt-3 rounded-control bg-surface px-4 py-3 text-caption text-ink-secondary">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="block truncate text-label text-ink">{editingMeetup.course.name}</strong>
+                    <span>{editingMeetup.course.distanceKm}km · {editingMeetup.course.durationMinutes}분</span>
+                  </div>
+                  <button type="button" onClick={() => setSelectedCourseId('')} className="min-h-8 shrink-0 font-bold text-brand-700">
+                    연결 해제
+                  </button>
+                </div>
               </div>
             ) : null}
           </Field>
@@ -312,10 +356,10 @@ export function MeetupComposer({
             </div>
           </Field>
           {error ? (
-            <div className="mt-4 rounded-[12px] bg-[#FFF1EE] px-4 py-3 text-[12px] text-[#B91C1C]">{error}</div>
+            <div className="mt-4 rounded-control bg-danger-subtle px-4 py-3 text-caption text-danger">{error}</div>
           ) : null}
         </div>
-      </div>
+      </FullScreenPage>
     </div>
   )
 }
@@ -323,7 +367,7 @@ export function MeetupComposer({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="mt-4">
-      <div className="mb-2 text-[13px] font-bold text-[#261912]">{label}</div>
+      <div className="mb-2 text-label font-bold text-ink">{label}</div>
       {children}
     </div>
   )
@@ -341,7 +385,7 @@ function PlaceSearchResults({
   if (status === 'idle') return null
 
   return (
-    <div className="mt-2 max-h-[240px] overflow-y-auto rounded-[14px] bg-white shadow-[0px_6px_18px_rgba(0,0,0,0.08)]">
+    <div className="mt-2 max-h-[240px] overflow-y-auto rounded-control bg-surface shadow-none">
       {status === 'loading' ? <StateText>장소를 검색하는 중입니다.</StateText> : null}
       {status === 'error' ? <StateText>장소 검색에 실패했습니다.</StateText> : null}
       {status === 'success' && places.length === 0 ? <StateText>검색 결과가 없습니다.</StateText> : null}
@@ -351,13 +395,13 @@ function PlaceSearchResults({
               key={place.kakaoPlaceId}
               type="button"
               onClick={() => onSelect(place)}
-              className="block w-full border-b border-[#F3F4F6] px-4 py-3 text-left last:border-b-0"
+              className="block w-full border-b border-border-subtle px-4 py-3 text-left last:border-b-0"
             >
-              <span className="rounded-full bg-[#FFF5EE] px-2.5 py-1 text-[11px] font-bold text-[#FF6F0F]">
+              <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-caption font-bold text-brand-500">
                 {placeCategoryLabel(place)}
               </span>
-              <strong className="mt-2 block text-[13px] font-black text-[#261912]">{place.name}</strong>
-              <small className="mt-1 block text-[12px] leading-5 text-[#8D7164]">
+              <strong className="mt-2 block text-label font-extrabold text-ink">{place.name}</strong>
+              <small className="mt-1 block text-caption leading-5 text-ink-secondary">
                 {place.address || place.categoryName || '주소 정보 없음'}
               </small>
             </button>
@@ -380,50 +424,32 @@ function CourseOptionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-[12px] border px-4 py-3 text-left ${
-        active ? 'border-[#FF6F0F] bg-[#FFF1EA]' : 'border-[#E1BFB1] bg-white'
+      className={`w-full rounded-control border px-4 py-3 text-left ${
+        active ? 'border-brand-500 bg-surface-subtle' : 'border-border-subtle bg-surface'
       }`}
     >
       <div className="flex items-center gap-2">
-        <span className="rounded-full bg-[#F5F5F5] px-2.5 py-1 text-[11px] font-bold text-[#594136]">
+        <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-caption font-bold text-ink-secondary">
           {course.courseType === 'SPOT_COURSE' ? '스팟' : '러닝'}
         </span>
-        <strong className="min-w-0 flex-1 truncate text-[13px] font-black text-[#261912]">{course.name}</strong>
+        <strong className="min-w-0 flex-1 truncate text-label font-extrabold text-ink">{course.name}</strong>
       </div>
-      <div className="mt-2 text-[12px] text-[#8D7164]">
+      <div className="mt-2 text-caption text-ink-secondary">
         {formatDistanceKm(course.distanceKm)}km · {course.estimatedDurationMinutes}분 · 난이도 {difficultyLabel(course.difficulty)}
       </div>
       {course.waypointNames.length > 0 ? (
-        <div className="mt-1 truncate text-[12px] text-[#8D7164]">{course.waypointNames.join(' > ')}</div>
+        <div className="mt-1 truncate text-caption text-ink-secondary">{course.waypointNames.join(' > ')}</div>
       ) : null}
     </button>
   )
 }
 
-function ChipButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean
-  children: ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-[12px] border px-4 py-3 text-[13px] font-bold ${
-        active ? 'border-[#FF6F0F] bg-[#FFF1EA] text-[#A04100]' : 'border-[#E1BFB1] bg-white text-[#594136]'
-      }`}
-    >
-      {children}
-    </button>
-  )
+function ChipButton({ children, active, onClick }: { children: ReactNode; active: boolean; onClick: () => void }) {
+  return <Chip variant="choice" selected={active} onClick={onClick}>{children}</Chip>
 }
 
 function StateText({ children }: { children: ReactNode }) {
-  return <div className="rounded-[12px] bg-white px-4 py-3 text-[12px] text-[#8D7164]">{children}</div>
+  return <div className="rounded-control bg-surface px-4 py-3 text-caption text-ink-secondary">{children}</div>
 }
 
 function placeCategoryLabel(place: PlaceSearchResult) {
@@ -488,4 +514,4 @@ function formatDateTimeLocal(date: Date) {
 }
 
 const inputClassName =
-  'h-12 w-full rounded-[12px] border border-[#E1BFB1] bg-white px-4 text-[13px] text-[#261912] outline-none'
+  'ui-input'

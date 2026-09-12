@@ -51,7 +51,7 @@ export function HomePage() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8 pb-2">
       <WeatherCard weather={weather} status={weatherStatus} errorMessage={weatherError} onRetry={refreshWeather} />
       <RecommendedCourseList
         courses={recommendedCourses}

@@ -3,6 +3,7 @@ import { JEJU_CENTER } from './courseBuilderUtils'
 import { getKakaoMapAppKey, loadKakaoMapSdk } from '../map/kakaoMaps'
 import type { KakaoCustomOverlay, KakaoMap, KakaoPolyline } from '../map/kakaoMaps'
 import type { CourseWaypointDraft, DraftRoute, LatLng, PlaceSearchResult } from './types'
+import { MapZoomControls } from '../../components/ui'
 
 type Props = {
   currentPosition: LatLng | null
@@ -247,10 +248,11 @@ export function CourseBuilderMap({
           JavaScript 키와 등록 도메인을 확인해 주세요.
         </div>
       )}
-      <div className="course-builder-zoom-controls" aria-label="지도 확대/축소">
-        <button type="button" aria-label="지도 확대" onClick={() => zoomBy(-1)}>+</button>
-        <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1)}>-</button>
-      </div>
+      <MapZoomControls
+        className="course-builder-zoom-controls"
+        onZoomIn={() => zoomBy(-1)}
+        onZoomOut={() => zoomBy(1)}
+      />
     </div>
   )
 }
