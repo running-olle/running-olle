@@ -20,6 +20,15 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             from Course c
             where c.isDeleted = false
               and (:createdOnly = false or c.creator.id = :userId)
+              and (:bookmarkedOnly = false or (
+                    c.creator.id <> :userId
+                    and exists (
+                        select 1
+                        from CourseBookmark savedBookmark
+                        where savedBookmark.course = c
+                          and savedBookmark.user.id = :userId
+                    )
+                  ))
               and (:courseType is null or c.courseType = :courseType)
               and (
                     (:libraryOnly = false and c.isPublic = true)
@@ -50,6 +59,7 @@ public interface CourseRepository extends JpaRepository<Course, UUID> {
             @Param("userId") UUID userId,
             @Param("courseType") CourseType courseType,
             @Param("createdOnly") boolean createdOnly,
+            @Param("bookmarkedOnly") boolean bookmarkedOnly,
             @Param("libraryOnly") boolean libraryOnly,
             @Param("keyword") String keyword
     );

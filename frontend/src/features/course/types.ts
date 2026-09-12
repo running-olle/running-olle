@@ -1,6 +1,6 @@
 export type CourseType = 'RUNNING_COURSE' | 'SPOT_COURSE'
 export type CourseDifficulty = 'LOW' | 'MID' | 'HIGH'
-export type CourseListFilter = 'ALL' | CourseType | 'CREATED'
+export type CourseListFilter = 'ALL' | CourseType | 'BOOKMARKED' | 'CREATED'
 export type CourseListScope = 'AVAILABLE' | 'LIBRARY'
 
 export type CourseRouteCoordinate = {

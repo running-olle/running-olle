@@ -9,6 +9,7 @@ const FILTER_OPTIONS: { value: CourseListFilter; label: string }[] = [
   { value: 'ALL', label: '전체' },
   { value: 'RUNNING_COURSE', label: '러닝코스' },
   { value: 'SPOT_COURSE', label: '스팟코스' },
+  { value: 'BOOKMARKED', label: '저장한 코스' },
   { value: 'CREATED', label: '내가만든코스' },
 ]
 
@@ -38,6 +39,7 @@ type CourseListViewProps = CourseListViewHeaderProps & {
   onDeleteCourse?: (courseId: string) => Promise<void>
   showCreateAction?: boolean
   showCreatedFilter?: boolean
+  showBookmarkedFilter?: boolean
   showSummary?: boolean
   showSearch?: boolean
   showDescription?: boolean
@@ -61,6 +63,7 @@ export function CourseListView({
   showHeader = true,
   showCreateAction = true,
   showCreatedFilter = true,
+  showBookmarkedFilter = false,
   showSummary = true,
   showSearch = false,
   showDescription = true,
@@ -79,17 +82,17 @@ export function CourseListView({
   const [savingBookmarkCourseId, setSavingBookmarkCourseId] = useState<string | null>(null)
   const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null)
 
-  const filterOptions = useMemo(() => (
-    showCreatedFilter
-      ? FILTER_OPTIONS
-      : FILTER_OPTIONS.filter((option) => option.value !== 'CREATED')
-  ), [showCreatedFilter])
+  const filterOptions = useMemo(() => FILTER_OPTIONS.filter((option) => (
+    (showCreatedFilter || option.value !== 'CREATED')
+    && (showBookmarkedFilter || option.value !== 'BOOKMARKED')
+  )), [showBookmarkedFilter, showCreatedFilter])
 
   useEffect(() => {
-    if (!showCreatedFilter && filter === 'CREATED') {
+    if ((!showCreatedFilter && filter === 'CREATED')
+      || (!showBookmarkedFilter && filter === 'BOOKMARKED')) {
       setFilter('ALL')
     }
-  }, [filter, showCreatedFilter])
+  }, [filter, showBookmarkedFilter, showCreatedFilter])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -168,11 +171,11 @@ export function CourseListView({
     try {
       if (course.bookmarkedByMe) {
         await courseService.unbookmarkCourse(course.id)
-        setCourses((current) => current?.map((item) => (
-          item.id === course.id
-            ? { ...item, bookmarkedByMe: false, bookmarkId: null }
-            : item
-        )) ?? current)
+        setCourses((current) => current?.flatMap((item) => {
+          if (item.id !== course.id) return [item]
+          if (filter === 'BOOKMARKED') return []
+          return [{ ...item, bookmarkedByMe: false, bookmarkId: null }]
+        }) ?? current)
       } else {
         const response = await courseService.bookmarkCourse(course.id)
         setCourses((current) => current?.map((item) => (
