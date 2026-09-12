@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class TourismEventQueryService {
 
-    private static final String PROVIDER_NAME = "한국관광공사";
+    private static final String DEFAULT_PROVIDER_NAME = "한국관광공사";
 
     private final TourismEventRepository tourismEventRepository;
 
@@ -123,7 +123,8 @@ public class TourismEventQueryService {
                 event.getFirstImageUrl(),
                 event.getThumbnailImageUrl(),
                 event.getOverview(),
-                PROVIDER_NAME
+                StringUtils.hasText(event.getProviderName()) ? event.getProviderName() : DEFAULT_PROVIDER_NAME,
+                event.getSourceUrl()
         );
     }
 

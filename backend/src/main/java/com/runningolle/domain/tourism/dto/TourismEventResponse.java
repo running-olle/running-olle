@@ -25,6 +25,7 @@ public record TourismEventResponse(
         String firstImageUrl,
         String thumbnailImageUrl,
         String overview,
-        String providerName
+        String providerName,
+        String sourceUrl
 ) {
 }

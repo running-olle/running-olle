@@ -97,7 +97,7 @@ export function TourismEventDetailPage() {
     )
   }
 
-  const homepageUrl = cleanExternalUrl(event.homepage)
+  const homepageUrl = cleanExternalUrl(event.homepage) ?? cleanExternalUrl(event.sourceUrl)
   const kakaoMapUrl = event.lat && event.lng
     ? `https://map.kakao.com/link/map/${encodeURIComponent(event.title)},${event.lat},${event.lng}`
     : null

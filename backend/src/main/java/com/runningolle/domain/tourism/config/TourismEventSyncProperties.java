@@ -19,6 +19,8 @@ public class TourismEventSyncProperties {
     private int lookAheadDays = 365;
     private boolean bootstrapEnabled = true;
     private boolean schedulerEnabled = true;
+    private boolean visitJejuEnabled = true;
+    private int visitJejuMaxPages = 12;
     private String cron = "0 20 4 ? * MON";
     private String zone = "Asia/Seoul";
     private List<String> runningKeywords = new ArrayList<>(List.of(

@@ -54,6 +54,12 @@ public class TourismEvent extends BaseTimeEntity {
     @Column(name = "content_type_id", nullable = false, length = 10)
     private String contentTypeId;
 
+    @Column(name = "provider_name", length = 50)
+    private String providerName;
+
+    @Column(name = "source_url", columnDefinition = "text")
+    private String sourceUrl;
+
     @Column(name = "title", nullable = false, length = 200)
     private String title;
 
@@ -145,6 +151,8 @@ public class TourismEvent extends BaseTimeEntity {
 
     public void sync(TourismEventSnapshot snapshot) {
         contentTypeId = snapshot.contentTypeId();
+        providerName = snapshot.providerName();
+        sourceUrl = snapshot.sourceUrl();
         title = snapshot.title();
         address = snapshot.address();
         detailAddress = snapshot.detailAddress();
@@ -176,6 +184,8 @@ public class TourismEvent extends BaseTimeEntity {
     public record TourismEventSnapshot(
             String contentId,
             String contentTypeId,
+            String providerName,
+            String sourceUrl,
             String title,
             String address,
             String detailAddress,

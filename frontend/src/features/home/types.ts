@@ -34,4 +34,5 @@ export type TourismEvent = {
   thumbnailImageUrl: string | null
   overview: string | null
   providerName: string
+  sourceUrl: string | null
 }

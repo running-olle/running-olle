@@ -4,6 +4,7 @@ import com.runningolle.domain.tourism.config.TourismEventSyncProperties;
 import com.runningolle.domain.tourism.dto.TourismEventSyncResponse;
 import com.runningolle.domain.tourism.repository.TourismEventRepository;
 import com.runningolle.global.config.properties.ExternalApiProperties;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -24,27 +25,35 @@ public class TourismEventBootstrapService {
     @EventListener(ApplicationReadyEvent.class)
     public void bootstrapJejuTourismEvents() {
         if (!tourismEventSyncProperties.isBootstrapEnabled()) {
-            log.info("TourAPI Jeju tourism event bootstrap skipped because bootstrap is disabled.");
+            log.info("Jeju tourism event bootstrap skipped because bootstrap is disabled.");
             return;
         }
 
-        if (!StringUtils.hasText(externalApiProperties.getTourApiKey())) {
-            log.warn("TourAPI Jeju tourism event bootstrap skipped because external-api.tour-api-key is empty.");
+        if (!hasEnabledProvider()) {
+            log.warn("Jeju tourism event bootstrap skipped because no event provider is enabled.");
             return;
         }
 
-        long activeCount = tourismEventRepository.countByIsDeletedFalse();
-        if (activeCount > 0) {
-            log.info("TourAPI Jeju tourism event bootstrap skipped because tourism_events already has {} rows.", activeCount);
+        long displayableCount = tourismEventRepository.countByIsDeletedFalseAndEventEndDateGreaterThanEqual(LocalDate.now());
+        if (displayableCount > 0) {
+            log.info(
+                    "Jeju tourism event bootstrap skipped because tourism_events already has {} active/upcoming rows.",
+                    displayableCount
+            );
             return;
         }
 
         try {
-            log.info("TourAPI Jeju tourism event bootstrap started.");
+            log.info("Jeju tourism event bootstrap started.");
             TourismEventSyncResponse response = tourismEventSyncService.syncJejuTourismEvents();
-            log.info("TourAPI Jeju tourism event bootstrap finished. response={}", response);
+            log.info("Jeju tourism event bootstrap finished. response={}", response);
         } catch (RuntimeException exception) {
-            log.error("TourAPI Jeju tourism event bootstrap failed.", exception);
+            log.error("Jeju tourism event bootstrap failed.", exception);
         }
+    }
+
+    private boolean hasEnabledProvider() {
+        return StringUtils.hasText(externalApiProperties.getTourApiKey())
+                || tourismEventSyncProperties.isVisitJejuEnabled();
     }
 }

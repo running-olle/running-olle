@@ -11,9 +11,13 @@ import com.runningolle.domain.tourism.client.TourApiClient;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaItem;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaPage;
 import com.runningolle.domain.tourism.client.TourApiClient.TourDetail;
+import com.runningolle.domain.tourism.client.VisitJejuEventClient;
+import com.runningolle.domain.tourism.client.VisitJejuEventClient.VisitJejuEventItem;
+import com.runningolle.domain.tourism.client.VisitJejuEventClient.VisitJejuEventPage;
 import com.runningolle.domain.tourism.config.TourismEventSyncProperties;
 import com.runningolle.domain.tourism.entity.TourismEvent;
 import com.runningolle.domain.tourism.repository.TourismEventRepository;
+import com.runningolle.global.config.properties.ExternalApiProperties;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +36,13 @@ class TourismEventSyncServiceTest {
     private TourApiClient tourApiClient;
 
     @Mock
+    private VisitJejuEventClient visitJejuEventClient;
+
+    @Mock
     private TourismEventRepository tourismEventRepository;
 
     private TourismEventSyncService tourismEventSyncService;
+    private ExternalApiProperties externalApiProperties;
 
     @BeforeEach
     void setUp() {
@@ -43,11 +51,16 @@ class TourismEventSyncServiceTest {
         properties.setPageSize(100);
         properties.setLookBackDays(1);
         properties.setLookAheadDays(30);
+        properties.setVisitJejuEnabled(false);
+        externalApiProperties = new ExternalApiProperties();
+        externalApiProperties.setTourApiKey("tour-api-key");
 
         tourismEventSyncService = new TourismEventSyncService(
                 tourApiClient,
+                visitJejuEventClient,
                 tourismEventRepository,
                 properties,
+                externalApiProperties,
                 new ObjectMapper()
         );
     }
@@ -142,6 +155,74 @@ class TourismEventSyncServiceTest {
         assertThat(response.skippedCount()).isEqualTo(1);
         assertThat(response.createdCount()).isZero();
         verify(tourismEventRepository, never()).save(any());
+    }
+
+    @Test
+    void createsActiveVisitJejuEvent() {
+        LocalDate today = LocalDate.now();
+        TourismEventSyncProperties properties = new TourismEventSyncProperties();
+        properties.setAreaCode("39");
+        properties.setPageSize(100);
+        properties.setLookAheadDays(1);
+        properties.setVisitJejuEnabled(true);
+        externalApiProperties.setTourApiKey("tour-api-key");
+
+        tourismEventSyncService = new TourismEventSyncService(
+                tourApiClient,
+                visitJejuEventClient,
+                tourismEventRepository,
+                properties,
+                externalApiProperties,
+                new ObjectMapper()
+        );
+
+        VisitJejuEventItem item = new VisitJejuEventItem(
+                "CNTS_1",
+                "2026 제주올레걷기축제",
+                "제주특별자치도 제주시 조천읍 조천18길 11-1",
+                "제주특별자치도 제주시 조천읍 조천리 1176-1",
+                "조천체육공원",
+                "064-762-2190",
+                "(사)제주올레",
+                today,
+                today.plusDays(2),
+                "cate0000001361",
+                "축제",
+                33.5390118,
+                126.6427149,
+                "https://example.com/olle.jpg",
+                "https://example.com/olle-thumb.jpg",
+                "제주올레길을 걷는 축제",
+                "제주올레걷기축제, 걷기, 올레길",
+                "20260701145053",
+                "20260701180257",
+                "https://www.visitjeju.net/kr/festival/view?contentsid=CNTS_1",
+                new ObjectMapper().createObjectNode()
+        );
+
+        given(tourApiClient.getAreaBasedList("39", "15", 1, 100))
+                .willReturn(new TourAreaPage(List.of(), 1, 100, 0));
+        given(visitJejuEventClient.getFestivalEvents(
+                today.getYear(),
+                String.format("%02d", today.getMonthValue()),
+                1,
+                100
+        )).willReturn(new VisitJejuEventPage(List.of(item), 1, 100, 1));
+        given(tourismEventRepository.findByContentId("VISITJEJU:CNTS_1")).willReturn(Optional.empty());
+
+        var response = tourismEventSyncService.syncJejuTourismEvents();
+
+        assertThat(response.fetchedCount()).isEqualTo(1);
+        assertThat(response.createdCount()).isEqualTo(1);
+
+        ArgumentCaptor<TourismEvent> eventCaptor = ArgumentCaptor.forClass(TourismEvent.class);
+        verify(tourismEventRepository).save(eventCaptor.capture());
+        TourismEvent savedEvent = eventCaptor.getValue();
+        assertThat(savedEvent.getContentId()).isEqualTo("VISITJEJU:CNTS_1");
+        assertThat(savedEvent.getProviderName()).isEqualTo("비짓제주");
+        assertThat(savedEvent.getSourceUrl()).isEqualTo("https://www.visitjeju.net/kr/festival/view?contentsid=CNTS_1");
+        assertThat(savedEvent.getRunningRelated()).isTrue();
+        assertThat(savedEvent.getCategory2()).isEqualTo("A0207");
     }
 
     private static TourAreaItem tourAreaItem(String contentId, String title, Double lat, Double lng) {

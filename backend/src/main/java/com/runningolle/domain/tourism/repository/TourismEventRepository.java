@@ -15,5 +15,7 @@ public interface TourismEventRepository extends JpaRepository<TourismEvent, UUID
 
     long countByIsDeletedFalse();
 
+    long countByIsDeletedFalseAndEventEndDateGreaterThanEqual(LocalDate date);
+
     List<TourismEvent> findByIsDeletedFalseAndEventEndDateGreaterThanEqual(LocalDate date);
 }

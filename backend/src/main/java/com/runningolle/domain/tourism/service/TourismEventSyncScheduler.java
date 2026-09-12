@@ -24,17 +24,22 @@ public class TourismEventSyncScheduler {
             return;
         }
 
-        if (!StringUtils.hasText(externalApiProperties.getTourApiKey())) {
-            log.warn("Scheduled TourAPI Jeju tourism event sync skipped because external-api.tour-api-key is empty.");
+        if (!hasEnabledProvider()) {
+            log.warn("Scheduled Jeju tourism event sync skipped because no event provider is enabled.");
             return;
         }
 
         try {
-            log.info("Scheduled TourAPI Jeju tourism event sync started.");
+            log.info("Scheduled Jeju tourism event sync started.");
             TourismEventSyncResponse response = tourismEventSyncService.syncJejuTourismEvents();
-            log.info("Scheduled TourAPI Jeju tourism event sync finished. response={}", response);
+            log.info("Scheduled Jeju tourism event sync finished. response={}", response);
         } catch (RuntimeException exception) {
-            log.error("Scheduled TourAPI Jeju tourism event sync failed.", exception);
+            log.error("Scheduled Jeju tourism event sync failed.", exception);
         }
+    }
+
+    private boolean hasEnabledProvider() {
+        return StringUtils.hasText(externalApiProperties.getTourApiKey())
+                || tourismEventSyncProperties.isVisitJejuEnabled();
     }
 }

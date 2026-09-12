@@ -1,6 +1,7 @@
 package com.runningolle.domain.tourism.service;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -41,7 +42,7 @@ class TourismEventBootstrapServiceTest {
 
     @Test
     void backfillsTourismEventsWhenCacheIsEmpty() {
-        given(tourismEventRepository.countByIsDeletedFalse()).willReturn(0L);
+        given(tourismEventRepository.countByIsDeletedFalseAndEventEndDateGreaterThanEqual(any())).willReturn(0L);
 
         tourismEventBootstrapService.bootstrapJejuTourismEvents();
 
@@ -49,8 +50,8 @@ class TourismEventBootstrapServiceTest {
     }
 
     @Test
-    void skipsBackfillWhenCacheAlreadyExists() {
-        given(tourismEventRepository.countByIsDeletedFalse()).willReturn(1L);
+    void skipsBackfillWhenActiveOrUpcomingEventAlreadyExists() {
+        given(tourismEventRepository.countByIsDeletedFalseAndEventEndDateGreaterThanEqual(any())).willReturn(1L);
 
         tourismEventBootstrapService.bootstrapJejuTourismEvents();
 
@@ -58,12 +59,23 @@ class TourismEventBootstrapServiceTest {
     }
 
     @Test
-    void skipsBackfillWhenTourApiKeyIsEmpty() {
+    void backfillsWhenTourApiKeyIsEmptyButVisitJejuIsEnabled() {
         externalApiProperties.setTourApiKey("");
+        given(tourismEventRepository.countByIsDeletedFalseAndEventEndDateGreaterThanEqual(any())).willReturn(0L);
 
         tourismEventBootstrapService.bootstrapJejuTourismEvents();
 
-        verify(tourismEventRepository, never()).countByIsDeletedFalse();
+        verify(tourismEventSyncService).syncJejuTourismEvents();
+    }
+
+    @Test
+    void skipsBackfillWhenNoEventProviderIsEnabled() {
+        externalApiProperties.setTourApiKey("");
+        tourismEventSyncProperties.setVisitJejuEnabled(false);
+
+        tourismEventBootstrapService.bootstrapJejuTourismEvents();
+
+        verify(tourismEventRepository, never()).countByIsDeletedFalseAndEventEndDateGreaterThanEqual(any());
         verify(tourismEventSyncService, never()).syncJejuTourismEvents();
     }
 }
