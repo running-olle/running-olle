@@ -148,7 +148,7 @@ export function TourismEventsPage() {
       </div>
 
       {loading && (
-        <div className="grid grid-cols-2 gap-3 min-[520px]:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 6 }, (_, index) => (
             <Card key={index} padding="none" className="aspect-[3/4] animate-pulse bg-white" />
           ))}
@@ -170,7 +170,7 @@ export function TourismEventsPage() {
       )}
 
       {!loading && !failed && events.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 min-[520px]:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4">
           {events.map((event) => (
             <Link key={event.id} to={`/events/${event.id}`} className="block text-inherit no-underline">
               <Card padding="none" className="h-full overflow-hidden">
