@@ -5,8 +5,10 @@ import { courseService } from '../../features/course/courseService'
 import type { CourseDetail } from '../../features/course/types'
 import { FreeRunningMap } from '../../features/running/FreeRunningMap'
 import { RunningIcon } from '../../features/running/RunningIcon'
+import { SafetyRunningSheet } from '../../features/running/SafetyRunningSheet'
 import { saveRunningRecord } from '../../features/running/runningRecordService'
 import { distanceBetween, formatDistance, formatDuration, formatPace, getLocationErrorMessage, GPS_OPTIONS, positionToPoint } from '../../features/running/runningUtils'
+import type { SafetyNearbyPlace } from '../../features/running/safetyTypes'
 import type { GeoPoint, RunningMode, RunningPhase } from '../../features/running/types'
 import { Button, Icon } from '../../components/ui'
 
@@ -34,8 +36,11 @@ export function LiveRunningPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [locked, setLocked] = useState(false)
   const [showEndSheet, setShowEndSheet] = useState(false)
+  const [showSafetySheet, setShowSafetySheet] = useState(false)
   const [saving, setSaving] = useState(false)
   const [locationError, setLocationError] = useState<string | null>(null)
+  const [safetyPlaces, setSafetyPlaces] = useState<SafetyNearbyPlace[]>([])
+  const [showSafetyPlacesOnMap, setShowSafetyPlacesOnMap] = useState(false)
   const [photoCount, setPhotoCount] = useState(0)
   const lastPositionRef = useRef<GeoPoint | null>(startPosition ?? null)
   const startedAtRef = useRef(new Date())
@@ -97,6 +102,7 @@ export function LiveRunningPage() {
     () => distanceMeters >= 10 ? elapsedSeconds / 60 / (distanceMeters / 1_000) : null,
     [distanceMeters, elapsedSeconds],
   )
+  const visibleSafetyPlaces = showSafetyPlacesOnMap ? safetyPlaces : []
 
   const togglePause = () => {
     lastPositionRef.current = null
@@ -143,10 +149,11 @@ export function LiveRunningPage() {
           waypoints={courseDetail.waypoints}
           currentPosition={position ? { lat: position.latitude, lng: position.longitude } : null}
           recordedPath={route.map(({ latitude, longitude }) => ({ lat: latitude, lng: longitude }))}
+          safetyPlaces={visibleSafetyPlaces}
           className="running-map"
         />
       ) : (
-        <FreeRunningMap currentPosition={position} recordedPath={route} />
+        <FreeRunningMap currentPosition={position} recordedPath={route} safetyPlaces={visibleSafetyPlaces} />
       )}
       <section className="live-stat-panel">
         <div><strong>{formatDistance(distanceMeters)}</strong><span>km</span></div>
@@ -155,6 +162,7 @@ export function LiveRunningPage() {
       </section>
       <div className={`recording-status ${phase === 'paused' ? 'is-paused' : ''}`}><span />{phase === 'paused' ? '일시정지' : '기록 중'}</div>
       {locationError && <div className="live-location-error">{locationError}</div>}
+      <button className="safety-running-trigger" type="button" onClick={() => setShowSafetySheet(true)}>안심</button>
       <div className="place-category-bar" aria-label="주변 장소 범례">
         <span><i className="place-camera"><Icon name="landmark" size={14} /></i>관광지</span>
         <span><i className="place-food"><Icon name="food" size={14} /></i>맛집</span>
@@ -170,6 +178,19 @@ export function LiveRunningPage() {
       <input ref={cameraInputRef} className="running-camera-input" type="file" accept="image/*" capture="environment" onChange={(event) => { if (event.target.files?.length) setPhotoCount((value) => value + 1); event.target.value = '' }} />
       {photoCount > 0 && <div className="photo-toast">사진 {photoCount}장이 러닝에 추가됐어요</div>}
       {locked && <ScreenLock onUnlock={() => setLocked(false)} />}
+      {showSafetySheet && (
+        <SafetyRunningSheet
+          position={position}
+          courseName={navigationState?.courseName ?? courseDetail?.name ?? null}
+          onPlacesLoaded={(places) => {
+            setSafetyPlaces(places)
+            setShowSafetyPlacesOnMap(places.length > 0)
+          }}
+          showPlacesOnMap={showSafetyPlacesOnMap}
+          onShowPlacesOnMapChange={setShowSafetyPlacesOnMap}
+          onClose={() => setShowSafetySheet(false)}
+        />
+      )}
       {showEndSheet && (
         <div className="end-sheet-backdrop" onClick={() => !saving && setShowEndSheet(false)}>
           <section className="end-sheet" role="dialog" aria-modal="true" aria-labelledby="end-title" onClick={(event) => event.stopPropagation()}>

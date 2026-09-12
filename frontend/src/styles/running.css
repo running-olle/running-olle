@@ -80,6 +80,50 @@
 .end-sheet .ui-button { min-height: 52px; border-radius: var(--radius-control); font-weight: 700; }
 .end-sheet .ui-button--danger { color: white; background: var(--color-danger); }
 
+.safety-running-trigger { position: fixed; z-index: var(--z-sticky); right: max(var(--spacing-4), var(--safe-right)); bottom: calc(196px + var(--safe-bottom)); display: inline-flex; min-width: 72px; min-height: 44px; align-items: center; justify-content: center; padding: 0 var(--spacing-4); border: 1px solid color-mix(in srgb, var(--color-danger) 22%, transparent); border-radius: var(--radius-full); color: var(--color-danger); background: rgb(255 255 255 / .96); box-shadow: var(--shadow-2); backdrop-filter: blur(8px); font-size: var(--text-label); font-weight: 800; }
+.safety-running-trigger:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+.safety-sheet-backdrop { position: fixed; inset: 0; z-index: var(--z-backdrop); display: flex; align-items: flex-end; justify-content: center; background: var(--color-overlay); }
+.safety-sheet { width: min(100%, var(--app-max-width)); max-height: calc(100dvh - var(--safe-top) - var(--spacing-4)); overflow-y: auto; padding: var(--spacing-3) max(var(--space-page), var(--safe-right)) max(var(--spacing-5), var(--safe-bottom)) max(var(--space-page), var(--safe-left)); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; color: var(--color-ink); background: var(--color-surface); box-shadow: var(--shadow-top); overscroll-behavior: contain; }
+.safety-sheet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--spacing-3); margin-bottom: var(--spacing-4); }
+.safety-sheet-header span { display: block; margin-bottom: var(--spacing-1); color: var(--color-danger); font-size: var(--text-caption); line-height: 1.125rem; font-weight: 800; }
+.safety-sheet-header h2 { margin: 0; color: var(--color-ink); font-size: var(--text-section-title); line-height: 1.75rem; font-weight: 800; letter-spacing: -.01em; }
+.safety-close-button { display: grid; width: 44px; height: 44px; flex: 0 0 44px; place-items: center; margin: calc(-1 * var(--spacing-2)) calc(-1 * var(--spacing-2)) 0 0; border-radius: var(--radius-full); color: var(--color-ink-secondary); background: transparent; }
+.safety-close-button:focus-visible, .safety-actions a:focus-visible, .safety-actions button:focus-visible, .safety-refresh-button:focus-visible, .safety-map-toggle:focus-visible, .safety-place-list a:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+.safety-location-card { display: flex; align-items: flex-start; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.safety-location-dot { width: 10px; height: 10px; flex: 0 0 10px; margin-top: 5px; border-radius: var(--radius-full); background: var(--color-warning); box-shadow: 0 0 0 5px var(--color-warning-subtle); }
+.safety-location-dot.is-ready { background: var(--color-success); box-shadow: 0 0 0 5px var(--color-success-subtle); }
+.safety-location-card strong { display: block; color: var(--color-ink); font-size: var(--text-body-sm); line-height: 1.25rem; font-weight: 800; }
+.safety-location-card p { margin: var(--spacing-1) 0 0; color: var(--color-ink-secondary); font-size: var(--text-caption); line-height: 1.125rem; }
+.safety-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2); margin-top: var(--spacing-4); }
+.safety-actions a, .safety-actions button { display: flex; min-height: 76px; align-items: center; justify-content: center; gap: var(--spacing-2); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface); text-decoration: none; transition: transform var(--motion-press) var(--ease-standard), background-color var(--motion-control) var(--ease-standard), border-color var(--motion-control) var(--ease-standard); }
+.safety-actions a:active, .safety-actions button:active:not(:disabled) { transform: scale(.98); }
+.safety-actions a span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius-full); color: white; background: var(--color-danger); font-size: var(--text-label); font-weight: 800; }
+.safety-actions a strong { color: var(--color-danger); font-size: var(--text-body-sm); line-height: 1.25rem; font-weight: 800; }
+.safety-actions button { color: var(--color-brand-700); background: var(--color-brand-050); }
+.safety-actions button strong { font-size: var(--text-body-sm); line-height: 1.25rem; font-weight: 800; }
+.safety-actions button:disabled { color: var(--color-ink-disabled); background: var(--color-surface-muted); cursor: not-allowed; }
+.safety-places-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); margin-top: var(--spacing-5); }
+.safety-places-toolbar > div:first-child { min-width: 0; }
+.safety-places-toolbar strong, .safety-places-toolbar span { display: block; }
+.safety-places-toolbar strong { color: var(--color-ink); font-size: var(--text-card-title); line-height: 1.5rem; font-weight: 800; }
+.safety-places-toolbar span { margin-top: var(--spacing-1); color: var(--color-ink-tertiary); font-size: var(--text-caption); line-height: 1.125rem; }
+.safety-places-toolbar > div:last-child { display: flex; flex: 0 0 auto; align-items: center; gap: var(--spacing-2); }
+.safety-map-toggle { min-height: 36px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-full); color: var(--color-ink-secondary); background: var(--color-surface); font-size: var(--text-caption); font-weight: 800; }
+.safety-map-toggle.is-on { border-color: var(--color-brand-500); color: var(--color-brand-700); background: var(--color-brand-050); }
+.safety-refresh-button { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid var(--color-border-default); border-radius: var(--radius-full); color: var(--color-ink-secondary); background: var(--color-surface); }
+.safety-refresh-button:disabled { color: var(--color-ink-disabled); background: var(--color-surface-muted); cursor: not-allowed; }
+.safety-refresh-button.is-loading svg { animation: ui-spin .8s linear infinite; }
+.safety-error, .safety-empty { margin: var(--spacing-3) 0 0; padding: var(--spacing-3); border-radius: var(--radius-control); font-size: var(--text-caption); line-height: 1.125rem; }
+.safety-error { color: var(--color-danger); background: var(--color-danger-subtle); }
+.safety-empty { color: var(--color-ink-secondary); background: var(--color-surface-subtle); }
+.safety-place-list { display: grid; gap: var(--spacing-4); margin-top: var(--spacing-4); }
+.safety-place-list section { display: grid; gap: var(--spacing-2); }
+.safety-place-list h3 { display: flex; align-items: center; gap: var(--spacing-2); margin: 0; color: var(--color-ink); font-size: var(--text-label); line-height: 1.125rem; font-weight: 800; }
+.safety-place-list h3 span { display: inline-grid; min-width: 28px; height: 28px; place-items: center; border-radius: var(--radius-full); color: var(--color-brand-700); background: var(--color-brand-050); font-size: var(--text-legal); font-weight: 800; }
+.safety-place-list a { display: block; min-height: 64px; padding: var(--spacing-3) var(--spacing-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-control); color: var(--color-ink); background: var(--color-surface); text-decoration: none; }
+.safety-place-list a strong { display: block; overflow: hidden; font-size: var(--text-body-sm); line-height: 1.25rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.safety-place-list a > span { display: block; margin-top: var(--spacing-1); overflow: hidden; color: var(--color-ink-secondary); font-size: var(--text-caption); line-height: 1.125rem; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Result */
 .running-complete-page { min-height: 100dvh; padding: max(var(--spacing-8), calc(var(--safe-top) + var(--spacing-6))) max(var(--space-page), var(--safe-right)) max(var(--spacing-8), var(--safe-bottom)) max(var(--space-page), var(--safe-left)); color: var(--color-ink); background: var(--color-canvas); overscroll-behavior-y: contain; }
 .complete-copy { text-align: left; }

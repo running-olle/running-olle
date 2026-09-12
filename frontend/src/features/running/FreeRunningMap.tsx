@@ -7,16 +7,25 @@ import type { GeoPoint } from './types'
 type Props = {
   currentPosition: GeoPoint | null
   recordedPath?: GeoPoint[]
+  safetyPlaces?: SafetyMapPlace[]
   followPosition?: boolean
   className?: string
 }
 
-export function FreeRunningMap({ currentPosition, recordedPath = [], followPosition = true, className = '' }: Props) {
+type SafetyMapPlace = {
+  type: string
+  name: string
+  lat: number
+  lng: number
+}
+
+export function FreeRunningMap({ currentPosition, recordedPath = [], safetyPlaces = [], followPosition = true, className = '' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<KakaoMap | null>(null)
   const markerRef = useRef<KakaoCustomOverlay | null>(null)
   const accuracyRef = useRef<KakaoCircle | null>(null)
   const routeRef = useRef<KakaoPolyline | null>(null)
+  const safetyOverlayRefs = useRef<KakaoCustomOverlay[]>([])
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const appKey = getKakaoMapAppKey()
@@ -86,6 +95,40 @@ export function FreeRunningMap({ currentPosition, recordedPath = [], followPosit
     routeRef.current.setPath(recordedPath.map((point) => new window.kakao!.maps.LatLng(point.latitude, point.longitude)))
   }, [ready, recordedPath])
 
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.kakao) return
+    safetyOverlayRefs.current.forEach((overlay) => overlay.setMap(null))
+    safetyOverlayRefs.current = safetyPlaces.map((place) => new window.kakao!.maps.CustomOverlay({
+      map: mapRef.current!,
+      position: new window.kakao!.maps.LatLng(place.lat, place.lng),
+      content: `<div class="safety-map-marker ${markerClass(place.type)}"><span>${markerLabel(place.type)}</span><b>${escapeHtml(place.name)}</b></div>`,
+      zIndex: 18,
+      yAnchor: 1,
+    }))
+  }, [ready, safetyPlaces])
+
   if (!appKey) return <div className={`running-map-fallback ${className}`}>카카오맵 API 키를 설정해 주세요.</div>
   return <div className={`running-map ${className}`}><div ref={containerRef} className="running-map-canvas" />{error && <div className="running-map-fallback">{error}<br />JavaScript 키와 등록 도메인을 확인해 주세요.</div>}</div>
+}
+
+function markerLabel(type: string) {
+  if (type === 'hospital') return '병'
+  if (type === 'pharmacy') return '약'
+  if (type === 'convenience_store') return '편'
+  if (type === 'toilet') return '화'
+  return '도'
+}
+
+function markerClass(type: string) {
+  return `is-${type.replaceAll('_', '-')}`
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char] ?? char)
 }
