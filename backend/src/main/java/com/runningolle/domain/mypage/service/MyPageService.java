@@ -28,9 +28,14 @@ import com.runningolle.domain.user.repository.UserTypeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
 import com.runningolle.domain.user.entity.UserUserType;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -177,24 +182,87 @@ public class MyPageService {
     }
 
     @Transactional(readOnly = true)
-    public List<MyPageDtos.TripResponse> trips(UUID userId) {
+    public List<MyPageDtos.RunTripReportSummary> reports(UUID userId) {
         activeUser(userId);
-        return tripRepository.findAllByUserIdOrderByStartDateDesc(userId).stream().map(this::tripDto).toList();
+        return tripRepository.findAllByUserIdOrderByStartDateDesc(userId).stream()
+                .map(this::reportSummary)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public MyPageDtos.RunTripReportDetail report(UUID userId, UUID reportId) {
+        activeUser(userId);
+        Trip report = reportForUser(userId, reportId);
+        List<RunningRecord> runs = runsFor(userId, report.getStartDate(), report.getEndDate());
+        List<RunningWaypointVisit> visits = visitsFor(userId, report.getStartDate(), report.getEndDate());
+        return reportDetail(report, runs, visits);
+    }
+
+    @Transactional(readOnly = true)
+    public MyPageDtos.RunTripReportStatistics reportPreview(UUID userId, LocalDate startDate, LocalDate endDate) {
+        activeUser(userId);
+        validateReport("preview", startDate, endDate);
+        return reportStatistics(runsFor(userId, startDate, endDate), visitsFor(userId, startDate, endDate));
+    }
+
+    @Transactional(readOnly = true)
+    public MyPageDtos.RunTripOverallStatistics overallReportStatistics(UUID userId) {
+        activeUser(userId);
+        List<Trip> reports = tripRepository.findAllByUserIdOrderByStartDateDesc(userId);
+        Map<UUID, RunningRecord> uniqueRuns = new LinkedHashMap<>();
+        Set<UUID> uniquePlaces = new LinkedHashSet<>();
+        BigDecimal summedReportDistance = BigDecimal.ZERO;
+
+        for (Trip report : reports) {
+            List<RunningRecord> reportRuns = runsFor(userId, report.getStartDate(), report.getEndDate());
+            reportRuns.forEach(run -> uniqueRuns.putIfAbsent(run.getId(), run));
+            summedReportDistance = summedReportDistance.add(totalDistance(reportRuns));
+            visitsFor(userId, report.getStartDate(), report.getEndDate()).stream()
+                    .map(visit -> visit.getCourseWaypoint().getId())
+                    .forEach(uniquePlaces::add);
+        }
+
+        List<RunningRecord> runs = new ArrayList<>(uniqueRuns.values());
+        BigDecimal distance = totalDistance(runs);
+        long duration = totalDuration(runs);
+        BigDecimal averageDistance = reports.isEmpty()
+                ? BigDecimal.ZERO
+                : summedReportDistance.divide(BigDecimal.valueOf(reports.size()), 2, RoundingMode.HALF_UP);
+        return new MyPageDtos.RunTripOverallStatistics(
+                reports.size(), runs.size(), uniqueCourseCount(runs), distance, duration,
+                averagePace(distance, duration), uniquePlaces.size(), averageDistance
+        );
     }
 
     @Transactional
-    public MyPageDtos.TripResponse createTrip(UUID userId, MyPageDtos.CreateTripRequest request) {
+    public MyPageDtos.RunTripReportDetail createReport(UUID userId, MyPageDtos.SaveRunTripReportRequest request) {
         User user = activeUser(userId);
-        if (request.name() == null || request.name().isBlank() || request.startDate() == null || request.endDate() == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "여행명과 기간을 입력해주세요.");
-        if (request.endDate().isBefore(request.startDate()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종료일은 시작일보다 빠를 수 없습니다.");
-        Trip trip = tripRepository.save(Trip.create(user, request.name().trim(), trim(request.region()), request.startDate(), request.endDate(), request.thumbnailImageUrl()));
-        runningRecordRepository.findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
-                userId, request.startDate().atStartOfDay(), request.endDate().plusDays(1).atStartOfDay()
-        ).forEach(record -> record.assignToTrip(trip));
+        validateReport(request.name(), request.startDate(), request.endDate());
+        Trip report = tripRepository.save(Trip.create(
+                user, request.name().trim(), null, request.startDate(), request.endDate(), trim(request.thumbnailImageUrl())
+        ));
+        return reportDetail(report, runsFor(userId, report.getStartDate(), report.getEndDate()),
+                visitsFor(userId, report.getStartDate(), report.getEndDate()));
+    }
+
+    @Transactional
+    public MyPageDtos.RunTripReportDetail updateReport(UUID userId, UUID reportId, MyPageDtos.SaveRunTripReportRequest request) {
+        activeUser(userId);
+        validateReport(request.name(), request.startDate(), request.endDate());
+        Trip report = reportForUser(userId, reportId);
+        report.update(request.name().trim(), null, request.startDate(), request.endDate(), trim(request.thumbnailImageUrl()));
+        return reportDetail(report, runsFor(userId, report.getStartDate(), report.getEndDate()),
+                visitsFor(userId, report.getStartDate(), report.getEndDate()));
+    }
+
+    @Transactional
+    public void deleteReport(UUID userId, UUID reportId) {
+        activeUser(userId);
+        Trip report = reportForUser(userId, reportId);
+        runningRecordRepository.findAllByTripIdOrderByStartedAtDesc(reportId)
+                .forEach(record -> record.assignToTrip(null));
         runningRecordRepository.flush();
-        return tripDto(trip);
+        tripRepository.delete(report);
     }
 
     @Transactional(readOnly = true)
@@ -230,12 +298,76 @@ public class MyPageService {
                 waypoint.getLocation().getY(), waypoint.getLocation().getX()
         );
     }
-    private MyPageDtos.TripResponse tripDto(Trip trip) {
-        List<RunningRecord> runs = runningRecordRepository.findAllByTripIdOrderByStartedAtDesc(trip.getId());
-        BigDecimal distance = runs.stream().map(RunningRecord::getTotalDistanceKm).reduce(BigDecimal.ZERO, BigDecimal::add);
-        long duration = runs.stream().mapToLong(RunningRecord::getTotalDurationSeconds).sum();
-        return new MyPageDtos.TripResponse(trip.getId(), trip.getName(), trip.getRegion(), trip.getStartDate(), trip.getEndDate(),
-                trip.getThumbnailImageUrl(), runs.size(), distance, visitRepository.countByRunningRecordTripId(trip.getId()), duration);
+    private MyPageDtos.RunTripReportSummary reportSummary(Trip report) {
+        return new MyPageDtos.RunTripReportSummary(report.getId(), report.getName(), report.getStartDate(),
+                report.getEndDate(), report.getThumbnailImageUrl());
+    }
+
+    private MyPageDtos.RunTripReportDetail reportDetail(Trip report, List<RunningRecord> runs,
+                                                         List<RunningWaypointVisit> visits) {
+        long runningCourseRuns = runs.stream().filter(run -> run.getCourse() != null
+                && run.getCourse().getCourseType() == com.runningolle.domain.course.enums.CourseType.RUNNING_COURSE).count();
+        long spotCourseRuns = runs.stream().filter(run -> run.getCourse() != null
+                && run.getCourse().getCourseType() == com.runningolle.domain.course.enums.CourseType.SPOT_COURSE).count();
+        long freeRuns = runs.size() - runningCourseRuns - spotCourseRuns;
+        return new MyPageDtos.RunTripReportDetail(
+                report.getId(), report.getName(), report.getStartDate(), report.getEndDate(), report.getThumbnailImageUrl(),
+                reportStatistics(runs, visits),
+                new MyPageDtos.RunTripReportBreakdown(runningCourseRuns, spotCourseRuns, freeRuns),
+                runs.stream().map(this::runDto).toList(), visits.stream().map(this::visitDto).toList()
+        );
+    }
+
+    private MyPageDtos.RunTripReportStatistics reportStatistics(List<RunningRecord> runs,
+                                                                 List<RunningWaypointVisit> visits) {
+        BigDecimal distance = totalDistance(runs);
+        long duration = totalDuration(runs);
+        long uniquePlaces = visits.stream().map(visit -> visit.getCourseWaypoint().getId()).distinct().count();
+        return new MyPageDtos.RunTripReportStatistics(runs.size(), uniqueCourseCount(runs), distance, duration,
+                averagePace(distance, duration), uniquePlaces);
+    }
+
+    private List<RunningRecord> runsFor(UUID userId, LocalDate startDate, LocalDate endDate) {
+        return runningRecordRepository
+                .findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
+                        userId, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+    }
+
+    private List<RunningWaypointVisit> visitsFor(UUID userId, LocalDate startDate, LocalDate endDate) {
+        return visitRepository
+                .findAllByRunningRecordUserIdAndRunningRecordStartedAtGreaterThanEqualAndRunningRecordStartedAtLessThanOrderByVisitedAtDesc(
+                        userId, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+    }
+
+    private BigDecimal totalDistance(List<RunningRecord> runs) {
+        return runs.stream().map(RunningRecord::getTotalDistanceKm).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private long totalDuration(List<RunningRecord> runs) {
+        return runs.stream().mapToLong(RunningRecord::getTotalDurationSeconds).sum();
+    }
+
+    private long uniqueCourseCount(List<RunningRecord> runs) {
+        return runs.stream().map(RunningRecord::getCourse).filter(java.util.Objects::nonNull)
+                .map(Course::getId).distinct().count();
+    }
+
+    private BigDecimal averagePace(BigDecimal distance, long durationSeconds) {
+        if (distance == null || distance.signum() <= 0 || durationSeconds <= 0) return null;
+        return BigDecimal.valueOf(durationSeconds)
+                .divide(distance.multiply(BigDecimal.valueOf(60)), 2, RoundingMode.HALF_UP);
+    }
+
+    private Trip reportForUser(UUID userId, UUID reportId) {
+        return tripRepository.findByIdAndUserId(reportId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "런트립 리포트를 찾을 수 없습니다."));
+    }
+
+    private void validateReport(String name, LocalDate startDate, LocalDate endDate) {
+        if (name == null || name.isBlank() || startDate == null || endDate == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "여행 이름과 기간을 입력해주세요.");
+        if (endDate.isBefore(startDate))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "종료일은 시작일보다 빠를 수 없습니다.");
     }
     private MyPageDtos.NotificationSettings notificationDto(UserNotificationSetting s) {
         return new MyPageDtos.NotificationSettings(s.getRecommendedCourse(), s.getWeather(), s.getSavedCourseUpdate(),

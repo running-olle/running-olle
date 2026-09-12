@@ -3,6 +3,7 @@ package com.runningolle.domain.running.controller;
 import com.runningolle.domain.course.dto.CourseCreateResponse;
 import com.runningolle.domain.running.dto.CreateRunningRecordRequest;
 import com.runningolle.domain.running.dto.CreateRunningRecordResponse;
+import com.runningolle.domain.running.dto.MonthlyRunCountResponse;
 import com.runningolle.domain.running.dto.SaveRunningCourseRequest;
 import com.runningolle.domain.running.service.RunningCourseSaveService;
 import com.runningolle.domain.running.service.RunningRecordService;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +27,14 @@ public class RunningRecordController {
 
     private final RunningRecordService runningRecordService;
     private final RunningCourseSaveService runningCourseSaveService;
+
+    @GetMapping("/monthly-count")
+    public MonthlyRunCountResponse monthlyCount(Authentication authentication) {
+        long runCount = runningRecordService.countCurrentMonthRuns(
+                UUID.fromString(authentication.getName())
+        );
+        return new MonthlyRunCountResponse(runCount);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

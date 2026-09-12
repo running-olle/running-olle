@@ -1,5 +1,6 @@
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
+import { Icon } from '../../components/ui/Icon'
 import type { Weather } from './types'
 
 type WeatherCardProps = {
@@ -7,9 +8,18 @@ type WeatherCardProps = {
   status: 'loading' | 'success' | 'error'
   errorMessage?: string | null
   onRetry: () => void
+  monthlyRunCount: number | null
+  monthlyRunCountStatus: 'loading' | 'success' | 'error'
 }
 
-export function WeatherCard({ weather, status, errorMessage, onRetry }: WeatherCardProps) {
+export function WeatherCard({
+  weather,
+  status,
+  errorMessage,
+  onRetry,
+  monthlyRunCount,
+  monthlyRunCountStatus,
+}: WeatherCardProps) {
   const isReady = status === 'success' && weather
 
   return (
@@ -29,12 +39,17 @@ export function WeatherCard({ weather, status, errorMessage, onRetry }: WeatherC
         </div>
 
         <div className="mt-3 flex flex-wrap items-end justify-between gap-x-3">
-          {isReady ? (
-            <div className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/15 px-4 text-label font-bold text-white">
-              <span className="h-2 w-2 rounded-full bg-success-indicator" />
-              <span>지금 달리는 러너 {weather.runningNowCount}명</span>
-            </div>
-          ) : status === 'error' ? (
+          <div className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/15 px-4 text-label font-bold text-white">
+            <Icon name="calendar" size={16} />
+            <span>
+              이번달 러닝 횟수{' '}
+              <strong className="tabular-nums">
+                {monthlyRunCountStatus === 'success' ? monthlyRunCount ?? 0 : '--'}회
+              </strong>
+            </span>
+          </div>
+
+          {status === 'error' ? (
             <Button type="button" variant="secondary" size="sm" onClick={onRetry}>다시 시도</Button>
           ) : null}
 

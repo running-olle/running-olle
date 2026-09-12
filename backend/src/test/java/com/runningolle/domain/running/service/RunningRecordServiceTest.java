@@ -19,7 +19,11 @@ import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.user.entity.User;
 import com.runningolle.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -82,6 +86,38 @@ class RunningRecordServiceTest {
         assertThat(savedRecord.getCourse()).isNull();
         assertThat(savedRecord.getRunningMode()).isEqualTo(RunningMode.FREE_RUN);
         assertThat(savedRecord.getTotalDistanceKm()).isEqualByComparingTo(new BigDecimal("3.20"));
+    }
+
+    @Test
+    void countsCurrentMonthRunsUsingKoreaMonthBoundariesInUtc() {
+        YearMonth currentMonth = YearMonth.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime startUtc = currentMonth.atDay(1)
+                .atStartOfDay(ZoneId.of("Asia/Seoul"))
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
+        LocalDateTime endUtc = currentMonth.plusMonths(1)
+                .atDay(1)
+                .atStartOfDay(ZoneId.of("Asia/Seoul"))
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
+        given(runningRecordRepository.countByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                USER_ID, startUtc, endUtc
+        )).willReturn(4L);
+
+        long count = runningRecordService.countCurrentMonthRuns(USER_ID);
+
+        assertThat(count).isEqualTo(4L);
+    }
+
+    @Test
+    void returnsZeroWhenCurrentMonthHasNoRunRecords() {
+        given(runningRecordRepository.countByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                any(), any(), any()
+        )).willReturn(0L);
+
+        long count = runningRecordService.countCurrentMonthRuns(USER_ID);
+
+        assertThat(count).isZero();
     }
 
     @Test

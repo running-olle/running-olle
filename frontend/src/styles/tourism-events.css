@@ -1,0 +1,686 @@
+/* Shared tourism-event surfaces */
+.tourism-events-more {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--spacing-0-5);
+  color: var(--color-brand-700);
+  font-size: var(--text-label);
+  line-height: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tourism-events-more:focus-visible,
+.tourism-event-link:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.tourism-event-highlight-list {
+  display: grid;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-4);
+}
+
+.tourism-event-highlight-skeleton {
+  display: flex;
+  min-height: 102px;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.tourism-event-highlight-skeleton__copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: var(--spacing-2);
+}
+
+.tourism-event-highlight-state {
+  display: flex;
+  min-height: 144px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6) var(--spacing-4);
+  border: 1px dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-brand-500);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.tourism-event-highlight-state--error {
+  border-color: transparent;
+  color: var(--color-danger);
+  background: var(--color-danger-subtle);
+}
+
+.tourism-event-highlight-state p {
+  margin: var(--spacing-3) 0 0;
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  line-height: 1.25rem;
+  font-weight: 700;
+}
+
+.tourism-event-highlight-state span {
+  margin-top: var(--spacing-1);
+  color: var(--color-ink-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.125rem;
+}
+
+.tourism-event-link {
+  display: block;
+  min-width: 0;
+  border-radius: var(--radius-md);
+  color: inherit;
+  text-decoration: none;
+}
+
+.tourism-event-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.tourism-event-card__media {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  color: var(--color-brand-500);
+  background: var(--color-brand-050);
+}
+
+.tourism-event-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tourism-event-badges {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+}
+
+.tourism-event-card__body {
+  min-width: 0;
+}
+
+.tourism-event-card__body h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-card-title);
+  line-height: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tourism-event-card__meta {
+  margin-top: var(--spacing-2);
+}
+
+.tourism-event-card__meta .ui-meta-list__item {
+  width: 100%;
+}
+
+.tourism-event-card__meta .ui-meta-list__item > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tourism-event-card__source {
+  margin: var(--spacing-2) 0 0;
+  color: var(--color-ink-tertiary);
+  font-size: var(--text-legal);
+  line-height: 1rem;
+}
+
+.tourism-event-card--compact {
+  display: grid;
+  min-height: 116px;
+  grid-template-columns: 76px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  box-shadow: none;
+}
+
+.tourism-event-card--compact .tourism-event-card__media {
+  width: 76px;
+  height: 84px;
+  border-radius: var(--radius-control);
+}
+
+.tourism-event-card--compact .tourism-event-card__media[data-has-image="true"]::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent, var(--color-overlay));
+  content: '';
+}
+
+.tourism-event-card--compact .tourism-event-card__media > svg {
+  display: none;
+}
+
+.tourism-event-card__date {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-brand-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.tourism-event-card__media[data-has-image="true"] .tourism-event-card__date {
+  justify-content: flex-end;
+  padding-bottom: var(--spacing-2);
+  color: var(--color-surface);
+}
+
+.tourism-event-card__date span {
+  font-size: var(--text-caption);
+  line-height: 1.125rem;
+  font-weight: 700;
+}
+
+.tourism-event-card__date strong {
+  font-size: var(--text-section-title);
+  line-height: 1.5rem;
+  font-weight: 800;
+}
+
+.tourism-event-card--compact .tourism-event-badges {
+  margin-bottom: var(--spacing-1);
+}
+
+.tourism-event-card--compact .tourism-event-card__meta {
+  margin-top: var(--spacing-1);
+}
+
+.tourism-event-card--compact .tourism-event-card__meta .ui-meta-list__item:first-child {
+  display: none;
+}
+
+.tourism-event-card__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ink-tertiary);
+}
+
+.tourism-event-card--catalog {
+  height: 100%;
+  border-radius: var(--radius-lg);
+}
+
+.tourism-event-card--catalog .tourism-event-card__media {
+  aspect-ratio: 4 / 5;
+}
+
+.tourism-event-card__media-badges {
+  position: absolute;
+  top: var(--spacing-3);
+  left: var(--spacing-3);
+}
+
+.tourism-event-card__media-badges .ui-badge {
+  box-shadow: var(--shadow-1);
+}
+
+.tourism-event-card--catalog .tourism-event-card__body {
+  padding: var(--spacing-3);
+}
+
+.tourism-event-card--catalog .tourism-event-card__meta {
+  display: grid;
+  gap: var(--spacing-1);
+}
+
+@media (hover: hover) {
+  .tourism-event-link:hover .tourism-event-card--catalog {
+    box-shadow: var(--shadow-2);
+    transform: translateY(-2px);
+  }
+
+  .tourism-event-link:hover .tourism-event-card--compact {
+    border-color: var(--color-border-default);
+    background: var(--color-surface-subtle);
+  }
+}
+
+/* Tourism-event catalog */
+.tourism-events-page {
+  display: grid;
+  gap: var(--spacing-6);
+  padding-bottom: var(--spacing-2);
+}
+
+.tourism-events-intro h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-page-title);
+  line-height: 2rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.tourism-events-intro p {
+  margin: var(--spacing-2) 0 0;
+  color: var(--color-ink-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.4rem;
+}
+
+.tourism-events-search {
+  display: grid;
+  min-height: 52px;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-1) 0 var(--spacing-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  color: var(--color-ink-tertiary);
+  background: var(--color-surface);
+  transition: border-color var(--motion-control) var(--ease-standard), box-shadow var(--motion-control) var(--ease-standard);
+}
+
+.tourism-events-search:focus-within {
+  border-color: var(--color-brand-500);
+  box-shadow: 0 0 0 2px var(--color-brand-050);
+}
+
+.tourism-events-search input {
+  min-width: 0;
+  height: 50px;
+  border: 0;
+  outline: 0;
+  color: var(--color-ink);
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1.375rem;
+}
+
+.tourism-events-search input::placeholder {
+  color: var(--color-ink-tertiary);
+}
+
+.tourism-events-search__action.ui-button {
+  min-height: 44px;
+  padding-inline: var(--spacing-3);
+}
+
+.tourism-events-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--spacing-4);
+}
+
+.tourism-events-summary > div {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding-inline: var(--spacing-3);
+}
+
+.tourism-events-summary > div:first-child {
+  padding-left: 0;
+  border-right: 1px solid var(--color-border-subtle);
+}
+
+.tourism-events-summary > div:last-child {
+  padding-right: 0;
+}
+
+.tourism-events-summary span {
+  color: var(--color-ink-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.125rem;
+  font-weight: 600;
+}
+
+.tourism-events-summary strong {
+  color: var(--color-ink);
+  font-size: var(--text-section-title);
+  line-height: 1.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tourism-events-summary small {
+  margin-left: var(--spacing-0-5);
+  color: var(--color-ink-secondary);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.tourism-events-filters,
+.tourism-events-filters fieldset {
+  display: grid;
+  gap: var(--spacing-3);
+}
+
+.tourism-events-filters {
+  gap: var(--spacing-4);
+}
+
+.tourism-events-filters fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tourism-events-filters legend {
+  padding: 0;
+  color: var(--color-ink);
+  font-size: var(--text-label);
+  line-height: 1.125rem;
+  font-weight: 700;
+}
+
+.tourism-events-chip-row {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-right: calc(-1 * var(--space-page));
+  overflow-x: auto;
+  padding-right: var(--space-page);
+  padding-bottom: var(--spacing-1);
+  scrollbar-width: none;
+}
+
+.tourism-events-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.tourism-events-chip-row .ui-chip {
+  min-height: 44px;
+  flex: 0 0 auto;
+}
+
+.tourism-events-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.tourism-events-results-heading h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-section-title);
+  line-height: 1.75rem;
+  font-weight: 800;
+}
+
+.tourism-events-results-heading span {
+  color: var(--color-ink-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.125rem;
+}
+
+.tourism-events-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-4);
+}
+
+.tourism-event-catalog-skeleton {
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.tourism-event-catalog-skeleton > .ui-skeleton {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+}
+
+.tourism-event-catalog-skeleton > div {
+  display: grid;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+}
+
+/* Tourism-event detail */
+.tourism-event-detail,
+.tourism-event-detail__header {
+  display: grid;
+}
+
+.tourism-event-detail {
+  gap: var(--spacing-6);
+  padding-bottom: var(--spacing-2);
+}
+
+.tourism-event-detail-state {
+  min-height: 55vh;
+}
+
+section.tourism-event-detail-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  color: var(--color-ink-secondary);
+  text-align: center;
+}
+
+.tourism-event-detail-state p {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  line-height: 1.25rem;
+}
+
+.tourism-event-detail__back.ui-button {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.tourism-event-detail__header {
+  gap: var(--spacing-3);
+}
+
+.tourism-event-detail__header h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-page-title);
+  line-height: 2rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.tourism-event-detail__header > p {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  margin: 0;
+  color: var(--color-ink-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.tourism-event-detail__header > p svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--color-brand-500);
+}
+
+.tourism-event-detail__hero {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  margin: 0;
+  overflow: hidden;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  color: var(--color-brand-500);
+  background: var(--color-brand-050);
+}
+
+.tourism-event-detail__hero img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 72vh;
+  object-fit: contain;
+}
+
+.tourism-event-detail__hero[data-has-image="true"] {
+  aspect-ratio: auto;
+  min-height: 240px;
+  background: var(--color-surface-subtle);
+}
+
+.tourism-event-detail__hero > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: var(--text-body-sm);
+  line-height: 1.25rem;
+  font-weight: 700;
+}
+
+.tourism-event-detail__info,
+.tourism-event-detail__overview {
+  padding: var(--spacing-5);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.tourism-event-detail__info h2,
+.tourism-event-detail__overview h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-app-title);
+  line-height: 1.5rem;
+  font-weight: 800;
+}
+
+.tourism-event-detail__info dl {
+  display: grid;
+  gap: 0;
+  margin: var(--spacing-2) 0 0;
+}
+
+.tourism-event-detail__info-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.tourism-event-detail__info-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.tourism-event-detail__info-row dt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  color: var(--color-ink-secondary);
+  font-size: var(--text-label);
+  line-height: 1.25rem;
+  font-weight: 700;
+}
+
+.tourism-event-detail__info-row dt span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--color-brand-500);
+}
+
+.tourism-event-detail__info-row dd {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  line-height: 1.35rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tourism-event-detail__overview p {
+  margin: var(--spacing-3) 0 0;
+  color: var(--color-ink-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.6rem;
+  white-space: pre-line;
+}
+
+.tourism-event-detail__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-2);
+}
+
+.tourism-event-detail__actions[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+
+.tourism-event-detail__source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  color: var(--color-ink-tertiary);
+  font-size: var(--text-legal);
+  line-height: 1rem;
+}
+
+.tourism-event-detail__source strong {
+  color: var(--color-ink-secondary);
+  font-weight: 700;
+}
+
+@media (max-width: 360px) {
+  .tourism-event-card--compact {
+    grid-template-columns: 68px minmax(0, 1fr) 20px;
+    gap: var(--spacing-2);
+  }
+
+  .tourism-event-card--compact .tourism-event-card__media {
+    width: 68px;
+    height: 80px;
+  }
+
+  .tourism-event-card--compact .tourism-event-card__source {
+    display: none;
+  }
+
+  .tourism-events-summary > div {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+  }
+
+  .tourism-event-detail__actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -37,10 +37,22 @@ public final class MyPageDtos {
                             List<CourseWaypointResponse> courseWaypoints) {}
     public record Bookmark(UUID bookmarkId, UUID courseId, String name, CourseType courseType,
                            BigDecimal distanceKm, Difficulty difficulty, String thumbnailImageUrl, boolean mine) {}
-    public record TripResponse(UUID id, String name, String region, LocalDate startDate, LocalDate endDate,
-                               String thumbnailImageUrl, long completedCourses, BigDecimal totalDistanceKm,
-                               long visitedPlaces, long totalDurationSeconds) {}
-    public record CreateTripRequest(String name, String region, LocalDate startDate, LocalDate endDate, String thumbnailImageUrl) {}
+    public record RunTripReportSummary(UUID id, String name, LocalDate startDate, LocalDate endDate,
+                                       String thumbnailImageUrl) {}
+    public record RunTripReportStatistics(long runCount, long uniqueCourseCount, BigDecimal totalDistanceKm,
+                                          long totalDurationSeconds, BigDecimal averagePace,
+                                          long uniqueVisitedPlaceCount) {}
+    public record RunTripReportBreakdown(long runningCourseRuns, long spotCourseRuns, long freeRuns) {}
+    public record RunTripReportDetail(UUID id, String name, LocalDate startDate, LocalDate endDate,
+                                      String thumbnailImageUrl, RunTripReportStatistics statistics,
+                                      RunTripReportBreakdown breakdown, List<Run> runs, List<Visit> visits) {}
+    public record RunTripOverallStatistics(long reportCount, long runCount, long uniqueCourseCount,
+                                            BigDecimal totalDistanceKm, long totalDurationSeconds,
+                                            BigDecimal averagePace, long uniqueVisitedPlaceCount,
+                                            BigDecimal averageDistancePerReport) {}
+    public record SaveRunTripReportRequest(@NotBlank @Size(max = 200) String name,
+                                           LocalDate startDate, LocalDate endDate,
+                                           @Size(max = 4_200_000) String thumbnailImageUrl) {}
     public record UpdateProfileRequest(@NotBlank @Size(min = 2, max = 100) String nickname,
                                        @Size(max = 4_200_000) String profileImageUrl,
                                        @Size(max = 300) String bio,

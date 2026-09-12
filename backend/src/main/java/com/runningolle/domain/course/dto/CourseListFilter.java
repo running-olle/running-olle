@@ -4,5 +4,6 @@ public enum CourseListFilter {
     ALL,
     RUNNING_COURSE,
     SPOT_COURSE,
+    BOOKMARKED,
     CREATED
 }

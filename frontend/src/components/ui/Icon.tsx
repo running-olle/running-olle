@@ -15,6 +15,7 @@ export type IconName =
   | 'close'
   | 'community'
   | 'edit'
+  | 'externalLink'
   | 'coffee'
   | 'course'
   | 'history'
@@ -25,6 +26,7 @@ export type IconName =
   | 'location'
   | 'minus'
   | 'plus'
+  | 'phone'
   | 'route'
   | 'routeAdd'
   | 'run'
@@ -73,6 +75,7 @@ export function Icon({ name, size = 20, ...svgProps }: IconProps) {
   if (name === 'close') return <svg {...commonProps}><path d="m6 6 12 12M18 6 6 18" /></svg>
   if (name === 'community') return <svg {...commonProps}><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20v-1.5a6 6 0 0 1 12 0V20M15 14a5 5 0 0 1 6 4.9V20" /></svg>
   if (name === 'edit') return <svg {...commonProps}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+  if (name === 'externalLink') return <svg {...commonProps}><path d="M15 3h6v6M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /></svg>
   if (name === 'coffee') return <svg {...commonProps}><path d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V8Zm11 2h2.3a2.7 2.7 0 1 1 0 5.4H16M7 21h10" /></svg>
   if (name === 'course') return <svg {...commonProps}><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z" /><path d="M9 3v15M15 6v15" /></svg>
   if (name === 'home') return <svg {...commonProps}><path d="m3 11 9-8 9 8" /><path d="M5 10v10h14V10M9 20v-6h6v6" /></svg>
@@ -83,6 +86,7 @@ export function Icon({ name, size = 20, ...svgProps }: IconProps) {
   if (name === 'location') return <svg {...commonProps}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
   if (name === 'minus') return <svg {...commonProps}><path d="M5 12h14" /></svg>
   if (name === 'plus') return <svg {...commonProps}><path d="M12 5v14M5 12h14" /></svg>
+  if (name === 'phone') return <svg {...commonProps}><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" /></svg>
   if (name === 'route') return <svg {...commonProps}><circle cx="5" cy="18" r="2" /><circle cx="19" cy="6" r="2" /><path d="m7 17 4-5 3 2 3-6" /></svg>
   if (name === 'routeAdd') return <svg {...commonProps}><circle cx="5" cy="18" r="2" /><path d="m7 17 4-5 2 1.5" /><circle cx="17" cy="8" r="4" /><path d="M17 6v4M15 8h4" /></svg>
   if (name === 'run') return (
