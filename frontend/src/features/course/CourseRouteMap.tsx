@@ -12,11 +12,19 @@ type CourseRouteLineStyle = {
   strokeStyle?: string
 }
 
+type SafetyMapPlace = {
+  type: string
+  name: string
+  lat: number
+  lng: number
+}
+
 type CourseRouteMapProps = {
   routeCoordinates: CourseRouteCoordinate[]
   waypoints: CourseWaypoint[]
   currentPosition?: CourseRouteCoordinate | null
   recordedPath?: CourseRouteCoordinate[]
+  safetyPlaces?: SafetyMapPlace[]
   fitTarget?: CourseRouteMapFitTarget
   plannedRouteStyle?: CourseRouteLineStyle
   recordedRouteStyle?: CourseRouteLineStyle
@@ -32,6 +40,7 @@ export function CourseRouteMap({
   waypoints,
   currentPosition = null,
   recordedPath = [],
+  safetyPlaces = [],
   fitTarget = 'all',
   plannedRouteStyle,
   recordedRouteStyle,
@@ -45,6 +54,7 @@ export function CourseRouteMap({
   const recordedRouteRef = useRef<KakaoPolyline | null>(null)
   const waypointOverlayRefs = useRef<KakaoCustomOverlay[]>([])
   const currentOverlayRef = useRef<KakaoCustomOverlay | null>(null)
+  const safetyOverlayRefs = useRef<KakaoCustomOverlay[]>([])
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const appKey = getKakaoMapAppKey()
@@ -137,6 +147,18 @@ export function CourseRouteMap({
 
   useEffect(() => {
     if (!ready || !mapRef.current || !window.kakao) return
+    safetyOverlayRefs.current.forEach((overlay) => overlay.setMap(null))
+    safetyOverlayRefs.current = safetyPlaces.map((place) => new window.kakao!.maps.CustomOverlay({
+      map: mapRef.current!,
+      position: new window.kakao!.maps.LatLng(place.lat, place.lng),
+      content: `<div class="safety-map-marker ${markerClass(place.type)}"><span>${markerLabel(place.type)}</span><b>${escapeHtml(place.name)}</b></div>`,
+      zIndex: 18,
+      yAnchor: 1,
+    }))
+  }, [ready, safetyPlaces])
+
+  useEffect(() => {
+    if (!ready || !mapRef.current || !window.kakao) return
     const points = getFitPoints(fitTarget, routeCoordinates, recordedPath, waypoints)
     if (points.length === 0) return
     if (points.length === 1) {
@@ -177,6 +199,28 @@ export function CourseRouteMap({
       )}
     </div>
   )
+}
+
+function markerLabel(type: string) {
+  if (type === 'hospital') return '병'
+  if (type === 'pharmacy') return '약'
+  if (type === 'convenience_store') return '편'
+  if (type === 'toilet') return '화'
+  return '도'
+}
+
+function markerClass(type: string) {
+  return `is-${type.replaceAll('_', '-')}`
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char] ?? char)
 }
 
 function toKakaoPath(coordinates: CourseRouteCoordinate[]) {
