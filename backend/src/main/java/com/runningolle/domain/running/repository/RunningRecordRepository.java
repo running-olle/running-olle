@@ -26,7 +26,8 @@ public interface RunningRecordRepository extends JpaRepository<RunningRecord, UU
 
     long countByTripId(UUID tripId);
 
-    List<RunningRecord> findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+    @EntityGraph(attributePaths = "course")
+    List<RunningRecord> findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
             UUID userId, LocalDateTime start, LocalDateTime endExclusive
     );
 
