@@ -10,6 +10,8 @@ import { CourseDetailPage } from './pages/Courses/CourseDetailPage'
 import { CourseSaveDetailPage } from './pages/Courses/CourseSaveDetailPage'
 import { CoursesPage } from './pages/Courses/CoursesPage'
 import { HomePage } from './pages/Home/HomePage'
+import { TourismEventDetailPage } from './pages/Home/TourismEventDetailPage'
+import { TourismEventsPage } from './pages/Home/TourismEventsPage'
 import { AccountPage, BookmarksPage, CompletedRunsPage, MyPage, NotificationPage, ProfileEditPage, ReportsPage, RunningHistoryPage, SettingsPage, TripCreatePage, TripsPage, VisitedPlacesPage } from './pages/MyPage/MyPage'
 import { FreeRunReadyPage } from './pages/Running/FreeRunReadyPage'
 import { LiveRunningPage } from './pages/Running/LiveRunningPage'
@@ -38,6 +40,8 @@ export default function App() {
       <Route element={<RequireAuth onboarding="required" />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/events" element={<TourismEventsPage />} />
+          <Route path="/events/:eventId" element={<TourismEventDetailPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/community" element={<CommunityPage />} />

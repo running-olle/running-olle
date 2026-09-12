@@ -6,3 +6,8 @@ running-olle.site {
 www.running-olle.site {
     redir https://running-olle.site{uri} permanent
 }
+
+monitor.running-olle.site {
+    encode zstd gzip
+    reverse_proxy grafana:3000
+}

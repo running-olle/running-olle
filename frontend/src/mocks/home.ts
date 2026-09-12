@@ -33,13 +33,6 @@ export type PopularCourse = {
   imageTone: CourseImageTone
 }
 
-export type RunningEvent = {
-  id: string
-  month: string
-  day: string
-  title: string
-}
-
 export const user: HomeUser = {
   id: 'user-1',
   nickname: '러너제주',
@@ -120,20 +113,5 @@ export const popularCourses: PopularCourse[] = [
     difficulty: 'easy',
     participantCount: 12,
     imageTone: 'oreum',
-  },
-]
-
-export const events: RunningEvent[] = [
-  {
-    id: 'jeju-trail-jun',
-    month: 'JUN',
-    day: '22',
-    title: '제주 국제 트레일런',
-  },
-  {
-    id: 'jeju-citrus-jul',
-    month: 'JUL',
-    day: '05',
-    title: '제주 감귤 축제 러닝',
   },
 ]

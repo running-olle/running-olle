@@ -6,7 +6,8 @@ import { WeatherCard } from '../../features/home/WeatherCard'
 import { homeService } from '../../features/home/homeService'
 import { toRecommendedCourseCardViewModel, type RecommendedCourseCardViewModel } from '../../features/home/homeViewModels'
 import { useCurrentWeather } from '../../features/home/useCurrentWeather'
-import { events, popularCourses } from '../../mocks/home'
+import { useTourismEventHighlights } from '../../features/home/useTourismEventHighlights'
+import { popularCourses } from '../../mocks/home'
 
 type OptionalPosition = {
   latitude: number
@@ -15,6 +16,7 @@ type OptionalPosition = {
 
 export function HomePage() {
   const { refreshWeather, weather, weatherError, weatherStatus } = useCurrentWeather()
+  const { events, status: eventStatus } = useTourismEventHighlights(3)
   const [recommendedCourses, setRecommendedCourses] = useState<RecommendedCourseCardViewModel[]>([])
   const [recommendationError, setRecommendationError] = useState<string | null>(null)
   const [loadingRecommendations, setLoadingRecommendations] = useState(true)
@@ -57,7 +59,7 @@ export function HomePage() {
         error={recommendationError}
       />
       <PopularCourseRank courses={popularCourses} />
-      <RunningEventList events={events} />
+      <RunningEventList events={events} status={eventStatus} />
     </div>
   )
 }
