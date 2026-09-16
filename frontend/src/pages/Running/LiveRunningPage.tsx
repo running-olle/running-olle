@@ -162,7 +162,9 @@ export function LiveRunningPage() {
       </section>
       <div className={`recording-status ${phase === 'paused' ? 'is-paused' : ''}`}><span />{phase === 'paused' ? '일시정지' : '기록 중'}</div>
       {locationError && <div className="live-location-error">{locationError}</div>}
-      <button className="safety-running-trigger" type="button" onClick={() => setShowSafetySheet(true)}>안심</button>
+      <button className="safety-running-trigger" type="button" onClick={() => setShowSafetySheet(true)}>
+        <span>안심</span>
+      </button>
       <div className="place-category-bar" aria-label="주변 장소 범례">
         <span><i className="place-camera"><Icon name="landmark" size={14} /></i>관광지</span>
         <span><i className="place-food"><Icon name="food" size={14} /></i>맛집</span>
@@ -197,7 +199,7 @@ export function LiveRunningPage() {
             <span className="sheet-handle" />
             <h2 id="end-title">러닝을 종료할까요?</h2>
             <p>지금까지 달린 코스와 기록이 저장돼요.</p>
-            <div><Button variant="secondary" disabled={saving} onClick={() => setShowEndSheet(false)}>계속 달리기</Button><Button variant="danger" loading={saving} onClick={finishRun}>종료 및 저장</Button></div>
+            <div className="end-sheet-actions"><Button variant="secondary" disabled={saving} onClick={() => setShowEndSheet(false)}>계속 달리기</Button><Button variant="danger" loading={saving} onClick={finishRun}>종료 및 저장</Button></div>
           </section>
         </div>
       )}
