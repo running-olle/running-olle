@@ -16,8 +16,22 @@ export type HomeRecommendedCourse = {
   recommendationReason: string
 }
 
+export type HomePopularCourse = {
+  courseId: string
+  rank: number
+  courseName: string
+  distanceKm: number
+  difficulty: HomeRecommendedCourseDifficulty
+  participantCount: number
+  thumbnailImageUrl: string | null
+}
+
 type RecommendedCoursesResponse = {
   recommendations: HomeRecommendedCourse[]
+}
+
+type PopularCoursesResponse = {
+  courses: HomePopularCourse[]
 }
 
 type RecommendedCoursesParams = {
@@ -41,5 +55,10 @@ export const homeService = {
         params,
       })
       .then(({ data }) => data.recommendations)
+  },
+  getPopularCourses() {
+    return axiosInstance
+      .get<PopularCoursesResponse>('/home/popular-courses')
+      .then(({ data }) => data.courses)
   },
 }

@@ -23,16 +23,6 @@ export type RecommendedCourse = {
   imageTone: CourseImageTone
 }
 
-export type PopularCourse = {
-  id: string
-  rank: number
-  title: string
-  distanceKm: number
-  difficulty: Difficulty
-  participantCount: number
-  imageTone: CourseImageTone
-}
-
 export const user: HomeUser = {
   id: 'user-1',
   nickname: '러너제주',
@@ -82,35 +72,5 @@ export const recommendedCourses: RecommendedCourse[] = [
     difficulty: 'medium',
     location: '제주 조천읍 교래리',
     imageTone: 'forest',
-  },
-]
-
-export const popularCourses: PopularCourse[] = [
-  {
-    id: 'seopjikoji-coast',
-    rank: 1,
-    title: '섭지코지 해안런',
-    distanceKm: 5.6,
-    difficulty: 'medium',
-    participantCount: 24,
-    imageTone: 'beach',
-  },
-  {
-    id: 'saryeoni-healing-rank',
-    rank: 2,
-    title: '사려니숲길 힐링런',
-    distanceKm: 8.2,
-    difficulty: 'easy',
-    participantCount: 18,
-    imageTone: 'forest',
-  },
-  {
-    id: 'hamdeok-morning-rank',
-    rank: 3,
-    title: '함덕 감성 모닝런',
-    distanceKm: 3.2,
-    difficulty: 'easy',
-    participantCount: 12,
-    imageTone: 'oreum',
   },
 ]
