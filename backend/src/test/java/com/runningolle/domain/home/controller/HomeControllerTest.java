@@ -8,8 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.runningolle.domain.course.enums.Difficulty;
+import com.runningolle.domain.home.dto.PopularCoursesResponse;
 import com.runningolle.domain.home.dto.RecommendedCoursesResponse;
 import com.runningolle.domain.home.service.CourseRecommendationService;
+import com.runningolle.domain.home.service.PopularCourseService;
 import com.runningolle.global.security.jwt.JwtAuthenticationFilter;
 import com.runningolle.global.security.oauth.CustomOAuth2UserService;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationFailureHandler;
@@ -38,6 +40,9 @@ class HomeControllerTest {
     private CourseRecommendationService courseRecommendationService;
 
     @MockBean
+    private PopularCourseService popularCourseService;
+
+    @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockBean
@@ -48,6 +53,32 @@ class HomeControllerTest {
 
     @MockBean
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
+    @Test
+    void returnsPopularCourses() throws Exception {
+        UUID courseId = UUID.randomUUID();
+        given(popularCourseService.getPopularCourses())
+                .willReturn(new PopularCoursesResponse(List.of(
+                        new PopularCoursesResponse.PopularCourseItem(
+                                courseId,
+                                1,
+                                "Aewol Coast Run",
+                                new BigDecimal("6.40"),
+                                Difficulty.LOW,
+                                12,
+                                "/uploads/aewol.jpg"
+                        )
+                )));
+
+        mockMvc.perform(get("/api/home/popular-courses")
+                        .principal(new TestingAuthenticationToken(UUID.randomUUID().toString(), null)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courses[0].courseId").value(courseId.toString()))
+                .andExpect(jsonPath("$.courses[0].rank").value(1))
+                .andExpect(jsonPath("$.courses[0].participantCount").value(12));
+
+        then(popularCourseService).should().getPopularCourses();
+    }
 
     @Test
     void returnsRecommendedCoursesForAuthenticatedUser() throws Exception {
