@@ -273,11 +273,8 @@
 .course-save-modal code { color: var(--color-ink-secondary); background: var(--color-surface-subtle); }
 .course-save-modal button { min-height: 48px; border-radius: var(--radius-control); color: var(--color-ink); background: var(--color-surface-subtle); }
 .course-save-modal button:first-child { background: var(--color-brand-500); }
-.course-save-success-sheet .ui-sheet__body { padding-bottom: var(--spacing-3); }
-.course-save-success { text-align: center; }
-.course-save-success > span { display: inline-flex; width: 56px; height: 56px; align-items: center; justify-content: center; margin-bottom: var(--spacing-3); border-radius: var(--radius-full); color: var(--color-success); background: var(--color-success-subtle); }
-.course-save-success p { margin: 0 0 var(--spacing-2); color: var(--color-ink-tertiary); font-size: var(--text-caption); font-weight: 600; }
-.course-save-success code { display: block; padding: var(--spacing-3); border-radius: var(--radius-control); color: var(--color-ink-secondary); background: var(--color-surface-subtle); font-size: var(--text-caption); word-break: break-all; }
+.course-save-success-sheet .ui-sheet__header { position: relative; display: block; padding-right: calc(var(--spacing-5) + 44px); padding-left: calc(var(--spacing-5) + 44px); text-align: center; }
+.course-save-success-sheet .ui-dialog__close { position: absolute; top: -10px; right: var(--spacing-3); margin: 0; }
 .course-save-success-sheet .ui-sheet__footer { display: block; }
 .course-save-success-actions { display: grid; gap: var(--spacing-2); width: 100%; }
 .course-save-success-actions .ui-button { box-shadow: none; }

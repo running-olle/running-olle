@@ -53,10 +53,11 @@ export function CourseSaveDetailPage() {
   }, [name, suggestedName])
 
   useEffect(() => {
+    if (submitStatus === 'success') return
     if (waypoints.length < 2 || !draftRoute) {
       navigate('/courses/create', { replace: true })
     }
-  }, [draftRoute, navigate, waypoints.length])
+  }, [draftRoute, navigate, submitStatus, waypoints.length])
 
   useEffect(() => {
     let disposed = false
@@ -242,7 +243,7 @@ export function CourseSaveDetailPage() {
       <BottomSheet
         open={submitStatus === 'success' && Boolean(createdCourseId)}
         title="코스를 저장했어요"
-        description="바로 달리거나 다음 코스를 이어서 만들 수 있어요."
+        description="바로 달리거나 다른 코스를 만들 수 있어요."
         closeLabel="코스 선택으로 이동"
         closeOnBackdrop={false}
         closeOnEscape={false}
@@ -256,11 +257,6 @@ export function CourseSaveDetailPage() {
           </div>
         )}
       >
-        <div className="course-save-success">
-          <span><Icon name="check" size={28} /></span>
-          {/*<p>코스 ID</p>*/}
-          {/*<code>{createdCourseId}</code>*/}
-        </div>
       </BottomSheet>
     </main>
   )
