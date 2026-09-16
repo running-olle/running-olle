@@ -15,6 +15,7 @@ export function CoursesPage() {
         createdBadgeLabel="내 공개 코스"
         showHeader={false}
         showCreatedFilter={false}
+        showBookmarkedFilter
         showSummary={false}
         showSearch
         showDescription={false}

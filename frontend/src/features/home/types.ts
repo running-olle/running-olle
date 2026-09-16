@@ -3,7 +3,6 @@ export type Weather = {
   temperatureCelsius: number
   condition: string
   windSpeedMeterPerSecond: number
-  runningNowCount: number
 }
 
 export type TourismEventStatus = 'ALL' | 'ONGOING' | 'UPCOMING'

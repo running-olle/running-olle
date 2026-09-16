@@ -19,6 +19,7 @@ import com.runningolle.domain.running.entity.RunningRecord;
 import com.runningolle.domain.running.enums.RunningMode;
 import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.running.repository.RunningWaypointVisitRepository;
+import com.runningolle.domain.trip.entity.Trip;
 import com.runningolle.domain.trip.repository.TripRepository;
 import com.runningolle.domain.user.entity.User;
 import com.runningolle.domain.user.entity.UserType;
@@ -32,6 +33,7 @@ import com.runningolle.domain.user.repository.UserThemeRepository;
 import com.runningolle.domain.user.repository.UserTypeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -196,6 +198,52 @@ class MyPageServiceTest {
                 .hasMessageContaining("올바른 사용자 유형");
     }
 
+    @Test
+    void buildsReportFromCurrentRecordsInsideItsDateRange() {
+        User user = user(USER_ID);
+        Trip report = trip(UUID.randomUUID(), user, LocalDate.of(2026, 8, 28), LocalDate.of(2026, 8, 30));
+        RunningRecord record = runningRecord(UUID.randomUUID(), user, course(UUID.randomUUID(), USER_ID));
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(tripRepository.findByIdAndUserId(report.getId(), USER_ID)).willReturn(Optional.of(report));
+        given(runningRecordRepository.findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
+                USER_ID, LocalDateTime.of(2026, 8, 28, 0, 0), LocalDateTime.of(2026, 8, 31, 0, 0)
+        )).willReturn(List.of(record));
+        given(visitRepository.findAllByRunningRecordUserIdAndRunningRecordStartedAtGreaterThanEqualAndRunningRecordStartedAtLessThanOrderByVisitedAtDesc(
+                USER_ID, LocalDateTime.of(2026, 8, 28, 0, 0), LocalDateTime.of(2026, 8, 31, 0, 0)
+        )).willReturn(List.of());
+
+        MyPageDtos.RunTripReportDetail detail = myPageService.report(USER_ID, report.getId());
+
+        assertThat(detail.name()).isEqualTo("제주 런트립");
+        assertThat(detail.statistics().runCount()).isEqualTo(1);
+        assertThat(detail.statistics().uniqueCourseCount()).isEqualTo(1);
+        assertThat(detail.statistics().totalDistanceKm()).isEqualByComparingTo("3.20");
+        assertThat(detail.runs()).extracting("id").containsExactly(record.getId());
+    }
+
+    @Test
+    void overallStatisticsDoNotCountTheSameRunTwiceAcrossOverlappingReports() {
+        User user = user(USER_ID);
+        Trip first = trip(UUID.randomUUID(), user, LocalDate.of(2026, 8, 28), LocalDate.of(2026, 8, 30));
+        Trip second = trip(UUID.randomUUID(), user, LocalDate.of(2026, 8, 29), LocalDate.of(2026, 9, 1));
+        RunningRecord record = runningRecord(UUID.randomUUID(), user, course(UUID.randomUUID(), USER_ID));
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(tripRepository.findAllByUserIdOrderByStartDateDesc(USER_ID)).willReturn(List.of(second, first));
+        given(runningRecordRepository.findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
+                any(), any(), any()
+        )).willReturn(List.of(record));
+        given(visitRepository.findAllByRunningRecordUserIdAndRunningRecordStartedAtGreaterThanEqualAndRunningRecordStartedAtLessThanOrderByVisitedAtDesc(
+                any(), any(), any()
+        )).willReturn(List.of());
+
+        MyPageDtos.RunTripOverallStatistics statistics = myPageService.overallReportStatistics(USER_ID);
+
+        assertThat(statistics.reportCount()).isEqualTo(2);
+        assertThat(statistics.runCount()).isEqualTo(1);
+        assertThat(statistics.totalDistanceKm()).isEqualByComparingTo("3.20");
+        assertThat(statistics.averageDistancePerReport()).isEqualByComparingTo("3.20");
+    }
+
     private static RunningRecord runningRecord(UUID id, User user, Course course) {
         var route = GEOMETRY_FACTORY.createLineString(new Coordinate[]{
                 new Coordinate(126.5312, 33.4996),
@@ -217,6 +265,12 @@ class MyPageServiceTest {
         );
         ReflectionTestUtils.setField(record, "id", id);
         return record;
+    }
+
+    private static Trip trip(UUID id, User user, LocalDate startDate, LocalDate endDate) {
+        Trip trip = Trip.create(user, "제주 런트립", null, startDate, endDate, null);
+        ReflectionTestUtils.setField(trip, "id", id);
+        return trip;
     }
 
     private static Course course(UUID id, UUID creatorId) {

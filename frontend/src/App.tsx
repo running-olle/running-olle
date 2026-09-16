@@ -12,7 +12,8 @@ import { CoursesPage } from './pages/Courses/CoursesPage'
 import { HomePage } from './pages/Home/HomePage'
 import { TourismEventDetailPage } from './pages/Home/TourismEventDetailPage'
 import { TourismEventsPage } from './pages/Home/TourismEventsPage'
-import { AccountPage, BookmarksPage, CompletedRunsPage, MyPage, NotificationPage, ProfileEditPage, ReportsPage, RunningHistoryPage, SettingsPage, TripCreatePage, TripsPage, VisitedPlacesPage } from './pages/MyPage/MyPage'
+import { AccountPage, BookmarksPage, CompletedRunsPage, MyPage, NotificationPage, ProfileEditPage, RunningHistoryPage, SettingsPage, VisitedPlacesPage } from './pages/MyPage/MyPage'
+import { ReportsPage, RunTripReportDetailPage, RunTripReportFormPage } from './pages/MyPage/RunTripReportPages'
 import { FreeRunReadyPage } from './pages/Running/FreeRunReadyPage'
 import { LiveRunningPage } from './pages/Running/LiveRunningPage'
 import { RunningCourseSelectPage } from './pages/Running/RunningCourseSelectPage'
@@ -52,8 +53,11 @@ export default function App() {
           <Route path="/mypage/history/:recordId" element={<RunningRecordDetailPage />} />
           <Route path="/mypage/bookmarks" element={<BookmarksPage />} />
           <Route path="/mypage/reports" element={<ReportsPage />} />
-          <Route path="/mypage/trips" element={<TripsPage />} />
-          <Route path="/mypage/trips/new" element={<TripCreatePage />} />
+          <Route path="/mypage/reports/new" element={<RunTripReportFormPage />} />
+          <Route path="/mypage/reports/:reportId/edit" element={<RunTripReportFormPage />} />
+          <Route path="/mypage/reports/:reportId" element={<RunTripReportDetailPage />} />
+          <Route path="/mypage/trips" element={<Navigate to="/mypage/reports" replace />} />
+          <Route path="/mypage/trips/new" element={<Navigate to="/mypage/reports/new" replace />} />
           <Route path="/mypage/settings" element={<SettingsPage />} />
           <Route path="/mypage/settings/account" element={<AccountPage />} />
           <Route path="/mypage/settings/profile" element={<ProfileEditPage />} />

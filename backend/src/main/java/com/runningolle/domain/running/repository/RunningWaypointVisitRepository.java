@@ -2,6 +2,7 @@ package com.runningolle.domain.running.repository;
 
 import com.runningolle.domain.running.entity.RunningWaypointVisit;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,9 @@ public interface RunningWaypointVisitRepository extends JpaRepository<RunningWay
 
     @EntityGraph(attributePaths = {"runningRecord.course", "courseWaypoint.course"})
     List<RunningWaypointVisit> findAllByRunningRecordUserIdOrderByVisitedAtDesc(UUID userId);
+
+    @EntityGraph(attributePaths = {"runningRecord.course", "courseWaypoint.course"})
+    List<RunningWaypointVisit> findAllByRunningRecordUserIdAndRunningRecordStartedAtGreaterThanEqualAndRunningRecordStartedAtLessThanOrderByVisitedAtDesc(
+            UUID userId, LocalDateTime start, LocalDateTime endExclusive
+    );
 }

@@ -96,7 +96,7 @@ export function SafetyRunningSheet({
         <span className="sheet-handle" />
         <div className="safety-sheet-header">
           <div>
-            <span>안심러닝</span>
+            <span className="safety-eyebrow">안심러닝</span>
             <h2 id="safety-title">필요할 때 바로 연결하세요</h2>
           </div>
           <button className="safety-close-button" type="button" aria-label="닫기" onClick={onClose}>
@@ -105,7 +105,9 @@ export function SafetyRunningSheet({
         </div>
 
         <div className="safety-location-card">
-          <span className={`safety-location-dot ${position ? 'is-ready' : ''}`} />
+          <span className={`safety-location-icon ${position ? 'is-ready' : ''}`}>
+            <Icon name="location" size={18} />
+          </span>
           <div>
             <strong>{position ? '현재 위치 확인됨' : '현재 위치 확인 중'}</strong>
             <p>{position ? '119 연결, 위치 공유, 주변 안심 시설 확인을 사용할 수 있습니다.' : 'GPS 위치를 확인하면 안심러닝 기능을 사용할 수 있습니다.'}</p>
@@ -114,21 +116,21 @@ export function SafetyRunningSheet({
 
         <div className="safety-actions">
           <a className="safety-call-button" href="tel:119">
-            <span>119</span>
-            <strong>전화 연결</strong>
+            <span className="safety-action-icon"><Icon name="phone" size={21} /></span>
+            <span className="safety-action-copy"><strong>119 전화</strong><small>긴급 신고</small></span>
           </a>
-          <button type="button" onClick={shareLocation} disabled={!position}>
-            <Icon name="share" size={22} />
-            <strong>위치 공유</strong>
+          <button className="safety-share-button" type="button" onClick={shareLocation} disabled={!position}>
+            <span className="safety-action-icon"><Icon name="share" size={21} /></span>
+            <span className="safety-action-copy"><strong>위치 공유</strong><small>보호자에게 보내기</small></span>
           </button>
         </div>
 
         <div className="safety-places-toolbar">
-          <div>
+          <div className="safety-places-heading">
             <strong>주변 안심 시설</strong>
             <span>{places ? `${places.length}곳 확인됨` : '필요할 때만 확인하세요'}</span>
           </div>
-          <div>
+          <div className="safety-places-tools">
             {places && places.length > 0 && (
               <button
                 className={`safety-map-toggle ${showPlacesOnMap ? 'is-on' : ''}`}
@@ -136,7 +138,8 @@ export function SafetyRunningSheet({
                 onClick={() => onShowPlacesOnMapChange(!showPlacesOnMap)}
                 aria-pressed={showPlacesOnMap}
               >
-                지도 {showPlacesOnMap ? 'ON' : 'OFF'}
+                <Icon name="location" size={16} />
+                <span>{showPlacesOnMap ? '지도 숨김' : '지도 표시'}</span>
               </button>
             )}
             <button
@@ -148,6 +151,7 @@ export function SafetyRunningSheet({
               title={places ? '새로고침' : '시설 보기'}
             >
               <RefreshIcon />
+              <span>{places ? '새로고침' : '시설 찾기'}</span>
             </button>
           </div>
         </div>
@@ -163,11 +167,15 @@ export function SafetyRunningSheet({
                 if (items.length === 0) return null
                 return (
                   <section key={type}>
-                    <h3><span>{TYPE_ICON[type]}</span>{TYPE_LABELS[type]}</h3>
+                    <h3>{TYPE_LABELS[type]}<span>{items.length}</span></h3>
                     {items.map((place) => (
-                      <a key={`${place.type}-${place.name}-${place.lat}-${place.lng}`} href={place.placeUrl ?? kakaoMapUrl({ latitude: place.lat, longitude: place.lng })} target="_blank" rel="noreferrer">
-                        <strong>{place.name}</strong>
-                        <span>{formatDistance(place.distanceMeters)} · {place.address ?? place.categoryName ?? '위치 정보 확인'}</span>
+                      <a className="safety-place-row" key={`${place.type}-${place.name}-${place.lat}-${place.lng}`} href={place.placeUrl ?? kakaoMapUrl({ latitude: place.lat, longitude: place.lng })} target="_blank" rel="noreferrer">
+                        <span className={`safety-place-type is-${type}`}>{TYPE_ICON[type]}</span>
+                        <span className="safety-place-copy">
+                          <strong>{place.name}</strong>
+                          <span>{formatDistance(place.distanceMeters)} · {place.address ?? place.categoryName ?? '위치 정보 확인'}</span>
+                        </span>
+                        <Icon name="externalLink" size={17} />
                       </a>
                     ))}
                   </section>

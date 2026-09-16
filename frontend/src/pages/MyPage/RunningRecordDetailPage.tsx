@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { AppHeader } from '../../components/layout/Header'
-import { Badge, EmptyState, Icon, IconButton, Spinner } from '../../components/ui'
+import { Badge, EmptyState, Icon } from '../../components/ui'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { myPageService } from '../../features/mypage/myPageService'
 import type { RunRecordDetail, RunRouteCoordinate } from '../../features/mypage/types'
+import { MyPageHeader, MyPageLoading } from './MyPageCommon'
 import './mypage.css'
 
 const courseTypeLabels = {
@@ -55,7 +55,7 @@ export function RunningRecordDetailPage() {
   if (hasError) {
     return (
       <div className="my-screen">
-        <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
+        <MyPageHeader title="러닝 상세" onBack={() => navigate(-1)} />
         <main className="my-content">
           <EmptyState className="my-empty" icon={<Icon name="history" size={28}/>} title="러닝 기록을 불러오지 못했어요" description="삭제되었거나 내 기록이 아닐 수 있어요." action={<Link className="ui-button ui-button--primary ui-button--md" to="/mypage/history">히스토리로 돌아가기</Link>}/>
         </main>
@@ -66,9 +66,9 @@ export function RunningRecordDetailPage() {
   if (!record) {
     return (
       <div className="my-screen">
-        <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
+        <MyPageHeader title="러닝 상세" onBack={() => navigate(-1)} />
         <main className="my-content">
-          <div className="my-loading"><Spinner label="러닝 기록을 불러오는 중"/><span>러닝 기록을 불러오는 중…</span></div>
+          <MyPageLoading label="러닝 기록을 불러오는 중…"/>
         </main>
       </div>
     )
@@ -86,7 +86,7 @@ export function RunningRecordDetailPage() {
 
   return (
     <div className="my-screen run-detail-screen">
-      <PageHeader title="러닝 상세" onBack={() => navigate(-1)} />
+      <MyPageHeader title="러닝 상세" onBack={() => navigate(-1)} />
       <main className="my-content run-detail-content">
         <section className="run-detail-hero">
           <Badge variant="brand">{runningModeLabels[record.runningMode]}</Badge>
@@ -172,10 +172,6 @@ export function RunningRecordDetailPage() {
       </main>
     </div>
   )
-}
-
-function PageHeader({ title, onBack }: { title: string; onBack: () => void }) {
-  return <AppHeader className="my-header" title={title} leading={<IconButton icon={<Icon name="arrowLeft" size={22}/>} label="뒤로" onClick={onBack}/>}/>
 }
 
 function formatDateTime(value: string) {

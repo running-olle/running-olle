@@ -6,6 +6,7 @@ import { WeatherCard } from '../../features/home/WeatherCard'
 import { homeService } from '../../features/home/homeService'
 import { toRecommendedCourseCardViewModel, type RecommendedCourseCardViewModel } from '../../features/home/homeViewModels'
 import { useCurrentWeather } from '../../features/home/useCurrentWeather'
+import { useMonthlyRunCount } from '../../features/home/useMonthlyRunCount'
 import { useTourismEventHighlights } from '../../features/home/useTourismEventHighlights'
 import { popularCourses } from '../../mocks/home'
 
@@ -16,6 +17,7 @@ type OptionalPosition = {
 
 export function HomePage() {
   const { refreshWeather, weather, weatherError, weatherStatus } = useCurrentWeather()
+  const { monthlyRunCount, monthlyRunCountStatus } = useMonthlyRunCount()
   const { events, status: eventStatus } = useTourismEventHighlights(3)
   const [recommendedCourses, setRecommendedCourses] = useState<RecommendedCourseCardViewModel[]>([])
   const [recommendationError, setRecommendationError] = useState<string | null>(null)
@@ -52,7 +54,14 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-8 pb-2">
-      <WeatherCard weather={weather} status={weatherStatus} errorMessage={weatherError} onRetry={refreshWeather} />
+      <WeatherCard
+        weather={weather}
+        status={weatherStatus}
+        errorMessage={weatherError}
+        onRetry={refreshWeather}
+        monthlyRunCount={monthlyRunCount}
+        monthlyRunCountStatus={monthlyRunCountStatus}
+      />
       <RecommendedCourseList
         courses={recommendedCourses}
         isLoading={loadingRecommendations}

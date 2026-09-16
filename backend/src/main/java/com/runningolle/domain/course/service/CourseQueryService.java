@@ -36,6 +36,7 @@ public class CourseQueryService {
     public List<CourseListItemResponse> getCourses(UUID userId, CourseListFilter filter, CourseListScope scope, String keyword) {
         CourseType courseType = toCourseType(filter);
         boolean createdOnly = filter == CourseListFilter.CREATED;
+        boolean bookmarkedOnly = filter == CourseListFilter.BOOKMARKED;
         boolean libraryOnly = scope == CourseListScope.LIBRARY;
         String normalizedKeyword = normalizeKeyword(keyword);
 
@@ -43,6 +44,7 @@ public class CourseQueryService {
                 userId,
                 courseType,
                 createdOnly,
+                bookmarkedOnly,
                 libraryOnly,
                 normalizedKeyword
         );
@@ -94,7 +96,7 @@ public class CourseQueryService {
         return switch (filter) {
             case RUNNING_COURSE -> CourseType.RUNNING_COURSE;
             case SPOT_COURSE -> CourseType.SPOT_COURSE;
-            case ALL, CREATED -> null;
+            case ALL, BOOKMARKED, CREATED -> null;
         };
     }
 

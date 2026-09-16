@@ -63,4 +63,12 @@ public class Trip extends BaseTimeEntity {
         trip.thumbnailImageUrl = thumbnailImageUrl;
         return trip;
     }
+
+    public void update(String name, String region, LocalDate startDate, LocalDate endDate, String thumbnailImageUrl) {
+        this.name = name;
+        this.region = region;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.thumbnailImageUrl = thumbnailImageUrl;
+    }
 }

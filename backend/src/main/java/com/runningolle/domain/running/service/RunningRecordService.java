@@ -12,6 +12,8 @@ import com.runningolle.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +33,31 @@ import org.springframework.web.server.ResponseStatusException;
 public class RunningRecordService {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
+    private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
 
     private final RunningRecordRepository runningRecordRepository;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
+
+    @Transactional(readOnly = true)
+    public long countCurrentMonthRuns(UUID userId) {
+        YearMonth currentMonth = YearMonth.now(SERVICE_ZONE);
+        LocalDateTime startUtc = currentMonth.atDay(1)
+                .atStartOfDay(SERVICE_ZONE)
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
+        LocalDateTime endUtc = currentMonth.plusMonths(1)
+                .atDay(1)
+                .atStartOfDay(SERVICE_ZONE)
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .toLocalDateTime();
+
+        return runningRecordRepository.countByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThan(
+                userId,
+                startUtc,
+                endUtc
+        );
+    }
 
     @Transactional
     public UUID createRecord(UUID userId, CreateRunningRecordRequest request) {

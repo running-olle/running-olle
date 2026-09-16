@@ -64,7 +64,7 @@ class CourseQueryServiceTest {
         Course savedCourse = course(savedCourseId, UUID.randomUUID(), "저장한 협재 코스", CourseType.SPOT_COURSE);
         List<UUID> courseIds = List.of(myCourseId, savedCourseId);
 
-        given(courseRepository.findVisibleCourses(USER_ID, null, false, true, null))
+        given(courseRepository.findVisibleCourses(USER_ID, null, false, false, true, null))
                 .willReturn(List.of(myCourse, savedCourse));
         given(courseWaypointRepository.findByCourse_IdInOrderByCourse_IdAscOrderIndexAsc(eq(courseIds)))
                 .willReturn(List.of(
@@ -94,22 +94,32 @@ class CourseQueryServiceTest {
 
     @Test
     void createdFilterRequestsCreatedOnlyCourses() {
-        given(courseRepository.findVisibleCourses(USER_ID, null, true, false, null))
+        given(courseRepository.findVisibleCourses(USER_ID, null, true, false, false, null))
                 .willReturn(List.of());
 
         courseQueryService.getCourses(USER_ID, CourseListFilter.CREATED, CourseListScope.AVAILABLE, null);
 
-        verify(courseRepository).findVisibleCourses(USER_ID, null, true, false, null);
+        verify(courseRepository).findVisibleCourses(USER_ID, null, true, false, false, null);
+    }
+
+    @Test
+    void bookmarkedFilterRequestsOnlyBookmarkedCourses() {
+        given(courseRepository.findVisibleCourses(USER_ID, null, false, true, false, null))
+                .willReturn(List.of());
+
+        courseQueryService.getCourses(USER_ID, CourseListFilter.BOOKMARKED, CourseListScope.AVAILABLE, null);
+
+        verify(courseRepository).findVisibleCourses(USER_ID, null, false, true, false, null);
     }
 
     @Test
     void keywordIsTrimmedAndLowercasedBeforeQueryingCourses() {
-        given(courseRepository.findVisibleCourses(USER_ID, null, false, false, "seongsan"))
+        given(courseRepository.findVisibleCourses(USER_ID, null, false, false, false, "seongsan"))
                 .willReturn(List.of());
 
         courseQueryService.getCourses(USER_ID, CourseListFilter.ALL, CourseListScope.AVAILABLE, "  SeongSan  ");
 
-        verify(courseRepository).findVisibleCourses(USER_ID, null, false, false, "seongsan");
+        verify(courseRepository).findVisibleCourses(USER_ID, null, false, false, false, "seongsan");
     }
 
     private static Course course(UUID id, UUID creatorId, String name, CourseType courseType) {

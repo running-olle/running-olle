@@ -25,7 +25,16 @@ type RecommendedCoursesParams = {
   longitude?: number
 }
 
+type MonthlyRunCountResponse = {
+  runCount: number
+}
+
 export const homeService = {
+  getMonthlyRunCount() {
+    return axiosInstance
+      .get<MonthlyRunCountResponse>('/running-records/monthly-count')
+      .then(({ data }) => data.runCount)
+  },
   getRecommendedCourses(params: RecommendedCoursesParams = {}) {
     return axiosInstance
       .get<RecommendedCoursesResponse>('/home/recommended-courses', {

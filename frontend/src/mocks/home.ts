@@ -44,7 +44,6 @@ export const weather: Weather = {
   temperatureCelsius: 23,
   condition: '맑음',
   windSpeedMeterPerSecond: 2,
-  runningNowCount: 12,
 }
 
 export const recommendedCourses: RecommendedCourse[] = [

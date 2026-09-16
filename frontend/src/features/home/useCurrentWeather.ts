@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { weather as fallbackWeather } from '../../mocks/home'
 import { fetchCurrentWeather } from './currentWeatherApi'
 import { useCurrentLocation } from './CurrentLocationContext'
 import type { Weather } from './types'
@@ -29,7 +28,7 @@ export function useCurrentWeather() {
     }
 
     setWeatherStatus('loading')
-    fetchCurrentWeather(coordinates, fallbackWeather.runningNowCount, controller.signal)
+    fetchCurrentWeather(coordinates, controller.signal)
       .then((currentWeather) => {
         setWeather(currentWeather)
         setWeatherStatus('success')
