@@ -99,7 +99,7 @@ export function RecommendedCourseList({
 
         {!isLoading && courses.length === 0 && !error ? (
           <Card shadow="none" className="w-full border border-border-subtle">
-            <p className="text-caption leading-6 text-ink-secondary">추천할 만한 코스를 아직 찾지 못했어요.</p>
+            <p className="text-center text-caption leading-6 text-ink-secondary">추천할 만한 코스를 아직 찾지 못했어요.</p>
           </Card>
         ) : null}
       </HorizontalScroller>

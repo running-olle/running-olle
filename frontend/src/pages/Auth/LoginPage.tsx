@@ -21,7 +21,7 @@ export function LoginPage() {
           <span className="kakao-icon">K</span> 카카오 로그인/시작하기
         </button>
         {oauthError && <p className="login-error">{oauthError}</p>}
-        <small>로그인 시 이용약관 및 개인정보처리방침에 동의하게 됩니다.</small>
+        <small>로그인 후 이용약관과 개인정보 수집·이용 내용을 확인하고 동의할 수 있습니다.</small>
       </section>
     </main>
   )

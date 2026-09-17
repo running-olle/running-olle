@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { courseBuilderService } from '../../features/courseBuilder/courseBuilderService'
 import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftStore'
 import { difficultyLabel, formatDistanceKm } from '../../features/courseBuilder/courseBuilderUtils'
-import type { CourseTagOption, CourseType, ThemeOption } from '../../features/courseBuilder/types'
+import type { CourseType, ThemeOption } from '../../features/courseBuilder/types'
 import { BottomSheet, Button, Chip, Icon, IconButton, Input, SectionHeader, Switch, Textarea } from '../../components/ui'
 
 type LoadStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -31,10 +31,8 @@ export function CourseSaveDetailPage() {
   const [description, setDescription] = useState('')
   const [courseType, setCourseType] = useState<CourseType>('RUNNING_COURSE')
   const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([])
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [isPublic, setIsPublic] = useState(true)
   const [themes, setThemes] = useState<ThemeOption[]>([])
-  const [courseTags, setCourseTags] = useState<CourseTagOption[]>([])
   const [loadStatus, setLoadStatus] = useState<LoadStatus>('idle')
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -62,20 +60,15 @@ export function CourseSaveDetailPage() {
   useEffect(() => {
     let disposed = false
     setLoadStatus('loading')
-    Promise.all([
-      courseBuilderService.getThemes(),
-      courseBuilderService.getCourseTags(),
-    ])
-      .then(([themeOptions, tagOptions]) => {
+    courseBuilderService.getThemes()
+      .then((themeOptions) => {
         if (disposed) return
         setThemes(themeOptions)
-        setCourseTags(tagOptions)
         setLoadStatus('success')
       })
       .catch(() => {
         if (disposed) return
         setThemes([])
-        setCourseTags([])
         setLoadStatus('error')
       })
 
@@ -101,7 +94,7 @@ export function CourseSaveDetailPage() {
         courseType,
         waypoints,
         themeIds: selectedThemeIds,
-        tagIds: selectedTagIds,
+        tagIds: [],
         isPublic,
       })
       setCreatedCourseId(response.courseId)
@@ -195,14 +188,6 @@ export function CourseSaveDetailPage() {
         options={themes.map((theme) => ({ id: theme.id, label: theme.name }))}
         selectedIds={selectedThemeIds}
         onToggle={(id) => setSelectedThemeIds((ids) => toggleId(ids, id))}
-      />
-
-      <OptionSection
-        title="태그"
-        emptyText="선택 가능한 태그가 아직 없어요."
-        options={courseTags.map((tag) => ({ id: tag.id, label: tag.name }))}
-        selectedIds={selectedTagIds}
-        onToggle={(id) => setSelectedTagIds((ids) => toggleId(ids, id))}
       />
 
       {loadStatus === 'error' && (
