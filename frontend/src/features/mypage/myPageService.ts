@@ -1,7 +1,8 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, RunTripOverallStatistics, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, SaveRunTripReport, ThemeOption, Visit } from './types'
+import { themeCatalogService } from '../themes/themeCatalog'
+import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, RunTripOverallStatistics, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, SaveRunTripReport, Visit } from './types'
 export const myPageService = {
-  themes: () => axiosInstance.get<ThemeOption[]>('/themes').then(({ data }) => data),
+  themes: themeCatalogService.list,
   dashboard: () => axiosInstance.get<Dashboard>('/mypage').then(({ data }) => data),
   runs: () => axiosInstance.get<RunRecord[]>('/mypage/runs').then(({ data }) => data),
   run: (id: string) => axiosInstance.get<RunRecordDetail>(`/mypage/runs/${id}`).then(({ data }) => data),

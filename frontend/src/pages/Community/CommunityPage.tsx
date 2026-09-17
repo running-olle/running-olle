@@ -183,8 +183,8 @@ export function CommunityPage() {
       if (meetupFilter === 'recruiting') return meetup.status === 'recruiting'
       if (meetupFilter === 'today') return meetup.dateKey === todayKey
       if (meetupFilter === 'thisWeek') return thisWeekKeys.includes(meetup.dateKey)
-      if (meetupFilter === 'coast') return meetup.theme === 'coast'
-      if (meetupFilter === 'oreum') return meetup.theme === 'oreum'
+      if (meetupFilter === 'coast') return meetup.theme === 'COAST'
+      if (meetupFilter === 'oreum') return meetup.theme === 'OREUM'
       return true
     })
   }, [meetupFilter, meetups])

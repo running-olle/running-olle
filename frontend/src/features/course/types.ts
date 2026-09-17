@@ -1,3 +1,5 @@
+import type { ThemeOption } from '../themes/themeCatalog'
+
 export type CourseType = 'RUNNING_COURSE' | 'SPOT_COURSE'
 export type CourseDifficulty = 'LOW' | 'MID' | 'HIGH'
 export type CourseListFilter = 'ALL' | CourseType | 'BOOKMARKED' | 'CREATED'
@@ -25,6 +27,7 @@ export type CourseListItem = {
   id: string
   name: string
   description: string | null
+  themes: ThemeOption[]
   courseType: CourseType
   distanceKm: number
   estimatedDurationMinutes: number

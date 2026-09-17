@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { courseBuilderService } from '../../features/courseBuilder/courseBuilderService'
 import { useCourseDraftStore } from '../../features/courseBuilder/courseDraftStore'
 import { difficultyLabel, formatDistanceKm } from '../../features/courseBuilder/courseBuilderUtils'
-import type { CourseType, ThemeOption } from '../../features/courseBuilder/types'
+import type { CourseType } from '../../features/courseBuilder/types'
+import { themeCatalogService, type ThemeOption } from '../../features/themes/themeCatalog'
 import { BottomSheet, Button, Chip, Icon, IconButton, Input, SectionHeader, Switch, Textarea } from '../../components/ui'
 
 type LoadStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -60,7 +61,7 @@ export function CourseSaveDetailPage() {
   useEffect(() => {
     let disposed = false
     setLoadStatus('loading')
-    courseBuilderService.getThemes()
+    themeCatalogService.list()
       .then((themeOptions) => {
         if (disposed) return
         setThemes(themeOptions)

@@ -39,12 +39,6 @@ export type PlaceDetail = {
 
 export type CourseType = 'RUNNING_COURSE' | 'SPOT_COURSE'
 
-export type ThemeOption = {
-  id: string
-  code: string
-  name: string
-}
-
 export type CourseTagOption = {
   id: string
   name: string

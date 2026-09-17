@@ -6,6 +6,7 @@ import type {
   MeetupTheme,
   ParticipationStatus,
 } from './communityTypes'
+import { normalizeThemeCode, themeLabels, type ThemeCode } from '../themes/themeCatalog'
 
 type MeetupApiResponse = {
   id: string
@@ -59,7 +60,7 @@ export type MeetupCreatePayload = {
   latitude: number
   longitude: number
   joinMethod: 'INSTANT' | 'APPROVAL'
-  themeCode: string
+  themeCode: ThemeCode
   courseId?: string | null
 }
 
@@ -104,7 +105,7 @@ export async function deleteMeetup(meetupId: string) {
 }
 
 function mapMeetup(source: MeetupApiResponse): Meetup {
-  const theme = normalizeTheme(source.themeCode)
+  const theme = normalizeThemeCode(source.themeCode)
 
   return {
     id: source.id,
@@ -116,7 +117,7 @@ function mapMeetup(source: MeetupApiResponse): Meetup {
     organizerAvatar: source.organizerName.slice(0, 1).toUpperCase(),
     organizerGradient: buildGradient(theme),
     theme,
-    themeLabel: source.themeLabel ?? themeToLabel(theme),
+    themeLabel: source.themeLabel ?? themeLabels[theme],
     meetupDate: source.meetupDate,
     scheduleLabel: formatSchedule(source.meetupDate),
     dateKey: source.meetupDate.slice(0, 10),
@@ -168,13 +169,6 @@ function mapParticipant(
   }
 }
 
-function normalizeTheme(value: string | null): MeetupTheme {
-  if (value === 'forest' || value === 'oreum' || value === 'photo' || value === 'food') {
-    return value
-  }
-  return 'coast'
-}
-
 function normalizeStatus(value: MeetupApiResponse['status']): MeetupStatus {
   switch (value) {
     case 'CLOSED':
@@ -203,31 +197,20 @@ function normalizeParticipation(value: MeetupApiResponse['myParticipation']): Pa
 
 function buildGradient(theme: MeetupTheme) {
   switch (theme) {
-    case 'forest':
+    case 'FOREST':
       return 'linear-gradient(135deg,#34C759,#86EFAC)'
-    case 'oreum':
+    case 'OREUM':
       return 'linear-gradient(135deg,#14B8A6,#67E8F9)'
-    case 'photo':
+    case 'PHOTO':
       return 'linear-gradient(135deg,#3B82F6,#93C5FD)'
-    case 'food':
+    case 'FOOD':
       return 'linear-gradient(135deg,#F97316,#FDBA74)'
+    case 'TRADITION':
+      return 'linear-gradient(135deg,#8B5E3C,#D6A77A)'
+    case 'URBAN':
+      return 'linear-gradient(135deg,#475569,#94A3B8)'
     default:
       return 'linear-gradient(135deg,#FF6F0F,#FF954E)'
-  }
-}
-
-function themeToLabel(theme: MeetupTheme) {
-  switch (theme) {
-    case 'forest':
-      return '숲길'
-    case 'oreum':
-      return '오름'
-    case 'photo':
-      return '포토'
-    case 'food':
-      return '맛집'
-    default:
-      return '해안'
   }
 }
 

@@ -380,6 +380,7 @@ function CourseListCard({
           {course.createdByMe && <Badge variant="brand">{createdBadgeLabel}</Badge>}
           {!course.isPublic && <Badge variant="neutral">비공개</Badge>}
           {course.bookmarkedByMe && <Badge variant="warning">저장됨</Badge>}
+          {course.themes.slice(0, 2).map((theme) => <Badge variant="neutral" key={theme.id}>{theme.name}</Badge>)}
         </div>
         <h2>{course.name}</h2>
         {showDescription && course.description && <p className="course-library-description">{course.description}</p>}

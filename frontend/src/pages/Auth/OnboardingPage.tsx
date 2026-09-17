@@ -2,6 +2,7 @@ import { type ChangeEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosInstance } from '../../api/axiosInstance'
 import { Button, Chip, Icon, IconButton, Input, Switch, Textarea } from '../../components/ui'
+import { themeCatalogService, type ThemeOption } from '../../features/themes/themeCatalog'
 
 type UserType = 'ACTIVE_RUNNER' | 'RELAXED_TRAVELER' | 'JEJU_RESIDENT'
 type Distance = 'UNDER_3KM' | 'FROM_5_TO_10KM' | 'OVER_10KM'
@@ -54,7 +55,7 @@ const TERM_ITEMS: TermItem[] = [
       {
         title: '수집 항목',
         paragraphs: [
-          '카카오 계정 식별자, 닉네임, 프로필 사진과 자기소개, 사용자 유형, 선호 거리·난이도, 알림 설정을 수집합니다. 프로필 사진과 자기소개는 선택 항목입니다.',
+          '카카오 계정 식별자, 닉네임, 프로필 사진과 자기소개, 사용자 유형, 선호 거리·난이도, 관심 테마, 알림 설정을 수집합니다. 프로필 사진과 자기소개는 선택 항목입니다.',
           '서비스 이용 중 작성한 코스, 러닝 기록, 게시물·댓글 및 서비스 이용 기록이 추가로 생성될 수 있습니다.',
         ],
       },
@@ -142,6 +143,7 @@ const initialForm = {
   userTypes: [] as UserType[],
   preferredDistance: '' as Distance | '',
   preferredDifficulty: '' as Difficulty | '',
+  themeIds: [] as string[],
   terms: { service: false, privacy: false, location: false, marketing: false },
   notifications: { recommendedCourse: true, weather: true, meetupInvite: true, commentLike: false },
 }
@@ -171,9 +173,23 @@ export function OnboardingPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(initialForm)
+  const [themes, setThemes] = useState<ThemeOption[]>([])
+  const [themeLoadError, setThemeLoadError] = useState(false)
   const [nicknameStatus, setNicknameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    themeCatalogService.list()
+      .then((items) => {
+        setThemes(items)
+        setThemeLoadError(false)
+      })
+      .catch(() => {
+        setThemes([])
+        setThemeLoadError(true)
+      })
+  }, [])
   const [openTerm, setOpenTerm] = useState<TermKey | null>(null)
 
   useEffect(() => {
@@ -207,6 +223,15 @@ export function OnboardingPage() {
       userTypes: prev.userTypes.includes(value)
         ? prev.userTypes.filter((item) => item !== value)
         : [...prev.userTypes, value],
+    }))
+  }
+
+  const toggleTheme = (themeId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      themeIds: prev.themeIds.includes(themeId)
+        ? prev.themeIds.filter((id) => id !== themeId)
+        : [...prev.themeIds, themeId],
     }))
   }
 
@@ -305,6 +330,19 @@ export function OnboardingPage() {
             <Choice value="NORMAL" label="보통" selected={form.preferredDifficulty === 'NORMAL'} onClick={(value) => setForm({ ...form, preferredDifficulty: value })} />
             <Choice value="HARD" label="어려움" selected={form.preferredDifficulty === 'HARD'} onClick={(value) => setForm({ ...form, preferredDifficulty: value })} />
           </div></div>
+          <div className="choice-group"><h2>관심 테마 <small>복수 선택</small></h2>
+            {themes.length > 0 ? <div className="choices">
+              {themes.map((theme) => (
+                <Choice
+                  key={theme.id}
+                  value={theme.id}
+                  label={theme.name}
+                  selected={form.themeIds.includes(theme.id)}
+                  onClick={toggleTheme}
+                />
+              ))}
+            </div> : <p className="excluded-note">{themeLoadError ? '테마 목록을 불러오지 못했어요. 나중에 프로필에서 설정할 수 있어요.' : '테마 목록을 불러오는 중이에요.'}</p>}
+          </div>
         </>}
 
         {step === 3 && <>
