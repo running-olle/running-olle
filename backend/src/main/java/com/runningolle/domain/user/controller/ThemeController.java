@@ -1,8 +1,9 @@
 package com.runningolle.domain.user.controller;
 
 import com.runningolle.domain.user.dto.ThemeResponse;
+import com.runningolle.domain.user.enums.ThemeCode;
 import com.runningolle.domain.user.repository.ThemeRepository;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +19,9 @@ public class ThemeController {
 
     @GetMapping
     public List<ThemeResponse> getThemes() {
-        return themeRepository.findAll().stream()
+        return Arrays.stream(ThemeCode.values())
+                .map(code -> themeRepository.findByCode(code.name()).orElseThrow())
                 .map(ThemeResponse::from)
-                .sorted(Comparator.comparing(ThemeResponse::name))
                 .toList();
     }
 }

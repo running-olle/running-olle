@@ -7,6 +7,7 @@ import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.running.enums.RunningMode;
 import com.runningolle.domain.user.enums.PreferredDifficulty;
 import com.runningolle.domain.user.enums.PreferredDistance;
+import com.runningolle.domain.user.dto.ThemeResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
@@ -20,7 +21,7 @@ public final class MyPageDtos {
 
     public record Profile(String nickname, String profileImageUrl, String bio, List<String> userTypes,
                           PreferredDistance preferredDistance, PreferredDifficulty preferredDifficulty,
-                          LocalDateTime createdAt, String accountStatus) {}
+                          List<ThemeResponse> themes, LocalDateTime createdAt, String accountStatus) {}
     public record Dashboard(Profile profile, BigDecimal totalDistanceKm, long completionCount, long uniqueCourseCount) {}
     public record Run(UUID id, UUID courseId, String courseName, CourseType courseType, String thumbnailImageUrl,
                       BigDecimal distanceKm, int durationSeconds, BigDecimal averagePace, LocalDateTime startedAt) {}

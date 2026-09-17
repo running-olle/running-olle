@@ -28,6 +28,7 @@ import com.runningolle.domain.running.entity.RunningRecord;
 import com.runningolle.domain.running.repository.RunningRecordRepository;
 import com.runningolle.domain.user.entity.Theme;
 import com.runningolle.domain.user.entity.User;
+import com.runningolle.domain.user.enums.ThemeCode;
 import com.runningolle.domain.user.repository.ThemeRepository;
 import com.runningolle.domain.user.repository.UserRepository;
 import java.math.BigDecimal;
@@ -53,14 +54,6 @@ import org.springframework.web.server.ResponseStatusException;
 public class MeetupService {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
-    private static final Map<String, String> THEME_LABELS = Map.of(
-            "coast", "Coast",
-            "forest", "Forest",
-            "oreum", "Oreum",
-            "photo", "Photo",
-            "food", "Food"
-    );
-
     private final MeetupRepository meetupRepository;
     private final MeetupParticipantRepository meetupParticipantRepository;
     private final MeetupThemeRepository meetupThemeRepository;
@@ -337,8 +330,12 @@ public class MeetupService {
                 );
 
         MeetupTheme meetupTheme = meetupThemeRepository.findByMeetupId(meetup.getId()).stream().findFirst().orElse(null);
-        String themeCode = meetupTheme == null ? null : meetupTheme.getTheme().getCode();
-        String themeLabel = meetupTheme == null ? null : meetupTheme.getTheme().getName();
+        String storedThemeCode = meetupTheme == null ? null : meetupTheme.getTheme().getCode();
+        ThemeCode themeCode = ThemeCode.fromOrNull(storedThemeCode);
+        String responseThemeCode = themeCode == null ? storedThemeCode : themeCode.name();
+        String themeLabel = meetupTheme == null
+                ? null
+                : themeCode == null ? meetupTheme.getTheme().getName() : themeCode.getDisplayName();
 
         return new MeetupResponse(
                 meetup.getId(),
@@ -348,7 +345,7 @@ public class MeetupService {
                 meetup.getOrganizer().getId(),
                 meetup.getOrganizer().getNickname(),
                 meetup.getOrganizer().getProfileImageUrl(),
-                themeCode,
+                responseThemeCode,
                 themeLabel,
                 meetup.getMeetupDate(),
                 meetup.getMeetingPlace(),
@@ -418,16 +415,14 @@ public class MeetupService {
                 .intValue();
     }
 
-    private void syncTheme(Meetup meetup, String themeCode) {
+    private void syncTheme(Meetup meetup, ThemeCode themeCode) {
         meetupThemeRepository.deleteByMeetupId(meetup.getId());
-        if (themeCode == null || themeCode.isBlank()) {
+        if (themeCode == null) {
             return;
         }
 
-        Theme theme = themeRepository.findByCode(themeCode)
-                .orElseGet(() -> themeRepository.save(
-                        Theme.create(themeCode, THEME_LABELS.getOrDefault(themeCode, themeCode))
-                ));
+        Theme theme = themeRepository.findByCode(themeCode.name())
+                .orElseGet(() -> themeRepository.save(Theme.create(themeCode)));
         meetupThemeRepository.save(MeetupTheme.create(meetup, theme));
     }
 
