@@ -62,6 +62,20 @@ class PopularCourseServiceTest {
         assertThat(startedAtCaptor.getValue()).isEqualTo(endedAtCaptor.getValue().minusDays(30));
     }
 
+    @Test
+    void returnsEmptyCoursesWhenThereAreNoRunsInTheLastThirtyDays() {
+        given(runningRecordRepository.findPopularCourses(
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class),
+                org.mockito.ArgumentMatchers.any(LocalDateTime.class),
+                org.mockito.ArgumentMatchers.eq(PageRequest.of(0, 5))
+        )).willReturn(List.of());
+        PopularCourseService service = new PopularCourseService(runningRecordRepository);
+
+        PopularCoursesResponse response = service.getPopularCourses();
+
+        assertThat(response.courses()).isEmpty();
+    }
+
     private RunningRecordRepository.PopularCourseProjection popularCourse(
             String name,
             long participantCount,

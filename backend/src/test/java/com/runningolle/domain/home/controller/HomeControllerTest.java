@@ -81,6 +81,19 @@ class HomeControllerTest {
     }
 
     @Test
+    void returnsOkWithEmptyCoursesWhenThereAreNoPopularCourses() throws Exception {
+        given(popularCourseService.getPopularCourses())
+                .willReturn(new PopularCoursesResponse(List.of()));
+
+        mockMvc.perform(get("/api/home/popular-courses")
+                        .principal(new TestingAuthenticationToken(UUID.randomUUID().toString(), null)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courses").isEmpty());
+
+        then(popularCourseService).should().getPopularCourses();
+    }
+
+    @Test
     void returnsRecommendedCoursesForAuthenticatedUser() throws Exception {
         UUID userId = UUID.randomUUID();
         given(courseRecommendationService.getRecommendedCourses(userId, 33.45, 126.57))
