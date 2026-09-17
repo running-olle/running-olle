@@ -64,6 +64,11 @@ public class SecurityConfig {
                             "/actuator/health",
                             "/actuator/prometheus"
                     ).permitAll();
+                    auth.requestMatchers(
+                             HttpMethod.GET,
+                 "/api/community/feed/images/files/**"
+                    ).permitAll();
+                    
                     auth.requestMatchers(HttpMethod.GET, "/api/public/**").permitAll();
                     auth.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
                     if (tourismManualSyncEnabled) {

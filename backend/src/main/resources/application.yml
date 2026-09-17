@@ -73,8 +73,14 @@ management:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   storage:
+    type: ${APP_STORAGE_TYPE:local}
     local-dir: ${APP_STORAGE_LOCAL_DIR:uploads}
     public-base-path: ${APP_STORAGE_PUBLIC_BASE_PATH:/uploads}
+    s3:
+      region: ${AWS_REGION:ap-northeast-2}
+      bucket: ${AWS_S3_BUCKET:}
+      prefix: ${AWS_S3_PREFIX:feed-images}
+      public-base-path: ${AWS_S3_PUBLIC_BASE_PATH:/api/community/feed/images/files}
 
 tourism:
   sync:

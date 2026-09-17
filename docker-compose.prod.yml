@@ -10,7 +10,12 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       FRONTEND_URL: ${FRONTEND_URL}
+      APP_STORAGE_TYPE: ${APP_STORAGE_TYPE:-s3}
       APP_STORAGE_LOCAL_DIR: /app/uploads
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:?AWS_S3_BUCKET is required}
+      AWS_S3_PREFIX: ${AWS_S3_PREFIX:-feed-images}
+      AWS_S3_PUBLIC_BASE_PATH: ${AWS_S3_PUBLIC_BASE_PATH:-/api/community/feed/images/files}
     volumes:
       - uploads:/app/uploads
 
