@@ -11,12 +11,16 @@ import com.runningolle.domain.course.dto.CourseListScope;
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.entity.CourseBookmark;
 import com.runningolle.domain.course.entity.CourseWaypoint;
+import com.runningolle.domain.course.entity.CourseTheme;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.course.repository.CourseBookmarkRepository;
 import com.runningolle.domain.course.repository.CourseRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
+import com.runningolle.domain.course.repository.CourseThemeRepository;
 import com.runningolle.domain.user.entity.User;
+import com.runningolle.domain.user.entity.Theme;
+import com.runningolle.domain.user.enums.ThemeCode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,6 +49,9 @@ class CourseQueryServiceTest {
     @Mock
     private CourseBookmarkRepository courseBookmarkRepository;
 
+    @Mock
+    private CourseThemeRepository courseThemeRepository;
+
     private CourseQueryService courseQueryService;
 
     @BeforeEach
@@ -52,7 +59,8 @@ class CourseQueryServiceTest {
         courseQueryService = new CourseQueryService(
                 courseRepository,
                 courseWaypointRepository,
-                courseBookmarkRepository
+                courseBookmarkRepository,
+                courseThemeRepository
         );
     }
 
@@ -62,6 +70,7 @@ class CourseQueryServiceTest {
         UUID savedCourseId = UUID.randomUUID();
         Course myCourse = course(myCourseId, USER_ID, "내가 만든 성산 코스", CourseType.RUNNING_COURSE);
         Course savedCourse = course(savedCourseId, UUID.randomUUID(), "저장한 협재 코스", CourseType.SPOT_COURSE);
+        Theme coast = Theme.create(ThemeCode.COAST);
         List<UUID> courseIds = List.of(myCourseId, savedCourseId);
 
         given(courseRepository.findVisibleCourses(USER_ID, null, false, false, true, null))
@@ -74,6 +83,8 @@ class CourseQueryServiceTest {
                 ));
         given(courseBookmarkRepository.findAllByUser_IdAndCourse_IdIn(USER_ID, courseIds))
                 .willReturn(List.of(bookmark(savedCourse)));
+        given(courseThemeRepository.findAllByCourse_IdIn(courseIds))
+                .willReturn(List.of(CourseTheme.of(myCourse, coast)));
 
         List<CourseListItemResponse> responses = courseQueryService.getCourses(
                 USER_ID,
@@ -86,6 +97,7 @@ class CourseQueryServiceTest {
         assertThat(responses.get(0).createdByMe()).isTrue();
         assertThat(responses.get(0).bookmarkedByMe()).isFalse();
         assertThat(responses.get(0).waypointNames()).containsExactly("성산일출봉", "광치기해변");
+        assertThat(responses.get(0).themes()).extracting("code").containsExactly("COAST");
         assertThat(responses.get(1).createdByMe()).isFalse();
         assertThat(responses.get(1).bookmarkedByMe()).isTrue();
         assertThat(responses.get(1).bookmarkId()).isNotNull();

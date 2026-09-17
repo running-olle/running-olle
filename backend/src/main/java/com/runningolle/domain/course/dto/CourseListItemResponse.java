@@ -3,6 +3,7 @@ package com.runningolle.domain.course.dto;
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.enums.Difficulty;
+import com.runningolle.domain.user.dto.ThemeResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,7 @@ public record CourseListItemResponse(
         UUID id,
         String name,
         String description,
+        List<ThemeResponse> themes,
         CourseType courseType,
         BigDecimal distanceKm,
         Integer estimatedDurationMinutes,
@@ -36,12 +38,14 @@ public record CourseListItemResponse(
             boolean createdByMe,
             boolean bookmarkedByMe,
             UUID bookmarkId,
+            List<ThemeResponse> themes,
             List<CourseWaypointResponse> waypoints
     ) {
         return new CourseListItemResponse(
                 course.getId(),
                 course.getName(),
                 course.getDescription(),
+                themes,
                 course.getCourseType(),
                 course.getDistanceKm(),
                 course.getEstimatedDurationMinutes(),

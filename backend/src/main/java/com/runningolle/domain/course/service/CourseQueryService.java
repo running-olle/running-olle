@@ -8,10 +8,13 @@ import com.runningolle.domain.course.dto.CourseWaypointResponse;
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.entity.CourseBookmark;
 import com.runningolle.domain.course.entity.CourseWaypoint;
+import com.runningolle.domain.course.entity.CourseTheme;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.repository.CourseBookmarkRepository;
 import com.runningolle.domain.course.repository.CourseRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
+import com.runningolle.domain.course.repository.CourseThemeRepository;
+import com.runningolle.domain.user.dto.ThemeResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +34,7 @@ public class CourseQueryService {
     private final CourseRepository courseRepository;
     private final CourseWaypointRepository courseWaypointRepository;
     private final CourseBookmarkRepository courseBookmarkRepository;
+    private final CourseThemeRepository courseThemeRepository;
 
     @Transactional(readOnly = true)
     public List<CourseListItemResponse> getCourses(UUID userId, CourseListFilter filter, CourseListScope scope, String keyword) {
@@ -54,6 +58,7 @@ public class CourseQueryService {
 
         List<UUID> courseIds = courses.stream().map(Course::getId).toList();
         Map<UUID, List<CourseWaypointResponse>> waypointsByCourseId = waypointsByCourseId(courseIds);
+        Map<UUID, List<ThemeResponse>> themesByCourseId = themesByCourseId(courseIds);
         Map<UUID, UUID> bookmarkIdByCourseId = bookmarkIdByCourseId(userId, courseIds);
         Set<UUID> bookmarkedCourseIds = bookmarkIdByCourseId.keySet();
 
@@ -63,6 +68,7 @@ public class CourseQueryService {
                         course.getCreator().getId().equals(userId),
                         bookmarkedCourseIds.contains(course.getId()),
                         bookmarkIdByCourseId.get(course.getId()),
+                        themesByCourseId.getOrDefault(course.getId(), List.of()),
                         waypointsByCourseId.getOrDefault(course.getId(), List.of())
                 ))
                 .toList();
@@ -82,12 +88,14 @@ public class CourseQueryService {
                 .map(CourseWaypointResponse::from)
                 .toList();
         UUID bookmarkId = bookmarkIdByCourseId(userId, List.of(courseId)).get(courseId);
+        List<ThemeResponse> themes = themesByCourseId(List.of(courseId)).getOrDefault(courseId, List.of());
 
         return CourseDetailResponse.from(
                 course,
                 course.getCreator().getId().equals(userId),
                 bookmarkId != null,
                 bookmarkId,
+                themes,
                 waypoints
         );
     }
@@ -115,6 +123,16 @@ public class CourseQueryService {
                     .add(CourseWaypointResponse.from(waypoint));
         }
         return waypointsByCourseId;
+    }
+
+    private Map<UUID, List<ThemeResponse>> themesByCourseId(List<UUID> courseIds) {
+        Map<UUID, List<ThemeResponse>> themesByCourseId = new LinkedHashMap<>();
+        for (CourseTheme courseTheme : courseThemeRepository.findAllByCourse_IdIn(courseIds)) {
+            themesByCourseId.computeIfAbsent(courseTheme.getCourse().getId(), ignored -> new ArrayList<>())
+                    .add(ThemeResponse.from(courseTheme.getTheme()));
+        }
+        themesByCourseId.values().forEach(themes -> themes.sort(java.util.Comparator.comparing(ThemeResponse::name)));
+        return themesByCourseId;
     }
 
     private Map<UUID, UUID> bookmarkIdByCourseId(UUID userId, List<UUID> courseIds) {

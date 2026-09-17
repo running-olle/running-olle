@@ -1,5 +1,6 @@
 package com.runningolle.domain.user.entity;
 
+import com.runningolle.domain.user.enums.ThemeCode;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
@@ -39,5 +40,14 @@ public class Theme {
         theme.code = code;
         theme.name = name;
         return theme;
+    }
+
+    public static Theme create(ThemeCode code) {
+        return create(code.name(), code.getDisplayName());
+    }
+
+    public void synchronize(ThemeCode code) {
+        this.code = code.name();
+        this.name = code.getDisplayName();
     }
 }

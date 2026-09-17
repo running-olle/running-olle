@@ -17,6 +17,7 @@ import com.runningolle.domain.user.enums.AccountStatus;
 import com.runningolle.domain.user.enums.PreferredDifficulty;
 import com.runningolle.domain.user.enums.PreferredDistance;
 import com.runningolle.domain.user.enums.UserTypeCode;
+import com.runningolle.domain.user.enums.ThemeCode;
 import com.runningolle.domain.user.repository.UserRepository;
 import com.runningolle.domain.user.repository.UserThemeRepository;
 import com.runningolle.domain.user.repository.UserUserTypeRepository;
@@ -26,10 +27,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -65,17 +69,12 @@ public class CourseRecommendationService {
     private static final double HIGH_COMPLETION_SCORE = 2.0;
     private static final double MID_COMPLETION_SCORE = 1.0;
     private static final int RESPONSE_RECOMMENDATION_LIMIT = 3;
-    private static final Set<String> RELAXED_TRAVELER_THEME_CODES = Set.of("COAST", "PHOTO", "FOOD", "TRADITION");
-    private static final Set<String> REVIEW_SOURCE_TYPES = Set.of("COURSE_REVIEW");
-    private static final Map<String, String> THEME_LABELS = Map.of(
-            "COAST", "해안 풍경",
-            "FOREST", "숲길 분위기",
-            "OREUM", "오름 코스",
-            "FOOD", "미식 동선",
-            "PHOTO", "포토 포인트",
-            "TRADITION", "제주 전통 분위기",
-            "URBAN", "도심 접근성"
+    private static final Set<String> RELAXED_TRAVELER_THEME_CODES = Set.of(
+            ThemeCode.COAST.name(), ThemeCode.PHOTO.name(), ThemeCode.FOOD.name(), ThemeCode.TRADITION.name()
     );
+    private static final Set<String> REVIEW_SOURCE_TYPES = Set.of("COURSE_REVIEW");
+    private static final Map<String, String> THEME_LABELS = Arrays.stream(ThemeCode.values())
+            .collect(Collectors.toUnmodifiableMap(ThemeCode::name, ThemeCode::getRecommendationLabel));
 
     private final UserRepository userRepository;
     private final UserUserTypeRepository userUserTypeRepository;
@@ -119,7 +118,7 @@ public class CourseRecommendationService {
                         .map(mapping -> UserTypeCode.valueOf(mapping.getUserType().getCode()))
                         .collect(java.util.stream.Collectors.toSet()),
                 userThemeRepository.findAllByUserId(userId).stream()
-                        .map(userTheme -> userTheme.getTheme().getCode())
+                        .map(userTheme -> normalizeThemeCode(userTheme.getTheme().getCode()))
                         .collect(java.util.stream.Collectors.toSet())
         );
     }
@@ -190,9 +189,13 @@ public class CourseRecommendationService {
         Map<UUID, List<String>> themeCodesByCourseId = new LinkedHashMap<>();
         for (CourseTheme courseTheme : courseThemeRepository.findAllByCourse_IdIn(courseIds)) {
             themeCodesByCourseId.computeIfAbsent(courseTheme.getCourse().getId(), ignored -> new ArrayList<>())
-                    .add(courseTheme.getTheme().getCode());
+                    .add(normalizeThemeCode(courseTheme.getTheme().getCode()));
         }
         return themeCodesByCourseId;
+    }
+
+    private String normalizeThemeCode(String themeCode) {
+        return themeCode == null ? "" : themeCode.trim().toUpperCase(Locale.ROOT);
     }
 
     private BaseScoreComponents calculateBaseScoreComponents(
@@ -574,7 +577,7 @@ public class CourseRecommendationService {
         if (candidate.difficulty() != Difficulty.HIGH) {
             score += 1;
         }
-        if (themeCodes.contains("URBAN") || themeCodes.contains("FOREST")) {
+        if (themeCodes.contains(ThemeCode.URBAN.name()) || themeCodes.contains(ThemeCode.FOREST.name())) {
             score += 2;
         }
         return score;
@@ -670,16 +673,16 @@ public class CourseRecommendationService {
         if (candidate.courseType() == CourseType.SPOT_COURSE) {
             return "가볍게 둘러보기 좋은 스팟 코스예요";
         }
-        if (recommendation.themeCodes().contains("OREUM")) {
+        if (recommendation.themeCodes().contains(ThemeCode.OREUM.name())) {
             return "오름 분위기를 느끼기 좋은 코스예요";
         }
-        if (recommendation.themeCodes().contains("FOREST")) {
+        if (recommendation.themeCodes().contains(ThemeCode.FOREST.name())) {
             return "숲길 분위기가 살아 있는 코스예요";
         }
-        if (recommendation.themeCodes().contains("COAST")) {
+        if (recommendation.themeCodes().contains(ThemeCode.COAST.name())) {
             return "제주 해안을 느끼기 좋은 코스예요";
         }
-        if (recommendation.themeCodes().contains("URBAN")) {
+        if (recommendation.themeCodes().contains(ThemeCode.URBAN.name())) {
             return "도심에서 반복해 뛰기 좋은 코스예요";
         }
         return "선호 조건에 잘 맞는 코스예요";

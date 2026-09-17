@@ -1,5 +1,6 @@
-export type ThemeOption = { id: string; code: string; name: string }
-export type Profile = { nickname: string; profileImageUrl: string | null; bio: string | null; userTypes: string[]; preferredDistance: string | null; preferredDifficulty: string | null; createdAt: string; accountStatus: string }
+import type { ThemeOption } from '../themes/themeCatalog'
+
+export type Profile = { nickname: string; profileImageUrl: string | null; bio: string | null; userTypes: string[]; preferredDistance: string | null; preferredDifficulty: string | null; themes: ThemeOption[]; createdAt: string; accountStatus: string }
 export type ProfileUpdate = Pick<Profile, 'nickname' | 'profileImageUrl' | 'bio' | 'userTypes' | 'preferredDistance' | 'preferredDifficulty'> & { themeIds?: string[] }
 export type Dashboard = { profile: Profile; totalDistanceKm: number; completionCount: number; uniqueCourseCount: number }
 export type RunRecord = { id: string; courseId: string | null; courseName: string | null; courseType: 'RUNNING_COURSE' | 'SPOT_COURSE' | null; thumbnailImageUrl: string | null; distanceKm: number; durationSeconds: number; averagePace: number | null; startedAt: string }

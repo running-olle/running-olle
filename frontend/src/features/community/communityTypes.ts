@@ -1,3 +1,5 @@
+import type { ThemeCode } from '../themes/themeCatalog'
+
 export type CommunityTab = 'feed' | 'meetup' | 'chat'
 
 export type MeetupFilter = 'all' | 'recruiting' | 'today' | 'thisWeek' | 'coast' | 'oreum'
@@ -5,7 +7,7 @@ export type MeetupJoinMethod = 'instant' | 'approval'
 export type MeetupStatus = 'recruiting' | 'closed' | 'completed' | 'cancelled'
 export type ParticipationStatus = 'none' | 'pending' | 'accepted' | 'rejected'
 
-export type MeetupTheme = 'coast' | 'forest' | 'oreum' | 'photo' | 'food'
+export type MeetupTheme = ThemeCode
 
 export type MemberStats = {
   totalDistanceKm: number

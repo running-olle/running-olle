@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { CourseCreateResponse, CourseTagOption, CourseType, CourseWaypointDraft, DraftRoute, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult, ThemeOption } from './types'
+import type { CourseCreateResponse, CourseTagOption, CourseType, CourseWaypointDraft, DraftRoute, NearbyCategoryGroupCode, PlaceDetail, PlaceSearchResult } from './types'
 
 type DraftRouteWaypointRequest = {
   kakaoPlaceId: string | null
@@ -34,10 +34,6 @@ type CourseCreateRequest = {
 }
 
 export const courseBuilderService = {
-  getThemes() {
-    return axiosInstance.get<ThemeOption[]>('/themes').then(({ data }) => data)
-  },
-
   getCourseTags() {
     return axiosInstance.get<CourseTagOption[]>('/course-tags').then(({ data }) => data)
   },

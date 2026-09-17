@@ -7,8 +7,8 @@ import { homeService } from '../../features/home/homeService'
 import { toRecommendedCourseCardViewModel, type RecommendedCourseCardViewModel } from '../../features/home/homeViewModels'
 import { useCurrentWeather } from '../../features/home/useCurrentWeather'
 import { useMonthlyRunCount } from '../../features/home/useMonthlyRunCount'
+import { usePopularCourses } from '../../features/home/usePopularCourses'
 import { useTourismEventHighlights } from '../../features/home/useTourismEventHighlights'
-import { popularCourses } from '../../mocks/home'
 
 type OptionalPosition = {
   latitude: number
@@ -18,6 +18,7 @@ type OptionalPosition = {
 export function HomePage() {
   const { refreshWeather, weather, weatherError, weatherStatus } = useCurrentWeather()
   const { monthlyRunCount, monthlyRunCountStatus } = useMonthlyRunCount()
+  const { courses: popularCourses, status: popularCoursesStatus } = usePopularCourses()
   const { events, status: eventStatus } = useTourismEventHighlights(3)
   const [recommendedCourses, setRecommendedCourses] = useState<RecommendedCourseCardViewModel[]>([])
   const [recommendationError, setRecommendationError] = useState<string | null>(null)
@@ -67,7 +68,7 @@ export function HomePage() {
         isLoading={loadingRecommendations}
         error={recommendationError}
       />
-      <PopularCourseRank courses={popularCourses} />
+      <PopularCourseRank courses={popularCourses} status={popularCoursesStatus} />
       <RunningEventList events={events} status={eventStatus} />
     </div>
   )

@@ -22,10 +22,13 @@ import com.runningolle.domain.running.repository.RunningWaypointVisitRepository;
 import com.runningolle.domain.trip.entity.Trip;
 import com.runningolle.domain.trip.repository.TripRepository;
 import com.runningolle.domain.user.entity.User;
+import com.runningolle.domain.user.entity.Theme;
+import com.runningolle.domain.user.entity.UserTheme;
 import com.runningolle.domain.user.entity.UserType;
 import com.runningolle.domain.user.entity.UserUserType;
 import com.runningolle.domain.user.enums.PreferredDifficulty;
 import com.runningolle.domain.user.enums.PreferredDistance;
+import com.runningolle.domain.user.enums.ThemeCode;
 import com.runningolle.domain.user.repository.ThemeRepository;
 import com.runningolle.domain.user.repository.UserNotificationSettingRepository;
 import com.runningolle.domain.user.repository.UserRepository;
@@ -162,6 +165,19 @@ class MyPageServiceTest {
         verify(userUserTypeRepository, never()).deleteAllByUserId(USER_ID);
         verify(userUserTypeRepository, never()).flush();
         verify(userUserTypeRepository, never()).save(any(UserUserType.class));
+    }
+
+    @Test
+    void returnsSelectedThemesWithProfile() {
+        User user = user(USER_ID);
+        Theme coast = Theme.create(ThemeCode.COAST);
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(userUserTypeRepository.findAllByUserId(USER_ID)).willReturn(List.of());
+        given(userThemeRepository.findAllByUserId(USER_ID)).willReturn(List.of(UserTheme.of(user, coast)));
+
+        MyPageDtos.Profile profile = myPageService.profile(USER_ID);
+
+        assertThat(profile.themes()).extracting("code").containsExactly("COAST");
     }
 
     @Test

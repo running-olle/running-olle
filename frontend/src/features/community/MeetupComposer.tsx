@@ -9,6 +9,7 @@ import { difficultyLabel, formatDistanceKm, JEJU_CENTER } from '../courseBuilder
 import type { PlaceSearchResult } from '../courseBuilder/types'
 import type { Meetup, MeetupTheme } from './communityTypes'
 import type { MeetupCreatePayload } from './meetupApi'
+import { MEETUP_THEME_CODES, themeLabels } from '../themes/themeCatalog'
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error'
 
@@ -40,7 +41,7 @@ export function MeetupComposer({
   const [joinMethod, setJoinMethod] = useState<'INSTANT' | 'APPROVAL'>(
     editingMeetup?.joinMethod === 'approval' ? 'APPROVAL' : 'INSTANT',
   )
-  const [theme, setTheme] = useState<MeetupTheme>(editingMeetup?.theme ?? 'coast')
+  const [theme, setTheme] = useState<MeetupTheme>(editingMeetup?.theme ?? 'COAST')
   const [courseOptions, setCourseOptions] = useState<CourseListItem[]>([])
   const [courseKeyword, setCourseKeyword] = useState('')
   const [selectedCourseId, setSelectedCourseId] = useState(editingMeetup?.course?.id ?? '')
@@ -348,9 +349,9 @@ export function MeetupComposer({
           </Field>
           <Field label="테마">
             <div className="flex flex-wrap gap-2">
-              {(['coast', 'forest', 'oreum', 'photo', 'food'] as MeetupTheme[]).map((item) => (
+              {MEETUP_THEME_CODES.map((item) => (
                 <ChipButton key={item} active={theme === item} onClick={() => setTheme(item)}>
-                  {themeToLabel(item)}
+                  {themeLabels[item]}
                 </ChipButton>
               ))}
             </div>
@@ -458,21 +459,6 @@ function placeCategoryLabel(place: PlaceSearchResult) {
   if (place.categoryGroupCode === 'FD6') return '맛집'
   if (place.categoryGroupCode === 'CS2') return '편의점'
   return place.categoryName || '장소'
-}
-
-function themeToLabel(theme: MeetupTheme) {
-  switch (theme) {
-    case 'forest':
-      return '숲길'
-    case 'oreum':
-      return '오름'
-    case 'photo':
-      return '포토'
-    case 'food':
-      return '맛집'
-    default:
-      return '해안'
-  }
 }
 
 function parsePace(value: string) {

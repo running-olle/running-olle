@@ -14,6 +14,7 @@ import com.runningolle.domain.running.repository.RunningWaypointVisitRepository;
 import com.runningolle.domain.trip.entity.Trip;
 import com.runningolle.domain.trip.repository.TripRepository;
 import com.runningolle.domain.user.entity.Theme;
+import com.runningolle.domain.user.dto.ThemeResponse;
 import com.runningolle.domain.user.entity.User;
 import com.runningolle.domain.user.entity.UserNotificationSetting;
 import com.runningolle.domain.user.entity.UserTheme;
@@ -31,6 +32,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.LinkedHashSet;
@@ -70,8 +72,14 @@ public class MyPageService {
     public MyPageDtos.Profile profile(UUID userId) {
         User user = activeUser(userId);
         List<String> types = userUserTypeRepository.findAllByUserId(userId).stream().map(x -> x.getUserType().getCode()).toList();
+        List<ThemeResponse> themes = userThemeRepository.findAllByUserId(userId).stream()
+                .map(UserTheme::getTheme)
+                .map(ThemeResponse::from)
+                .sorted(Comparator.comparing(ThemeResponse::name))
+                .toList();
         return new MyPageDtos.Profile(user.getNickname(), user.getProfileImageUrl(), user.getBio(), types,
-                user.getPreferredDistance(), user.getPreferredDifficulty(), user.getCreatedAt(), user.getAccountStatus().name());
+                user.getPreferredDistance(), user.getPreferredDifficulty(), themes,
+                user.getCreatedAt(), user.getAccountStatus().name());
     }
 
     @Transactional

@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { axiosInstance } from '../../api/axiosInstance'
 
 export type HomeRecommendedCourseDifficulty = 'LOW' | 'MID' | 'HIGH'
@@ -16,8 +17,22 @@ export type HomeRecommendedCourse = {
   recommendationReason: string
 }
 
+export type HomePopularCourse = {
+  courseId: string
+  rank: number
+  courseName: string
+  distanceKm: number
+  difficulty: HomeRecommendedCourseDifficulty
+  participantCount: number
+  thumbnailImageUrl: string | null
+}
+
 type RecommendedCoursesResponse = {
   recommendations: HomeRecommendedCourse[]
+}
+
+type PopularCoursesResponse = {
+  courses: HomePopularCourse[]
 }
 
 type RecommendedCoursesParams = {
@@ -41,5 +56,18 @@ export const homeService = {
         params,
       })
       .then(({ data }) => data.recommendations)
+  },
+  async getPopularCourses() {
+    try {
+      const { data } = await axiosInstance.get<PopularCoursesResponse>('/home/popular-courses')
+      return data.courses
+    } catch (error) {
+      // Keep the home screen compatible while the endpoint is absent during a staggered deployment.
+      // The current backend contract returns 200 with an empty collection when no ranking exists.
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return []
+      }
+      throw error
+    }
   },
 }

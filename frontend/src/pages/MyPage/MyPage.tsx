@@ -8,10 +8,11 @@ import { courseService } from '../../features/course/courseService'
 import { myPageService } from '../../features/mypage/myPageService'
 import { NotificationCenter } from '../../features/notifications/NotificationCenter'
 import type { Dashboard, NotificationSettings, Profile, RunRecord, Visit } from '../../features/mypage/types'
+import type { ThemeOption } from '../../features/themes/themeCatalog'
 import { MyPageHeader as PageHeader, MyPageLoading as Loading } from './MyPageCommon'
 import './mypage.css'
 
-const EMPTY_PROFILE: Profile = { nickname: '러너', profileImageUrl: null, bio: null, userTypes: [], preferredDistance: null, preferredDifficulty: null, createdAt: '', accountStatus: 'ACTIVE' }
+const EMPTY_PROFILE: Profile = { nickname: '러너', profileImageUrl: null, bio: null, userTypes: [], preferredDistance: null, preferredDifficulty: null, themes: [], createdAt: '', accountStatus: 'ACTIVE' }
 const EMPTY_DASHBOARD: Dashboard = { profile: EMPTY_PROFILE, totalDistanceKm: 0, completionCount: 0, uniqueCourseCount: 0 }
 const DEFAULT_NOTIFICATIONS: NotificationSettings = { recommendedCourse: true, weather: true, savedCourseUpdate: true, meetupInvite: true, commentLike: true, tierChange: true, eventChallenge: true }
 function assetUrl(url: string) {
@@ -95,6 +96,7 @@ export function ProfileEditPage() {
   const nav = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [p, setP] = useState<Profile | null>(null)
+  const [themeOptions, setThemeOptions] = useState<ThemeOption[]>([])
   const [loadError, setLoadError] = useState(false)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -102,7 +104,12 @@ export function ProfileEditPage() {
 
   const load = () => {
     setLoadError(false)
-    myPageService.profile().then(setP).catch(() => setLoadError(true))
+    Promise.all([myPageService.profile(), myPageService.themes()])
+      .then(([profile, themes]) => {
+        setP(profile)
+        setThemeOptions(themes)
+      })
+      .catch(() => setLoadError(true))
   }
   useEffect(load, [])
 
@@ -141,6 +148,7 @@ export function ProfileEditPage() {
         userTypes: p.userTypes,
         preferredDistance: p.preferredDistance,
         preferredDifficulty: p.preferredDifficulty,
+        themeIds: p.themes.map((theme) => theme.id),
       })
       nav('/mypage')
     } catch (caught) {
@@ -160,10 +168,12 @@ export function ProfileEditPage() {
     <Choice title="사용자 유형" options={['ACTIVE_RUNNER','RELAXED_TRAVELER','JEJU_RESIDENT']} value={p.userTypes[0] || ''} labels={typeLabels} onChange={v => setP({...p,userTypes:[v]})}/>
     <Choice title="선호 거리" options={['UNDER_3KM','FROM_5_TO_10KM','OVER_10KM']} value={p.preferredDistance || ''} labels={{UNDER_3KM:'3km 이하',FROM_5_TO_10KM:'5km ~ 10km',OVER_10KM:'10km 이상'}} onChange={v => setP({...p,preferredDistance:v})}/>
     <Choice title="선호 난이도" options={['EASY','NORMAL','HARD']} value={p.preferredDifficulty || ''} labels={{EASY:'쉬움',NORMAL:'보통',HARD:'어려움'}} onChange={v => setP({...p,preferredDifficulty:v})}/>
+    <ThemeChoice options={themeOptions} selected={p.themes} onChange={themes => setP({...p, themes})}/>
     {error && <p className="my-error" role="alert">{error}</p>}
     <Button variant="primary" size="lg" fullWidth loading={saving} onClick={save} disabled={uploading}>저장하기</Button>
   </main></div>
 }
 function Choice({title,options,value,labels,onChange}:{title:string;options:string[];value:string;labels:Record<string,string>;onChange:(v:string)=>void}){return <section className="profile-choice"><h2>{title}</h2><div className="chips">{options.map(x=><Chip variant="choice" selected={value===x} onClick={()=>onChange(x)} key={x}>{labels[x]}</Chip>)}</div></section>}
+function ThemeChoice({options,selected,onChange}:{options:ThemeOption[];selected:ThemeOption[];onChange:(themes:ThemeOption[])=>void}){const selectedIds=new Set(selected.map(theme=>theme.id));return <section className="profile-choice"><h2>관심 테마 <small>복수 선택</small></h2><div className="chips">{options.map(theme=><Chip variant="choice" selected={selectedIds.has(theme.id)} onClick={()=>onChange(selectedIds.has(theme.id)?selected.filter(item=>item.id!==theme.id):[...selected,theme])} key={theme.id}>{theme.name}</Chip>)}</div></section>}
 export function NotificationPage(){const [settings,setSettings]=useState<NotificationSettings|null>(null);const [saved,setSaved]=useState(false);useEffect(()=>{myPageService.notifications().then(setSettings).catch(()=>setSettings(DEFAULT_NOTIFICATIONS))},[]);const toggle=async(key:keyof NotificationSettings)=>{if(!settings)return;const next={...settings,[key]:!settings[key]};setSettings(next);setSaved(false);try{await myPageService.updateNotifications(next);setSaved(true);setTimeout(()=>setSaved(false),1500)}catch{setSettings(settings)}};if(!settings)return <div className="my-screen"><Loading label="알림 설정을 불러오는 중…"/></div>;return <div className="my-screen settings-bg"><PageHeader title="알림 설정"/><main className="my-content notification-content"><div className="info-box"><Icon name="bell" size={20}/><span>알림은 앱 우측 상단의 알림함에 쌓입니다.</span></div><ToggleGroup title="커뮤니티" rows={[['meetupInvite','같이 달리기','참여 요청·승인·일정 변경·취소 알림'],['commentLike','댓글/좋아요','내 게시글에 대한 댓글과 좋아요 알림']]} settings={settings} toggle={toggle}/></main><Toast open={saved} message="알림 설정을 저장했어요" tone="success" onClose={()=>setSaved(false)} duration={1500}/></div>}
 function ToggleGroup({title,rows,settings,toggle}:{title:string;rows:[keyof NotificationSettings,string,string][];settings:NotificationSettings;toggle:(k:keyof NotificationSettings)=>void}){return <section className="toggle-group"><h2>{title}</h2><div>{rows.map(([key,label,desc])=><Switch key={key} checked={settings[key]} label={label} description={desc} onCheckedChange={()=>toggle(key)}/>)}</div></section>}

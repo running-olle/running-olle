@@ -126,9 +126,14 @@
 .course-thumbnail { position: relative; overflow: hidden; border-radius: var(--radius-sm); background: var(--color-surface-muted); }
 .course-thumbnail--square { border-radius: 0; }
 .course-thumbnail::after { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 33.333%; background: var(--color-course-highlight); }
+.course-thumbnail--image::after { display: none; }
 .course-thumbnail--beach { background: radial-gradient(circle at 70% 28%, var(--color-course-beach-deep) 0 18%, transparent 19%), linear-gradient(160deg, var(--color-course-beach-sky) 0 32%, var(--color-course-beach-sea) 33% 54%, var(--color-course-beach-sand) 55% 72%, var(--color-course-beach-field) 73% 100%); }
 .course-thumbnail--oreum { background: radial-gradient(circle at 62% 42%, var(--color-course-oreum-accent) 0 18%, transparent 19%), linear-gradient(145deg, var(--color-course-oreum-sky) 0 36%, var(--color-course-oreum-mid) 37% 58%, var(--color-course-oreum-deep) 59% 100%); }
 .course-thumbnail--forest { background: radial-gradient(circle at 35% 35%, var(--color-course-forest-accent) 0 18%, transparent 19%), linear-gradient(145deg, var(--color-course-forest-light) 0 28%, var(--color-course-forest-mid) 29% 62%, var(--color-course-forest-deep) 63% 100%); }
+
+.popular-course-link { display: block; color: inherit; text-decoration: none; }
+.popular-course-link + .popular-course-link { border-top: 1px solid var(--divider-color); }
+.popular-course-link:focus-visible { position: relative; z-index: 1; outline: 2px solid var(--color-brand-500); outline-offset: -2px; }
 
 .ui-overlay { position: fixed; inset: 0; z-index: var(--z-backdrop); display: flex; padding: max(var(--spacing-4), var(--safe-top)) max(var(--spacing-4), var(--safe-right)) max(var(--spacing-4), var(--safe-bottom)) max(var(--spacing-4), var(--safe-left)); background: var(--color-overlay); }
 .ui-overlay--center { align-items: center; justify-content: center; }

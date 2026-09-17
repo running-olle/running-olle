@@ -129,6 +129,7 @@ export function CourseDetailPage() {
         {course.createdByMe && <Badge variant="brand">내가 만든 코스</Badge>}
         {course.bookmarkedByMe && <Badge variant="warning">저장됨</Badge>}
         {!course.isPublic && <Badge variant="neutral">비공개</Badge>}
+        {course.themes.map((theme) => <Badge variant="neutral" key={theme.id}>{theme.name}</Badge>)}
       </div>
 
       <section className="course-detail-creator">

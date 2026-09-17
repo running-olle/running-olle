@@ -1,14 +1,17 @@
 package com.runningolle.domain.running.repository;
 
+import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.running.entity.RunningRecord;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface RunningRecordRepository extends JpaRepository<RunningRecord, UUID> {
 
@@ -29,6 +32,34 @@ public interface RunningRecordRepository extends JpaRepository<RunningRecord, UU
 
     long countByTripId(UUID tripId);
 
+    @Query("""
+            select r.course.id as courseId,
+                   r.course.name as courseName,
+                   r.course.distanceKm as distanceKm,
+                   r.course.difficulty as difficulty,
+                   r.course.thumbnailImageUrl as thumbnailImageUrl,
+                   count(distinct r.user.id) as participantCount
+            from RunningRecord r
+            where r.course is not null
+              and r.course.isPublic = true
+              and r.course.isDeleted = false
+              and r.startedAt >= :startedAt
+              and r.startedAt < :endedAt
+            group by r.course.id,
+                     r.course.name,
+                     r.course.distanceKm,
+                     r.course.difficulty,
+                     r.course.thumbnailImageUrl
+            order by count(distinct r.user.id) desc,
+                     r.course.name asc,
+                     r.course.id asc
+            """)
+    List<PopularCourseProjection> findPopularCourses(
+            @Param("startedAt") LocalDateTime startedAt,
+            @Param("endedAt") LocalDateTime endedAt,
+            Pageable pageable
+    );
+
     @EntityGraph(attributePaths = "course")
     List<RunningRecord> findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
             UUID userId, LocalDateTime start, LocalDateTime endExclusive
@@ -48,5 +79,14 @@ public interface RunningRecordRepository extends JpaRepository<RunningRecord, UU
         UUID getUserId();
         BigDecimal getTotalDistanceKm();
         BigDecimal getAveragePaceMinutes();
+    }
+
+    interface PopularCourseProjection {
+        UUID getCourseId();
+        String getCourseName();
+        BigDecimal getDistanceKm();
+        Difficulty getDifficulty();
+        String getThumbnailImageUrl();
+        long getParticipantCount();
     }
 }

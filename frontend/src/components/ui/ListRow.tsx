@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react'
 
-type ListRowProps = HTMLAttributes<HTMLDivElement> & {
+type ListRowProps = Omit<HTMLAttributes<HTMLDivElement>, 'title'> & {
   leading?: ReactNode
   title: ReactNode
   description?: ReactNode
