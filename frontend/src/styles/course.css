@@ -39,6 +39,10 @@
 .course-library-card h2 { color: var(--color-ink); font-size: var(--text-app-title); line-height: 1.45; font-weight: 800; letter-spacing: -.01em; }
 .course-library-description { color: var(--color-ink-secondary); font-size: var(--text-body-sm); }
 .course-library-waypoints { margin-top: var(--spacing-2); color: var(--color-ink-tertiary); font-size: var(--text-caption); }
+.course-library-review-summary { display: flex; align-items: center; gap: var(--spacing-2); margin-top: var(--spacing-2); color: var(--color-ink-secondary); font-size: var(--text-caption); font-weight: 700; }
+.course-library-review-summary span { display: inline-flex; align-items: center; gap: var(--spacing-1); }
+.course-library-review-summary span:first-child { color: var(--color-rating); }
+.course-library-review-summary i { width: 1px; height: 12px; background: var(--color-border-default); }
 .course-library-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-top: var(--spacing-4); padding: var(--spacing-3) 0; border-top: 1px solid var(--color-border-subtle); border-bottom: 1px solid var(--color-border-subtle); }
 .course-library-stats span { min-height: 32px; padding: 0 var(--spacing-1); border-radius: 0; color: var(--color-ink-secondary); background: transparent; font-size: var(--text-caption); font-weight: 600; }
 .course-library-stats span + span { border-left: 1px solid var(--color-border-subtle); }
@@ -96,6 +100,46 @@
 .course-detail-waypoints strong { color: var(--color-ink); font-size: var(--text-body); }
 .course-detail-waypoints p { color: var(--color-ink-secondary); font-size: var(--text-body-sm); }
 .course-detail-waypoints small { color: var(--color-ink-tertiary); font-size: var(--text-caption); }
+.course-review-section { padding: var(--spacing-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--color-surface); }
+.course-review-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--spacing-4); }
+.course-review-section-heading h2 { margin: 0; color: var(--color-ink); font-size: var(--text-section-title); }
+.course-review-section-heading p { margin: var(--spacing-1) 0 0; color: var(--color-ink-secondary); font-size: var(--text-caption); line-height: 1.5; }
+.course-review-section-heading > strong { display: inline-flex; flex: 0 0 auto; align-items: center; gap: var(--spacing-1); color: var(--color-rating); font-size: var(--text-body); font-variant-numeric: tabular-nums; }
+.course-review-section-heading > strong small { color: var(--color-ink-tertiary); font-size: var(--text-caption); font-weight: 500; }
+.course-review-loading { display: grid; min-height: 100px; place-items: center; }
+.course-review-empty { margin: var(--spacing-5) 0 0; padding: var(--spacing-5); border-radius: var(--radius-md); color: var(--color-ink-secondary); background: var(--color-surface-subtle); font-size: var(--text-body-sm); line-height: 1.5; text-align: center; }
+.course-review-list { display: grid; gap: var(--spacing-3); margin-top: var(--spacing-5); }
+.course-review-latest-label { margin-top: var(--spacing-5); color: var(--color-ink-tertiary); font-size: var(--text-caption); font-weight: 700; }
+.course-review-latest-label + .course-review-card { margin-top: var(--spacing-2); }
+.course-review-view-all.ui-button { min-height: 46px; margin-top: var(--spacing-3); border-color: var(--color-border-default); border-radius: var(--radius-control); color: var(--color-ink); background: var(--color-surface); }
+.course-review-modal { width: min(100%, 440px); }
+.course-review-modal .ui-dialog__body { padding-top: var(--spacing-3); }
+.course-review-modal .course-review-list { margin-top: 0; }
+.course-review-card { padding: var(--spacing-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); background: var(--color-surface); }
+.course-review-card header { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: var(--spacing-3); }
+.course-review-card header > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius-full); color: var(--color-brand-700); background: var(--color-brand-050); font-size: var(--text-body-sm); font-weight: 800; }
+.course-review-card header div { min-width: 0; }
+.course-review-card header strong, .course-review-card header small { display: block; }
+.course-review-card header strong { color: var(--color-ink); font-size: var(--text-body-sm); }
+.course-review-card header small { margin-top: 2px; color: var(--color-ink-tertiary); font-size: var(--text-legal); }
+.course-review-card header b { display: inline-flex; align-items: center; gap: var(--spacing-1); color: var(--color-rating); font-size: var(--text-label); font-variant-numeric: tabular-nums; }
+.course-review-card > p { margin: var(--spacing-3) 0 0; color: var(--color-ink-secondary); font-size: var(--text-body-sm); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.course-review-actions { display: flex; justify-content: flex-end; gap: var(--spacing-2); margin-top: var(--spacing-3); }
+.course-review-actions button { min-height: 36px; padding-inline: var(--spacing-3); border-radius: var(--radius-control); color: var(--color-ink-secondary); background: var(--color-surface-subtle); font-size: var(--text-caption); font-weight: 700; }
+.course-review-actions button:last-child { color: var(--color-danger); background: var(--color-danger-subtle); }
+.course-review-editor { display: grid; gap: var(--spacing-4); margin-top: var(--spacing-4); }
+.course-review-rating { margin: 0; padding: 0; border: 0; text-align: center; }
+.course-review-rating legend { width: 100%; color: var(--color-ink); font-size: var(--text-body-sm); font-weight: 800; }
+.course-review-rating > div { display: flex; justify-content: center; gap: var(--spacing-1); margin-top: var(--spacing-2); }
+.course-review-rating button { display: grid; width: 44px; height: 44px; place-items: center; border-radius: var(--radius-control); color: var(--color-border-default); background: transparent; }
+.course-review-rating button.is-selected { color: var(--color-rating); }
+.course-review-rating button:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+.course-review-rating > span { display: block; min-height: 18px; margin-top: var(--spacing-1); color: var(--color-ink-secondary); font-size: var(--text-caption); }
+.course-review-editor .ui-field__label { color: var(--color-ink); font-size: var(--text-label); }
+.course-review-editor .ui-textarea { min-height: 96px; }
+.course-review-error { margin: 0; padding: var(--spacing-3); border-radius: var(--radius-control); color: var(--color-danger); background: var(--color-danger-subtle); font-size: var(--text-caption); }
+.course-review-editor-actions { display: flex; justify-content: flex-end; gap: var(--spacing-2); }
+.course-review-editor-actions .ui-button { min-width: 104px; }
 .course-detail-action-error { z-index: var(--z-sticky); bottom: calc(var(--bottom-nav-total-height) + 76px); border-radius: var(--radius-control); color: var(--color-danger); background: var(--color-danger-subtle); box-shadow: var(--shadow-2); }
 .course-detail-info-backdrop { z-index: var(--z-backdrop); padding: var(--spacing-4); background: var(--color-overlay); }
 .course-detail-info-modal { padding: 0; border-radius: var(--radius-sheet); color: var(--color-ink); background: var(--color-surface); box-shadow: var(--shadow-3); }

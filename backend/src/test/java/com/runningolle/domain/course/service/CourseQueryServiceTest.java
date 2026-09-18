@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 
 import com.runningolle.domain.course.dto.CourseListFilter;
 import com.runningolle.domain.course.dto.CourseListItemResponse;
@@ -16,6 +17,7 @@ import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.course.repository.CourseBookmarkRepository;
 import com.runningolle.domain.course.repository.CourseRepository;
+import com.runningolle.domain.course.repository.CourseReviewRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
 import com.runningolle.domain.user.entity.User;
@@ -52,6 +54,9 @@ class CourseQueryServiceTest {
     @Mock
     private CourseThemeRepository courseThemeRepository;
 
+    @Mock
+    private CourseReviewRepository courseReviewRepository;
+
     private CourseQueryService courseQueryService;
 
     @BeforeEach
@@ -60,7 +65,8 @@ class CourseQueryServiceTest {
                 courseRepository,
                 courseWaypointRepository,
                 courseBookmarkRepository,
-                courseThemeRepository
+                courseThemeRepository,
+                courseReviewRepository
         );
     }
 
@@ -85,6 +91,10 @@ class CourseQueryServiceTest {
                 .willReturn(List.of(bookmark(savedCourse)));
         given(courseThemeRepository.findAllByCourse_IdIn(courseIds))
                 .willReturn(List.of(CourseTheme.of(myCourse, coast)));
+        CourseReviewRepository.CourseReviewCount reviewCount = mock(CourseReviewRepository.CourseReviewCount.class);
+        given(reviewCount.getCourseId()).willReturn(myCourseId);
+        given(reviewCount.getReviewCount()).willReturn(3L);
+        given(courseReviewRepository.countReviewsByCourseIds(courseIds)).willReturn(List.of(reviewCount));
 
         List<CourseListItemResponse> responses = courseQueryService.getCourses(
                 USER_ID,
@@ -98,10 +108,12 @@ class CourseQueryServiceTest {
         assertThat(responses.get(0).bookmarkedByMe()).isFalse();
         assertThat(responses.get(0).waypointNames()).containsExactly("성산일출봉", "광치기해변");
         assertThat(responses.get(0).themes()).extracting("code").containsExactly("COAST");
+        assertThat(responses.get(0).reviewCount()).isEqualTo(3);
         assertThat(responses.get(1).createdByMe()).isFalse();
         assertThat(responses.get(1).bookmarkedByMe()).isTrue();
         assertThat(responses.get(1).bookmarkId()).isNotNull();
         assertThat(responses.get(1).waypointNames()).containsExactly("협재해수욕장");
+        assertThat(responses.get(1).reviewCount()).isZero();
     }
 
     @Test

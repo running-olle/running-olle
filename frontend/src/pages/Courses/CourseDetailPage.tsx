@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { courseService } from '../../features/course/courseService'
-import type { CourseDetail, CourseDifficulty, CourseType } from '../../features/course/types'
+import { CourseReviewEditor, reviewErrorMessage } from '../../features/course/CourseReviewEditor'
+import type { CourseDetail, CourseDifficulty, CourseReview, CourseReviewInput, CourseType } from '../../features/course/types'
 import { Badge, Button, ErrorState, Icon, Modal, Spinner } from '../../components/ui'
 
 const courseTypeLabel: Record<CourseType, string> = {
@@ -24,6 +25,12 @@ export function CourseDetailPage() {
   const [bookmarkError, setBookmarkError] = useState(false)
   const [isSavingBookmark, setIsSavingBookmark] = useState(false)
   const [isInfoOpen, setIsInfoOpen] = useState(false)
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false)
+  const [reviews, setReviews] = useState<CourseReview[] | null>(null)
+  const [reviewsError, setReviewsError] = useState(false)
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [reviewMutationError, setReviewMutationError] = useState('')
 
   useEffect(() => {
     if (!courseId) return
@@ -31,6 +38,8 @@ export function CourseDetailPage() {
     setCourse(null)
     setHasError(false)
     setBookmarkError(false)
+    setReviews(null)
+    setReviewsError(false)
 
     courseService.getCourse(courseId)
       .then((data) => {
@@ -40,6 +49,17 @@ export function CourseDetailPage() {
         if (!ignore) {
           setCourse(null)
           setHasError(true)
+        }
+      })
+
+    courseService.getReviews(courseId)
+      .then((data) => {
+        if (!ignore) setReviews(data)
+      })
+      .catch(() => {
+        if (!ignore) {
+          setReviews([])
+          setReviewsError(true)
         }
       })
 
@@ -79,6 +99,40 @@ export function CourseDetailPage() {
       setBookmarkError(true)
     } finally {
       setIsSavingBookmark(false)
+    }
+  }
+
+  const updateReview = async (reviewId: string, input: CourseReviewInput) => {
+    if (!course || reviewSaving) return
+    setReviewSaving(true)
+    setReviewMutationError('')
+    try {
+      const updated = await courseService.updateReview(course.id, reviewId, input)
+      setReviews((current) => current?.map((review) => review.id === reviewId ? updated : review) ?? [updated])
+      setCourse((current) => current ? { ...current, ratingAvg: averageRating(reviews?.map((review) => review.id === reviewId ? updated : review) ?? [updated]) } : current)
+      setEditingReviewId(null)
+    } catch (error) {
+      setReviewMutationError(reviewErrorMessage(error))
+    } finally {
+      setReviewSaving(false)
+    }
+  }
+
+  const deleteReview = async (reviewId: string) => {
+    if (!course || reviewSaving || !window.confirm('이 리뷰를 삭제할까요?')) return
+    setReviewSaving(true)
+    setReviewMutationError('')
+    try {
+      await courseService.deleteReview(course.id, reviewId)
+      const remaining = reviews?.filter((review) => review.id !== reviewId) ?? []
+      setReviews(remaining)
+      setCourse((current) => current ? { ...current, ratingAvg: averageRating(remaining) } : current)
+      setEditingReviewId(null)
+      if (remaining.length === 0) setIsReviewsOpen(false)
+    } catch (error) {
+      setReviewMutationError(reviewErrorMessage(error))
+    } finally {
+      setReviewSaving(false)
     }
   }
 
@@ -176,6 +230,63 @@ export function CourseDetailPage() {
         </ol>
       </section>
 
+      <section className="course-review-section">
+        <div className="course-review-section-heading">
+          <div>
+            <h2>러너 리뷰</h2>
+            <p>직접 이 코스를 달린 러너들의 후기예요.</p>
+          </div>
+          <strong><Icon name="star" size={18} fill="currentColor" />{course.ratingAvg.toFixed(1)}<small>({reviews?.length ?? 0})</small></strong>
+        </div>
+        {reviews === null ? (
+          <div className="course-review-loading"><Spinner label="리뷰를 불러오는 중" /></div>
+        ) : reviewsError ? (
+          <p className="course-review-empty">리뷰를 불러오지 못했어요. 잠시 후 다시 확인해 주세요.</p>
+        ) : reviews.length === 0 ? (
+          <p className="course-review-empty">아직 등록된 리뷰가 없어요. 이 코스를 달리고 첫 리뷰를 남겨보세요.</p>
+        ) : (
+          <>
+            <div className="course-review-latest-label">가장 최근 리뷰</div>
+            <ReviewCard
+              review={reviews[0]}
+              editing={editingReviewId === reviews[0].id}
+              busy={reviewSaving}
+              error={reviewMutationError}
+              onEdit={() => { setEditingReviewId(reviews[0].id); setReviewMutationError('') }}
+              onCancel={() => { setEditingReviewId(null); setReviewMutationError('') }}
+              onUpdate={(input) => updateReview(reviews[0].id, input)}
+              onDelete={() => deleteReview(reviews[0].id)}
+            />
+            <Button className="course-review-view-all" variant="secondary" fullWidth onClick={() => setIsReviewsOpen(true)}>
+              리뷰 전체보기 ({reviews.length})
+            </Button>
+          </>
+        )}
+      </section>
+
+      <Modal
+        open={isReviewsOpen}
+        title="러너 리뷰 전체보기"
+        onClose={() => { setIsReviewsOpen(false); setEditingReviewId(null); setReviewMutationError('') }}
+        className="course-review-modal"
+      >
+        <div className="course-review-list">
+          {reviews?.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              editing={editingReviewId === review.id}
+              busy={reviewSaving}
+              error={reviewMutationError}
+              onEdit={() => { setEditingReviewId(review.id); setReviewMutationError('') }}
+              onCancel={() => { setEditingReviewId(null); setReviewMutationError('') }}
+              onUpdate={(input) => updateReview(review.id, input)}
+              onDelete={() => deleteReview(review.id)}
+            />
+          ))}
+        </div>
+      </Modal>
+
       {bookmarkError && (
         <p className="course-detail-action-error">코스 저장 상태를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.</p>
       )}
@@ -222,4 +333,68 @@ function formatCreatedAt(value: string) {
     month: 'long',
     day: 'numeric',
   })
+}
+
+function formatReviewDate(value: string) {
+  return new Date(value).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function averageRating(reviews: CourseReview[]) {
+  if (reviews.length === 0) return 0
+  return reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+}
+
+function ReviewCard({
+  review,
+  editing,
+  busy,
+  error,
+  onEdit,
+  onCancel,
+  onUpdate,
+  onDelete,
+}: {
+  review: CourseReview
+  editing: boolean
+  busy: boolean
+  error: string
+  onEdit: () => void
+  onCancel: () => void
+  onUpdate: (input: CourseReviewInput) => void | Promise<void>
+  onDelete: () => void
+}) {
+  return (
+    <article className="course-review-card">
+      <header>
+        <span>{(review.userNickname || '러너').slice(0, 1)}</span>
+        <div><strong>{review.authoredByMe ? '나' : review.userNickname || '러닝올레 러너'}</strong><small>{formatReviewDate(review.createdAt)}</small></div>
+        <b aria-label={`별점 ${review.rating}점`}><Icon name="star" size={16} fill="currentColor" />{review.rating.toFixed(1)}</b>
+      </header>
+      {editing ? (
+        <CourseReviewEditor
+          initialRating={review.rating}
+          initialContent={review.content}
+          submitLabel="수정 완료"
+          busy={busy}
+          error={error}
+          onCancel={onCancel}
+          onSubmit={onUpdate}
+        />
+      ) : (
+        <>
+          <p>{review.content || '별점으로 코스를 평가했어요.'}</p>
+          {review.authoredByMe && (
+            <div className="course-review-actions">
+              <button type="button" onClick={onEdit}>수정</button>
+              <button type="button" disabled={busy} onClick={onDelete}>삭제</button>
+            </div>
+          )}
+        </>
+      )}
+    </article>
+  )
 }

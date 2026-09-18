@@ -149,6 +149,10 @@ public class Course extends BaseTimeEntity {
         this.completionCount = (this.completionCount == null ? 0 : this.completionCount) + 1;
     }
 
+    public void updateRatingAverage(BigDecimal ratingAverage) {
+        this.ratingAvg = ratingAverage == null ? BigDecimal.ZERO : ratingAverage;
+    }
+
     public void delete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();

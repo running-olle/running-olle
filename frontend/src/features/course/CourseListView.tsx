@@ -383,6 +383,11 @@ function CourseListCard({
           {course.themes.slice(0, 2).map((theme) => <Badge variant="neutral" key={theme.id}>{theme.name}</Badge>)}
         </div>
         <h2>{course.name}</h2>
+        <div className="course-library-review-summary" aria-label={`평점 ${course.ratingAvg.toFixed(1)}, 리뷰 ${course.reviewCount}개`}>
+          <span><Icon name="star" size={16} fill="currentColor" />{course.ratingAvg.toFixed(1)}</span>
+          <i />
+          <span>리뷰 {course.reviewCount}개</span>
+        </div>
         {showDescription && course.description && <p className="course-library-description">{course.description}</p>}
         <p className="course-library-waypoints">{waypointPreview}</p>
         <div className="course-library-stats">

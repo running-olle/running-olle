@@ -22,6 +22,7 @@ public record CourseListItemResponse(
         String thumbnailImageUrl,
         Boolean isPublic,
         BigDecimal ratingAvg,
+        long reviewCount,
         Integer completionCount,
         UUID creatorId,
         String creatorNickname,
@@ -39,7 +40,8 @@ public record CourseListItemResponse(
             boolean bookmarkedByMe,
             UUID bookmarkId,
             List<ThemeResponse> themes,
-            List<CourseWaypointResponse> waypoints
+            List<CourseWaypointResponse> waypoints,
+            long reviewCount
     ) {
         return new CourseListItemResponse(
                 course.getId(),
@@ -54,6 +56,7 @@ public record CourseListItemResponse(
                 course.getThumbnailImageUrl(),
                 course.getIsPublic(),
                 course.getRatingAvg(),
+                reviewCount,
                 course.getCompletionCount(),
                 course.getCreator().getId(),
                 course.getCreator().getNickname(),

@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,7 +24,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
 @Entity
-@Table(name = "course_reviews")
+@Table(
+        name = "course_reviews",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_course_reviews_running_record",
+                columnNames = "running_record_id"
+        )
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 @Access(AccessType.FIELD)
@@ -51,4 +58,25 @@ public class CourseReview extends BaseTimeEntity {
 
     @Column(name = "content", columnDefinition = "text")
     private String content;
+
+    public static CourseReview create(
+            User user,
+            Course course,
+            RunningRecord runningRecord,
+            int rating,
+            String content
+    ) {
+        CourseReview review = new CourseReview();
+        review.user = user;
+        review.course = course;
+        review.runningRecord = runningRecord;
+        review.rating = rating;
+        review.content = content;
+        return review;
+    }
+
+    public void update(int rating, String content) {
+        this.rating = rating;
+        this.content = content;
+    }
 }
