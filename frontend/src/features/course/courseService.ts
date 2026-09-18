@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../api/axiosInstance'
-import type { CourseBookmarkResponse, CourseDetail, CourseListFilter, CourseListItem, CourseListScope } from './types'
+import type { CourseBookmarkResponse, CourseDetail, CourseListFilter, CourseListItem, CourseListScope, CourseReview, CourseReviewInput } from './types'
 
 type GetCoursesParams = {
   filter: CourseListFilter
@@ -28,5 +28,25 @@ export const courseService = {
 
   deleteCourse(courseId: string) {
     return axiosInstance.delete(`/courses/${courseId}`)
+  },
+
+  getReviews(courseId: string) {
+    return axiosInstance.get<CourseReview[]>(`/courses/${courseId}/reviews`).then(({ data }) => data)
+  },
+
+  createReview(courseId: string, runningRecordId: string, input: CourseReviewInput) {
+    return axiosInstance.post<CourseReview>(`/courses/${courseId}/reviews`, {
+      runningRecordId,
+      ...input,
+    }).then(({ data }) => data)
+  },
+
+  updateReview(courseId: string, reviewId: string, input: CourseReviewInput) {
+    return axiosInstance.patch<CourseReview>(`/courses/${courseId}/reviews/${reviewId}`, input)
+      .then(({ data }) => data)
+  },
+
+  deleteReview(courseId: string, reviewId: string) {
+    return axiosInstance.delete(`/courses/${courseId}/reviews/${reviewId}`)
   },
 }

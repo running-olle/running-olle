@@ -157,6 +157,15 @@
 .complete-stats strong { color: var(--color-ink); font-size: var(--text-app-title); font-weight: 800; font-variant-numeric: tabular-nums; }
 .complete-stats span { margin-top: var(--spacing-1); color: var(--color-ink-tertiary); font-size: var(--text-caption); }
 .record-sync-notice { margin-top: var(--spacing-3); padding: var(--spacing-3); border-radius: var(--radius-control); color: var(--color-warning); background: var(--color-warning-subtle); font-size: var(--text-caption); line-height: 1.4; }
+.complete-review-card { margin-top: var(--spacing-5); padding: var(--spacing-5); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--color-surface); }
+.complete-review-heading, .complete-review-success { display: flex; align-items: flex-start; gap: var(--spacing-3); }
+.complete-review-heading > span, .complete-review-success > span { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border-radius: var(--radius-control); }
+.complete-review-heading > span { color: var(--color-rating); background: color-mix(in srgb, var(--color-rating) 12%, white); }
+.complete-review-success > span { color: var(--color-success); background: var(--color-success-subtle); }
+.complete-review-heading strong, .complete-review-success strong { display: block; color: var(--color-ink); font-size: var(--text-body); }
+.complete-review-heading p, .complete-review-success p { margin: var(--spacing-1) 0 0; color: var(--color-ink-secondary); font-size: var(--text-caption); line-height: 1.5; }
+.complete-review-card .course-review-editor { margin-top: var(--spacing-5); }
+.complete-review-card .course-review-editor-actions .ui-button { width: 100%; }
 .complete-actions { margin-top: var(--spacing-5); padding: var(--spacing-4); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); background: var(--color-surface); }
 .complete-actions-copy { text-align: center; }
 .complete-actions-copy strong, .complete-actions-copy span { display: block; }

@@ -4,6 +4,9 @@ import { Badge, EmptyState, Icon } from '../../components/ui'
 import { CourseRouteMap } from '../../features/course/CourseRouteMap'
 import { myPageService } from '../../features/mypage/myPageService'
 import type { RunRecordDetail, RunRouteCoordinate } from '../../features/mypage/types'
+import { CourseReviewEditor, reviewErrorMessage } from '../../features/course/CourseReviewEditor'
+import { courseService } from '../../features/course/courseService'
+import type { CourseReview } from '../../features/course/types'
 import { MyPageHeader, MyPageLoading } from './MyPageCommon'
 import './mypage.css'
 
@@ -29,6 +32,10 @@ export function RunningRecordDetailPage() {
   const { recordId } = useParams()
   const [record, setRecord] = useState<RunRecordDetail | null>(null)
   const [hasError, setHasError] = useState(false)
+  const [review, setReview] = useState<CourseReview | null>(null)
+  const [reviewLoading, setReviewLoading] = useState(false)
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [reviewError, setReviewError] = useState('')
 
   useEffect(() => {
     if (!recordId) return
@@ -51,6 +58,39 @@ export function RunningRecordDetailPage() {
       ignore = true
     }
   }, [recordId])
+
+  useEffect(() => {
+    if (!record?.courseId) {
+      setReview(null)
+      return
+    }
+    let ignore = false
+    setReviewLoading(true)
+    courseService.getReviews(record.courseId)
+      .then((reviews) => {
+        if (!ignore) setReview(reviews.find((item) => item.runningRecordId === record.id) ?? null)
+      })
+      .catch(() => {
+        if (!ignore) setReview(null)
+      })
+      .finally(() => {
+        if (!ignore) setReviewLoading(false)
+      })
+    return () => { ignore = true }
+  }, [record?.courseId, record?.id])
+
+  const submitReview = async (input: { rating: number; content: string | null }) => {
+    if (!record?.courseId || reviewSaving) return
+    setReviewSaving(true)
+    setReviewError('')
+    try {
+      setReview(await courseService.createReview(record.courseId, record.id, input))
+    } catch (error) {
+      setReviewError(reviewErrorMessage(error))
+    } finally {
+      setReviewSaving(false)
+    }
+  }
 
   if (hasError) {
     return (
@@ -151,6 +191,26 @@ export function RunningRecordDetailPage() {
             <p className="run-detail-muted">코스 없이 즉시 달리기로 저장한 기록이에요.</p>
           )}
         </section>
+
+        {hasCourse && (
+          <section className="run-detail-card run-detail-review">
+            <h2>내 코스 리뷰</h2>
+            {reviewLoading ? (
+              <p className="run-detail-muted">리뷰 작성 여부를 확인하고 있어요.</p>
+            ) : review ? (
+              <div className="run-detail-review-complete">
+                <strong><Icon name="star" size={18} fill="currentColor" />{review.rating.toFixed(1)}점</strong>
+                <p>{review.content || '별점으로 코스를 평가했어요.'}</p>
+                <Link className="ui-button ui-button--secondary ui-button--md my-full-action" to={`/courses/${record.courseId}`}>코스 상세에서 리뷰 관리</Link>
+              </div>
+            ) : (
+              <>
+                <p className="run-detail-muted">이 기록으로 달린 코스의 별점과 후기를 남겨보세요.</p>
+                <CourseReviewEditor busy={reviewSaving} error={reviewError} onSubmit={submitReview} />
+              </>
+            )}
+          </section>
+        )}
 
         {record.courseWaypoints.length > 0 && (
           <section className="course-detail-waypoints run-detail-waypoints">

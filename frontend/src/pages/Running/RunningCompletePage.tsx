@@ -5,6 +5,9 @@ import { saveRunningRouteAsCourse } from '../../features/running/runningRecordSe
 import { formatDistance, formatDuration, formatPace } from '../../features/running/runningUtils'
 import type { SavedRunningRecord } from '../../features/running/types'
 import { Button, Icon, Input } from '../../components/ui'
+import { CourseReviewEditor, reviewErrorMessage } from '../../features/course/CourseReviewEditor'
+import { courseService } from '../../features/course/courseService'
+import type { CourseReview } from '../../features/course/types'
 
 export function RunningCompletePage() {
   const navigate = useNavigate()
@@ -15,9 +18,14 @@ export function RunningCompletePage() {
   const [savingCourse, setSavingCourse] = useState(false)
   const [courseSaveError, setCourseSaveError] = useState('')
   const [savedCourseId, setSavedCourseId] = useState<string | null>(null)
+  const [review, setReview] = useState<CourseReview | null>(null)
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [reviewError, setReviewError] = useState('')
   if (!record) return <Navigate to="/running" replace />
 
   const canSaveCourse = record.runningMode === 'FREE_RUN' && record.syncStatus === 'synced' && Boolean(record.serverId)
+  const reviewCourseId = record.runningMode === 'FREE_RUN' ? savedCourseId : record.courseId
+  const canReview = Boolean(reviewCourseId && record.serverId && record.syncStatus === 'synced')
 
   async function handleCourseSave() {
     const name = courseName.trim()
@@ -38,6 +46,19 @@ export function RunningCompletePage() {
     }
   }
 
+  async function handleReviewSubmit(input: { rating: number; content: string | null }) {
+    if (!reviewCourseId || !record?.serverId || reviewSaving) return
+    setReviewSaving(true)
+    setReviewError('')
+    try {
+      setReview(await courseService.createReview(reviewCourseId, record.serverId, input))
+    } catch (error) {
+      setReviewError(reviewErrorMessage(error))
+    } finally {
+      setReviewSaving(false)
+    }
+  }
+
   return (
     <main className="running-complete-page">
       <section className="complete-copy"><span><Icon name="check" size={24} /></span><p>러닝 완료</p><h1>오늘도 멋지게 달렸어요!</h1></section>
@@ -48,6 +69,24 @@ export function RunningCompletePage() {
         <div><strong>{formatPace(record.averagePace)}</strong><span>평균 페이스</span></div>
       </section>
       {record.syncStatus === 'pending' && <p className="record-sync-notice">서버 연결에 실패해 기록을 이 기기에 임시 저장했어요.</p>}
+      {canReview && (
+        <section className="complete-review-card">
+          {review ? (
+            <div className="complete-review-success">
+              <span><Icon name="check" size={20} /></span>
+              <div><strong>리뷰를 남겼어요</strong><p>별점 {review.rating}점이 코스에 반영됐어요.</p></div>
+            </div>
+          ) : (
+            <>
+              <div className="complete-review-heading">
+                <span><Icon name="star" size={21} /></span>
+                <div><strong>방금 달린 코스를 평가해 주세요</strong><p>다른 러너가 코스를 선택하는 데 도움이 돼요.</p></div>
+              </div>
+              <CourseReviewEditor busy={reviewSaving} error={reviewError} onSubmit={handleReviewSubmit} />
+            </>
+          )}
+        </section>
+      )}
       <section className="complete-actions" aria-label="러닝 완료 후 선택">
         <div className="complete-actions-copy">
           <strong>{savedCourseId ? '코스 저장을 완료했어요' : canSaveCourse ? '달린 경로를 코스로 남길까요?' : '러닝 기록을 저장했어요'}</strong>

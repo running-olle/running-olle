@@ -36,6 +36,7 @@ export type CourseListItem = {
   thumbnailImageUrl: string | null
   isPublic: boolean
   ratingAvg: number
+  reviewCount: number
   completionCount: number
   creatorId: string
   creatorNickname: string | null
@@ -48,7 +49,7 @@ export type CourseListItem = {
   waypoints: CourseWaypoint[]
 }
 
-export type CourseDetail = Omit<CourseListItem, 'previewRouteCoordinates' | 'waypointNames'> & {
+export type CourseDetail = Omit<CourseListItem, 'previewRouteCoordinates' | 'waypointNames' | 'reviewCount'> & {
   surfaceAsphaltPct: number
   surfaceDirtPct: number
   surfaceStairsPct: number
@@ -57,4 +58,21 @@ export type CourseDetail = Omit<CourseListItem, 'previewRouteCoordinates' | 'way
 
 export type CourseBookmarkResponse = {
   bookmarkId: string
+}
+
+export type CourseReview = {
+  id: string
+  userId: string
+  userNickname: string | null
+  runningRecordId: string
+  rating: number
+  content: string | null
+  createdAt: string
+  updatedAt: string
+  authoredByMe: boolean
+}
+
+export type CourseReviewInput = {
+  rating: number
+  content: string | null
 }
