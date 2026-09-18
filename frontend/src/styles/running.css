@@ -146,7 +146,7 @@
 .safety-map-marker.is-toilet span { background: var(--color-ink-secondary); }
 
 /* Result */
-.running-complete-page { min-height: 100dvh; padding: max(var(--spacing-8), calc(var(--safe-top) + var(--spacing-6))) max(var(--space-page), var(--safe-right)) max(var(--spacing-8), var(--safe-bottom)) max(var(--space-page), var(--safe-left)); color: var(--color-ink); background: var(--color-canvas); overscroll-behavior-y: contain; }
+.running-complete-page { height: 100dvh; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; padding: max(var(--spacing-8), calc(var(--safe-top) + var(--spacing-6))) max(var(--space-page), var(--safe-right)) max(var(--spacing-8), var(--safe-bottom)) max(var(--space-page), var(--safe-left)); color: var(--color-ink); background: var(--color-canvas); overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
 .complete-copy { text-align: center; }
 .complete-copy > span { width: 48px; height: 48px; margin: 0 auto var(--spacing-4); color: white; background: var(--color-success); font-size: var(--text-section-title); }
 .complete-copy p { margin: 0 0 var(--spacing-1); color: var(--color-brand-700); font-size: var(--text-caption); font-weight: 700; }
