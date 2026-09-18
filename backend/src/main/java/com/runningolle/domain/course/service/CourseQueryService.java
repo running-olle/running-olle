@@ -12,6 +12,7 @@ import com.runningolle.domain.course.entity.CourseTheme;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.repository.CourseBookmarkRepository;
 import com.runningolle.domain.course.repository.CourseRepository;
+import com.runningolle.domain.course.repository.CourseReviewRepository;
 import com.runningolle.domain.course.repository.CourseWaypointRepository;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
 import com.runningolle.domain.user.dto.ThemeResponse;
@@ -35,6 +36,7 @@ public class CourseQueryService {
     private final CourseWaypointRepository courseWaypointRepository;
     private final CourseBookmarkRepository courseBookmarkRepository;
     private final CourseThemeRepository courseThemeRepository;
+    private final CourseReviewRepository courseReviewRepository;
 
     @Transactional(readOnly = true)
     public List<CourseListItemResponse> getCourses(UUID userId, CourseListFilter filter, CourseListScope scope, String keyword) {
@@ -60,6 +62,7 @@ public class CourseQueryService {
         Map<UUID, List<CourseWaypointResponse>> waypointsByCourseId = waypointsByCourseId(courseIds);
         Map<UUID, List<ThemeResponse>> themesByCourseId = themesByCourseId(courseIds);
         Map<UUID, UUID> bookmarkIdByCourseId = bookmarkIdByCourseId(userId, courseIds);
+        Map<UUID, Long> reviewCountByCourseId = reviewCountByCourseId(courseIds);
         Set<UUID> bookmarkedCourseIds = bookmarkIdByCourseId.keySet();
 
         return courses.stream()
@@ -69,7 +72,8 @@ public class CourseQueryService {
                         bookmarkedCourseIds.contains(course.getId()),
                         bookmarkIdByCourseId.get(course.getId()),
                         themesByCourseId.getOrDefault(course.getId(), List.of()),
-                        waypointsByCourseId.getOrDefault(course.getId(), List.of())
+                        waypointsByCourseId.getOrDefault(course.getId(), List.of()),
+                        reviewCountByCourseId.getOrDefault(course.getId(), 0L)
                 ))
                 .toList();
     }
@@ -142,5 +146,13 @@ public class CourseQueryService {
             bookmarkIdByCourseId.put(bookmark.getCourse().getId(), bookmark.getId());
         }
         return bookmarkIdByCourseId;
+    }
+
+    private Map<UUID, Long> reviewCountByCourseId(List<UUID> courseIds) {
+        Map<UUID, Long> reviewCountByCourseId = new LinkedHashMap<>();
+        for (CourseReviewRepository.CourseReviewCount count : courseReviewRepository.countReviewsByCourseIds(courseIds)) {
+            reviewCountByCourseId.put(count.getCourseId(), count.getReviewCount());
+        }
+        return reviewCountByCourseId;
     }
 }
