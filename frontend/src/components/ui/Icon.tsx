@@ -23,6 +23,7 @@ export type IconName =
   | 'food'
   | 'home'
   | 'landmark'
+  | 'lightning'
   | 'location'
   | 'minus'
   | 'plus'
@@ -83,6 +84,7 @@ export function Icon({ name, size = 20, ...svgProps }: IconProps) {
   if (name === 'chart') return <svg {...commonProps}><path d="M4 19V9M10 19V5M16 19v-7M22 19V2" /></svg>
   if (name === 'food') return <svg {...commonProps}><path d="M7 3v8M10 3v8M5 11h7M8.5 11v10M17 3v18M15 3c3 2.5 3 5.5 0 8" /></svg>
   if (name === 'landmark') return <svg {...commonProps}><path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M4 18h16M3 21h18" /></svg>
+  if (name === 'lightning') return <svg {...commonProps}><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z" /></svg>
   if (name === 'location') return <svg {...commonProps}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
   if (name === 'minus') return <svg {...commonProps}><path d="M5 12h14" /></svg>
   if (name === 'plus') return <svg {...commonProps}><path d="M12 5v14M5 12h14" /></svg>
