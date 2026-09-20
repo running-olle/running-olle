@@ -59,7 +59,7 @@ class TourismPlaceSyncServiceTest {
     @Test
     void createsPendingTourismPlaceFromInventoryWithoutDetailCalls() {
         TourAreaItem item = tourAreaItem("1", "한라산", 33.361667, 126.529167);
-        given(tourApiClient.getAreaBasedList("39", "12", 1, 100))
+        given(tourApiClient.getAreaBasedList(null, "12", 1, 100))
                 .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
         given(tourismPlaceRepository.findByContentId("1")).willReturn(Optional.empty());
 
@@ -87,7 +87,7 @@ class TourismPlaceSyncServiceTest {
     @Test
     void skipsItemsWithoutCoordinates() {
         TourAreaItem item = tourAreaItem("2", "좌표 없는 장소", null, 126.529167);
-        given(tourApiClient.getAreaBasedList("39", "12", 1, 100))
+        given(tourApiClient.getAreaBasedList(null, "12", 1, 100))
                 .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
 
         var response = tourismPlaceSyncService.syncJejuTourismPlaces();
@@ -103,7 +103,7 @@ class TourismPlaceSyncServiceTest {
     void updatesExistingTourismPlace() {
         TourAreaItem item = tourAreaItem("3", "성산일출봉", 33.462147, 126.936424);
         TourismPlace existingPlace = TourismPlace.create(snapshot("3", "성산일출봉 옛 이름"));
-        given(tourApiClient.getAreaBasedList("39", "12", 1, 100))
+        given(tourApiClient.getAreaBasedList(null, "12", 1, 100))
                 .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
         given(tourismPlaceRepository.findByContentId("3")).willReturn(Optional.of(existingPlace));
 
@@ -114,6 +114,28 @@ class TourismPlaceSyncServiceTest {
         assertThat(existingPlace.getTitle()).isEqualTo("성산일출봉");
         verify(tourismPlaceRepository).save(existingPlace);
         verify(tourApiClient, never()).getDetail(any(), any());
+    }
+
+    @Test
+    void includesJejuAddressPlaceEvenWhenTourApiAreaCodeIsMissing() {
+        TourAreaItem item = new TourAreaItem(
+                "126435", "12", "성산일출봉 [유네스코 세계자연유산]",
+                "제주특별자치도 서귀포시 성산읍 일출로 284-12", null,
+                null, null, "A01", "A0101", "A01010400", null,
+                33.4580801942, 126.9415003865, null, null,
+                "20031107000000", "20250312000000", Map.of("contentid", "126435")
+        );
+        given(tourApiClient.getAreaBasedList(null, "12", 1, 100))
+                .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
+        given(tourismPlaceRepository.findByContentId("126435")).willReturn(Optional.empty());
+
+        var response = tourismPlaceSyncService.syncJejuTourismPlaces();
+
+        assertThat(response.createdCount()).isEqualTo(1);
+        ArgumentCaptor<TourismPlace> placeCaptor = ArgumentCaptor.forClass(TourismPlace.class);
+        verify(tourismPlaceRepository).save(placeCaptor.capture());
+        assertThat(placeCaptor.getValue().getTitle()).contains("성산일출봉");
+        assertThat(placeCaptor.getValue().getAreaCode()).isNull();
     }
 
     private static TourAreaItem tourAreaItem(String contentId, String title, Double lat, Double lng) {
