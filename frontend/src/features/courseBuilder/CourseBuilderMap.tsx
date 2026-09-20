@@ -13,7 +13,7 @@ type Props = {
   searchAnchorPlace?: PlaceSearchResult | null
   candidatePlaces?: PlaceSearchResult[]
   className?: string
-  onMapPress?: () => void
+  onMapPress?: (position: LatLng | null) => void
   onSelectedPlaceMarkerClick?: () => void
   onCandidatePlaceClick?: (place: PlaceSearchResult) => void
 }
@@ -130,7 +130,13 @@ export function CourseBuilderMap({
           strokeOpacity: 0.96,
           strokeStyle: 'solid',
         })
-        maps.event.addListener(map, 'click', () => onMapPressRef.current?.())
+        maps.event.addListener(map, 'click', (event) => {
+          const clickedPosition = event?.latLng
+          onMapPressRef.current?.(clickedPosition ? {
+            lat: clickedPosition.getLat(),
+            lng: clickedPosition.getLng(),
+          } : null)
+        })
         mapRef.current = map
         setReady(true)
         window.setTimeout(() => map.relayout(), 0)
@@ -188,6 +194,7 @@ export function CourseBuilderMap({
         content: candidateMarkerContent(place, onCandidatePlaceClick),
         zIndex: 9,
         yAnchor: 1,
+        clickable: true,
       })
     ))
   }, [candidatePlaces, onCandidatePlaceClick, ready])
@@ -204,6 +211,7 @@ export function CourseBuilderMap({
       content: candidateMarkerContent(searchAnchorPlace, onCandidatePlaceClick),
       zIndex: 10,
       yAnchor: 1,
+      clickable: true,
     })
   }, [onCandidatePlaceClick, ready, searchAnchorPlace, selectedPlace?.kakaoPlaceId])
 
@@ -220,6 +228,7 @@ export function CourseBuilderMap({
       content: selectedMarkerContent(onSelectedPlaceMarkerClick),
       zIndex: 11,
       yAnchor: 1,
+      clickable: true,
     })
     mapRef.current.panTo(position)
   }, [onSelectedPlaceMarkerClick, ready, selectedPlace])

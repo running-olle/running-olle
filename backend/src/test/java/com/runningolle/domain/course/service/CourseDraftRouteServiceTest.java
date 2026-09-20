@@ -123,6 +123,33 @@ class CourseDraftRouteServiceTest {
                 .hasMessageContaining("최소 2개");
     }
 
+    @Test
+    void rejectsOnlyConsecutiveDuplicateWaypoints() {
+        CourseDraftRouteRequest request = new CourseDraftRouteRequest(List.of(
+                new WaypointRequest("kakao-1", "성산일출봉", 33.462147, 126.936424, 0),
+                new WaypointRequest("kakao-1", "성산일출봉", 33.462147, 126.936424, 1)
+        ));
+
+        assertThatThrownBy(() -> courseDraftRouteService.calculateDraftRoute(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("연속");
+    }
+
+    @Test
+    void allowsReturningToAnEarlierWaypointAfterVisitingAnotherPlace() {
+        given(openRouteServiceClient.calculateFootWalkingRoute(anyList()))
+                .willReturn(routeResult(8.4, 84, 72, new SurfaceBreakdown(70, 30, 0)));
+        CourseDraftRouteRequest request = new CourseDraftRouteRequest(List.of(
+                new WaypointRequest("kakao-1", "성산일출봉", 33.462147, 126.936424, 0),
+                new WaypointRequest("kakao-2", "광치기해변", 33.452330, 126.924430, 1),
+                new WaypointRequest("kakao-1", "성산일출봉", 33.462147, 126.936424, 2)
+        ));
+
+        var response = courseDraftRouteService.calculateDraftRoute(request);
+
+        assertThat(response.distanceKm()).isEqualTo(8.4);
+    }
+
     private static OrsRouteResult routeResult(
             double distanceKm,
             int estimatedDurationMinutes,

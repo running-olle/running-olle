@@ -58,6 +58,7 @@ public class CourseCreateService {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
     private static final double EARTH_RADIUS_METERS = 6_371_000.0;
+    private static final double CONSECUTIVE_WAYPOINT_TOLERANCE_METERS = 5.0;
 
     private final CourseRepository courseRepository;
     private final CourseWaypointRepository courseWaypointRepository;
@@ -129,9 +130,28 @@ public class CourseCreateService {
             }
         }
 
-        return request.waypoints().stream()
+        List<WaypointRequest> sortedWaypoints = request.waypoints().stream()
                 .sorted(Comparator.comparing(WaypointRequest::orderIndex))
                 .toList();
+        validateConsecutiveWaypoints(sortedWaypoints);
+        return sortedWaypoints;
+    }
+
+    private static void validateConsecutiveWaypoints(List<WaypointRequest> waypoints) {
+        for (int index = 1; index < waypoints.size(); index++) {
+            WaypointRequest previous = waypoints.get(index - 1);
+            WaypointRequest current = waypoints.get(index);
+            boolean samePlaceId = StringUtils.hasText(previous.kakaoPlaceId())
+                    && previous.kakaoPlaceId().equals(current.kakaoPlaceId());
+            boolean samePosition = distanceMeters(previous.lat(), previous.lng(), current.lat(), current.lng())
+                    <= CONSECUTIVE_WAYPOINT_TOLERANCE_METERS;
+            if (samePlaceId || samePosition) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "같은 경유지를 연속으로 추가할 수 없습니다. 다른 경유지를 사이에 추가해 주세요."
+                );
+            }
+        }
     }
 
     private static List<Waypoint> toRoutingWaypoints(List<WaypointRequest> waypoints) {

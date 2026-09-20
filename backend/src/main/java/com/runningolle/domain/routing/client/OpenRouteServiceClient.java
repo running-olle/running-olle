@@ -28,7 +28,7 @@ public class OpenRouteServiceClient {
 
     private static final String PROVIDER = "OpenRouteService";
     private static final String BASE_URL = "https://api.openrouteservice.org";
-    private static final double WAYPOINT_SNAP_RADIUS_METERS = 2_000.0;
+    private static final double WAYPOINT_SNAP_RADIUS_METERS = 350.0;
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
 
     private final ExternalApiProperties properties;
@@ -50,7 +50,7 @@ public class OpenRouteServiceClient {
                             .toList(),
                     true,
                     List.of("surface", "steepness", "waytype"),
-                    new OrsRoutingOptions(List.of("steps")),
+                    new OrsRoutingOptions(List.of("ferries", "fords")),
                     waypoints.stream()
                             .map(waypoint -> WAYPOINT_SNAP_RADIUS_METERS)
                             .toList(),
