@@ -10,7 +10,9 @@ import com.runningolle.domain.tourism.entity.TourismPlace;
 import com.runningolle.domain.tourism.entity.TourismPlace.TourismPlaceDetailSnapshot;
 import com.runningolle.domain.tourism.repository.TourismPlaceRepository;
 import com.runningolle.global.exception.ExternalApiException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +36,23 @@ public class TourismPlaceDetailSyncService {
     private final ObjectMapper objectMapper;
 
     public TourismDetailSyncResponse syncPendingDetails() {
-        LocalDateTime processedAt = LocalDateTime.now();
+        ZoneId zoneId = ZoneId.of(tourismSyncProperties.getZone());
+        LocalDateTime processedAt = LocalDateTime.now(zoneId);
+        LocalDateTime dayStartedAt = LocalDate.now(zoneId).atStartOfDay();
+        int dailyLimit = Math.max(1, tourismSyncProperties.getDetailDailyLimit());
+        long attemptedToday = tourismPlaceRepository.countByDetailLastAttemptedAtGreaterThanEqual(dayStartedAt);
+        int remainingDailyCount = (int) Math.max(0, dailyLimit - attemptedToday);
+        int batchSize = Math.min(
+                Math.max(1, tourismSyncProperties.getDetailBatchSize()),
+                remainingDailyCount
+        );
+        if (batchSize == 0) {
+            return new TourismDetailSyncResponse(0, 0, 0, 0, 0, processedAt);
+        }
         var candidates = tourismPlaceRepository.findDetailSyncCandidates(
                 processedAt,
                 Math.max(1, tourismSyncProperties.getDetailMaxRetries()),
-                Math.max(1, tourismSyncProperties.getDetailBatchSize())
+                batchSize
         );
         int completedCount = 0;
         int failedCount = 0;
@@ -48,13 +62,17 @@ public class TourismPlaceDetailSyncService {
             processedCount++;
             try {
                 TourDetail detail = tourApiClient.getDetail(place.getContentId(), place.getContentTypeId())
-                        .orElse(null);
+                        .orElseThrow(() -> new ExternalApiException(
+                                "TourAPI",
+                                "TourAPI 상세정보 응답이 비어 있습니다. contentId=" + place.getContentId()
+                        ));
                 place.completeDetailSync(toSnapshot(place, detail), processedAt);
                 tourismPlaceRepository.save(place);
                 completedCount++;
             } catch (RuntimeException exception) {
                 place.failDetailSync(
                         exception.getMessage(),
+                        processedAt,
                         processedAt.plusHours(Math.max(1, tourismSyncProperties.getDetailRetryDelayHours()))
                 );
                 tourismPlaceRepository.save(place);
@@ -84,13 +102,6 @@ public class TourismPlaceDetailSyncService {
     }
 
     private TourismPlaceDetailSnapshot toSnapshot(TourismPlace place, TourDetail detail) {
-        if (detail == null) {
-            return new TourismPlaceDetailSnapshot(
-                    null, null, null, null, null, null, null, null,
-                    null, null, null, null, place.getRawData()
-            );
-        }
-
         return new TourismPlaceDetailSnapshot(
                 detail.title(),
                 detail.address(),

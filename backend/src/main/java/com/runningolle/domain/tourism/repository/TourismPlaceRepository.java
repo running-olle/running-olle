@@ -14,6 +14,8 @@ public interface TourismPlaceRepository extends JpaRepository<TourismPlace, UUID
 
     long countByIsDeletedFalseAndContentTypeIdIn(List<String> contentTypeIds);
 
+    long countByDetailLastAttemptedAtGreaterThanEqual(java.time.LocalDateTime since);
+
     @Query(value = """
             SELECT *
             FROM tourism_places
@@ -27,6 +29,7 @@ public interface TourismPlaceRepository extends JpaRepository<TourismPlace, UUID
               AND COALESCE(detail_retry_count, 0) < :maxRetries
               AND (detail_next_retry_at IS NULL OR detail_next_retry_at <= :now)
             ORDER BY
+              CASE content_type_id WHEN '12' THEN 0 WHEN '14' THEN 1 ELSE 2 END,
               CASE WHEN detail_sync_status = 'FAILED' THEN 1 ELSE 0 END,
               COALESCE(detail_retry_count, 0),
               synced_at,

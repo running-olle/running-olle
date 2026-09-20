@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 public class TourismPlaceBootstrapService {
 
     private final TourismPlaceSyncService tourismPlaceSyncService;
+    private final TourismPlaceDetailSyncService tourismPlaceDetailSyncService;
     private final TourismSyncProperties tourismSyncProperties;
     private final ExternalApiProperties externalApiProperties;
 
@@ -34,7 +35,17 @@ public class TourismPlaceBootstrapService {
             var response = tourismPlaceSyncService.syncJejuTourismPlaces();
             log.info("TourAPI tourism place startup inventory sync finished. response={}", response);
         } catch (RuntimeException exception) {
-            log.error("TourAPI tourism place bootstrap failed.", exception);
+            log.error("TourAPI tourism place startup inventory sync failed.", exception);
+        }
+
+        if (tourismSyncProperties.isDetailSchedulerEnabled()) {
+            try {
+                log.info("TourAPI tourism place startup detail sync started.");
+                var detailResponse = tourismPlaceDetailSyncService.syncPendingDetails();
+                log.info("TourAPI tourism place startup detail sync finished. response={}", detailResponse);
+            } catch (RuntimeException exception) {
+                log.error("TourAPI tourism place startup detail sync failed.", exception);
+            }
         }
     }
 }

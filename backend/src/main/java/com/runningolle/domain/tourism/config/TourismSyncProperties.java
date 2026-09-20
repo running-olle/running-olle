@@ -20,8 +20,9 @@ public class TourismSyncProperties {
     private boolean schedulerEnabled = false;
     private String cron = "0 0 4 * * *";
     private boolean detailSchedulerEnabled = false;
-    private String detailCron = "0 30 4 * * *";
+    private String detailCron = "0 30 */4 * * *";
     private int detailBatchSize = 300;
+    private int detailDailyLimit = 300;
     private int detailMaxRetries = 5;
     private int detailRetryDelayHours = 24;
     private String zone = "Asia/Seoul";

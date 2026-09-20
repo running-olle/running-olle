@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,6 +97,35 @@ class TourismPlaceDetailSyncServiceTest {
         assertThat(place.getUseTime()).isEqualTo("기존 이용 시간");
         assertThat(place.getDetailLastError()).contains("quota exceeded");
         verify(tourismPlaceRepository).save(place);
+    }
+
+    @Test
+    void retriesLaterWhenTourApiReturnsNoDetail() {
+        TourismPlace place = TourismPlace.createFromInventory(snapshot("3", null, null));
+        given(tourismPlaceRepository.findDetailSyncCandidates(any(), eq(5), eq(300)))
+                .willReturn(List.of(place));
+        given(tourApiClient.getDetail("3", "12")).willReturn(Optional.empty());
+
+        var response = detailSyncService.syncPendingDetails();
+
+        assertThat(response.completedCount()).isZero();
+        assertThat(response.failedCount()).isEqualTo(1);
+        assertThat(place.getDetailSyncStatus()).isEqualTo(TourismDetailSyncStatus.FAILED);
+        assertThat(place.getDetailRetryCount()).isEqualTo(1);
+        assertThat(place.getDetailLastError()).contains("상세정보 응답이 비어 있습니다");
+        verify(tourismPlaceRepository).save(place);
+    }
+
+    @Test
+    void skipsBatchWhenDailyAttemptLimitIsExhausted() {
+        given(tourismPlaceRepository.countByDetailLastAttemptedAtGreaterThanEqual(any()))
+                .willReturn(300L);
+
+        var response = detailSyncService.syncPendingDetails();
+
+        assertThat(response.selectedCount()).isZero();
+        assertThat(response.processedCount()).isZero();
+        verify(tourismPlaceRepository, never()).findDetailSyncCandidates(any(), any(Integer.class), any(Integer.class));
     }
 
     private static TourismPlaceSnapshot snapshot(String contentId, String overview, String useTime) {
