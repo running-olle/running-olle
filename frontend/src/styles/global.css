@@ -5,10 +5,15 @@
 :root { font-family: var(--font-family-sans); color: var(--color-ink); background: var(--color-canvas); font-synthesis: none; }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; min-height: 100%; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; overflow-x: clip; background: var(--color-canvas); }
 button, input, textarea { font: inherit; }
 button { border: 0; cursor: pointer; }
 button, a { -webkit-tap-highlight-color: transparent; }
+
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+}
 
 #root { width: 100%; }
 #root > main { width: min(100%, var(--app-max-width)); min-height: 100dvh; margin: 0 auto; background: var(--color-surface); box-shadow: var(--shadow-1); }
