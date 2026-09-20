@@ -211,7 +211,7 @@
 .course-source-badge { color: var(--color-success); background: var(--color-success-subtle); }
 .course-builder-zoom-controls { position: absolute; z-index: var(--z-map-content); left: max(var(--spacing-4), var(--safe-left)); bottom: 196px; }
 .course-builder-selected-marker { background: var(--color-brand-500); box-shadow: var(--shadow-2); }
-.course-builder-current-marker { background: var(--color-info-subtle); }
+.course-builder-current-marker { background: color-mix(in srgb, var(--color-info) 20%, transparent); }
 .course-builder-current-marker span { background: var(--color-info); box-shadow: var(--shadow-1); }
 .course-builder-candidate-marker { background: var(--color-ink-secondary); box-shadow: var(--shadow-1); }
 .course-builder-candidate-marker.is-tourism { background: var(--color-success); box-shadow: var(--shadow-2); }

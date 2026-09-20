@@ -4,6 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Strip diagnostics only from the production bundle. The dev server keeps
+  // them so local debugging still works.
+  build: {
+    rolldownOptions: {
+      output: {
+        minify: {
+          compress: {
+            dropConsole: true,
+            dropDebugger: true,
+          },
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -11,6 +25,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         cleanupOutdatedCaches: true,
+        disableDevLogs: true,
         navigateFallbackDenylist: [
           /^\/api\//,
           /^\/oauth2\//,
