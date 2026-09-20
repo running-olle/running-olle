@@ -7,7 +7,13 @@ export type KakaoMap = {
   relayout(): void
   panTo(position: KakaoLatLng): void
   setCenter(position: KakaoLatLng): void
-  setBounds(bounds: KakaoLatLngBounds): void
+  setBounds(
+    bounds: KakaoLatLngBounds,
+    paddingTop?: number,
+    paddingRight?: number,
+    paddingBottom?: number,
+    paddingLeft?: number,
+  ): void
   getLevel(): number
   setLevel(level: number): void
 }

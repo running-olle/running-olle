@@ -1,5 +1,6 @@
 package com.runningolle.domain.home.dto;
 
+import com.runningolle.domain.course.dto.RouteCoordinateResponse;
 import com.runningolle.domain.course.enums.Difficulty;
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,7 +17,8 @@ public record PopularCoursesResponse(
             BigDecimal distanceKm,
             Difficulty difficulty,
             long participantCount,
-            String thumbnailImageUrl
+            String thumbnailImageUrl,
+            List<RouteCoordinateResponse> previewRouteCoordinates
     ) {
     }
 }

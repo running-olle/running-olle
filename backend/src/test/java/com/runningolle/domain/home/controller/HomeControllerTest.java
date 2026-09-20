@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.runningolle.domain.course.enums.Difficulty;
+import com.runningolle.domain.course.dto.RouteCoordinateResponse;
 import com.runningolle.domain.home.dto.PopularCoursesResponse;
 import com.runningolle.domain.home.dto.RecommendedCoursesResponse;
 import com.runningolle.domain.home.service.CourseRecommendationService;
@@ -66,7 +67,11 @@ class HomeControllerTest {
                                 new BigDecimal("6.40"),
                                 Difficulty.LOW,
                                 12,
-                                "/uploads/aewol.jpg"
+                                "/uploads/aewol.jpg",
+                                List.of(
+                                        new RouteCoordinateResponse(33.45, 126.55),
+                                        new RouteCoordinateResponse(33.46, 126.56)
+                                )
                         )
                 )));
 
@@ -75,7 +80,8 @@ class HomeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.courses[0].courseId").value(courseId.toString()))
                 .andExpect(jsonPath("$.courses[0].rank").value(1))
-                .andExpect(jsonPath("$.courses[0].participantCount").value(12));
+                .andExpect(jsonPath("$.courses[0].participantCount").value(12))
+                .andExpect(jsonPath("$.courses[0].previewRouteCoordinates.length()").value(2));
 
         then(popularCourseService).should().getPopularCourses();
     }
@@ -109,7 +115,11 @@ class HomeControllerTest {
                                 91.5,
                                 null,
                                 91.5,
-                                "Recommended because it matches your preferred distance."
+                                "Recommended because it matches your preferred distance.",
+                                List.of(
+                                        new RouteCoordinateResponse(33.45, 126.55),
+                                        new RouteCoordinateResponse(33.46, 126.56)
+                                )
                         )
                 )));
 
@@ -121,7 +131,8 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.recommendations[0].courseName").value("Aewol Coast Run"))
                 .andExpect(jsonPath("$.recommendations[0].distanceFromUserKm").value(3.2))
                 .andExpect(jsonPath("$.recommendations[0].baseScore").value(91.5))
-                .andExpect(jsonPath("$.recommendations[0].finalScore").value(91.5));
+                .andExpect(jsonPath("$.recommendations[0].finalScore").value(91.5))
+                .andExpect(jsonPath("$.recommendations[0].previewRouteCoordinates.length()").value(2));
 
         then(courseRecommendationService).should().getRecommendedCourses(userId, 33.45, 126.57);
     }

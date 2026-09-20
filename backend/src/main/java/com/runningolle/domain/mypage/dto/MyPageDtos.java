@@ -47,10 +47,9 @@ public final class MyPageDtos {
     public record RunTripReportDetail(UUID id, String name, LocalDate startDate, LocalDate endDate,
                                       String thumbnailImageUrl, RunTripReportStatistics statistics,
                                       RunTripReportBreakdown breakdown, List<Run> runs, List<Visit> visits) {}
-    public record RunTripOverallStatistics(long reportCount, long runCount, long uniqueCourseCount,
-                                            BigDecimal totalDistanceKm, long totalDurationSeconds,
-                                            BigDecimal averagePace, long uniqueVisitedPlaceCount,
-                                            BigDecimal averageDistancePerReport) {}
+    public record OverallStatistics(long runCount, long uniqueCourseCount, BigDecimal totalDistanceKm,
+                                    long totalDurationSeconds, BigDecimal averagePace,
+                                    long uniqueVisitedPlaceCount, BigDecimal averageDistancePerRun) {}
     public record SaveRunTripReportRequest(@NotBlank @Size(max = 200) String name,
                                            LocalDate startDate, LocalDate endDate,
                                            @Size(max = 4_200_000) String thumbnailImageUrl) {}

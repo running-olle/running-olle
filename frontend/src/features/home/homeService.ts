@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { axiosInstance } from '../../api/axiosInstance'
+import type { CourseRouteCoordinate } from '../course/types'
 
 export type HomeRecommendedCourseDifficulty = 'LOW' | 'MID' | 'HIGH'
 
@@ -15,6 +16,7 @@ export type HomeRecommendedCourse = {
   ragScore: number | null
   finalScore: number
   recommendationReason: string
+  previewRouteCoordinates: CourseRouteCoordinate[]
 }
 
 export type HomePopularCourse = {
@@ -25,6 +27,7 @@ export type HomePopularCourse = {
   difficulty: HomeRecommendedCourseDifficulty
   participantCount: number
   thumbnailImageUrl: string | null
+  previewRouteCoordinates: CourseRouteCoordinate[]
 }
 
 type RecommendedCoursesResponse = {

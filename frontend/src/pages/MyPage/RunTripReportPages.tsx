@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Badge, Button, Card, EmptyState, Icon, Input, ListRow, Modal, SectionHeader, Spinner } from '../../components/ui'
 import { myPageService } from '../../features/mypage/myPageService'
-import type { RunRecord, RunTripOverallStatistics, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, Visit } from '../../features/mypage/types'
+import type { OverallStatistics as OverallStatisticsData, RunRecord, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, Visit } from '../../features/mypage/types'
 import { MyPageHeader as PageHeader, MyPageLoading as Loading } from './MyPageCommon'
 import './mypage.css'
 
@@ -58,11 +58,10 @@ function ReportList({ reports }: { reports: RunTripReportSummary[] }) {
   </div>
 }
 
-function OverallStatistics({ statistics }: { statistics: RunTripOverallStatistics }) {
+function OverallStatistics({ statistics }: { statistics: OverallStatisticsData }) {
   return <>
-    <p className="report-scope-note">생성한 런트립 리포트에 포함된 활동을 기준으로 집계했어요.</p>
-    <section className="report-stat-grid report-stat-grid--overall" aria-label="전체 런트립 통계">
-      <Stat label="총 런트립" value={String(statistics.reportCount)} unit="개"/>
+    <p className="report-scope-note">지금까지 기록한 모든 러닝과 방문 기록을 기준으로 집계했어요.</p>
+    <section className="report-stat-grid report-stat-grid--overall" aria-label="나의 전체 러닝 통계">
       <Stat label="총 러닝" value={String(statistics.runCount)} unit="회"/>
       <Stat label="누적 거리" value={statistics.totalDistanceKm.toFixed(1)} unit="km"/>
       <Stat label="러닝 시간" value={formatTime(statistics.totalDurationSeconds)}/>
@@ -70,9 +69,9 @@ function OverallStatistics({ statistics }: { statistics: RunTripOverallStatistic
       <Stat label="방문 장소" value={String(statistics.uniqueVisitedPlaceCount)} unit="곳"/>
     </section>
     <Card as="section" shadow="none" padding="lg" className="report-card">
-      <h3>나의 런트립 브리핑</h3>
+      <h3>나의 러닝 브리핑</h3>
       <p>전체 평균 페이스 <strong>{formatPace(statistics.averagePace)}/km</strong></p>
-      <p>런트립당 평균 거리 <strong>{statistics.averageDistancePerReport.toFixed(1)}km</strong></p>
+      <p>러닝당 평균 거리 <strong>{statistics.averageDistancePerRun.toFixed(1)}km</strong></p>
     </Card>
   </>
 }
@@ -80,7 +79,7 @@ function OverallStatistics({ statistics }: { statistics: RunTripOverallStatistic
 export function ReportsPage() {
   const [tab, setTab] = useState<'trip' | 'all'>('trip')
   const [reports, setReports] = useState<RunTripReportSummary[] | null>(null)
-  const [statistics, setStatistics] = useState<RunTripOverallStatistics | null>(null)
+  const [statistics, setStatistics] = useState<OverallStatisticsData | null>(null)
   const [reportError, setReportError] = useState(false)
   const [statisticsError, setStatisticsError] = useState(false)
 
@@ -92,7 +91,7 @@ export function ReportsPage() {
   const loadStatistics = () => {
     setStatisticsError(false)
     setStatistics(null)
-    myPageService.reportStatistics().then(setStatistics).catch(() => setStatisticsError(true))
+    myPageService.statistics().then(setStatistics).catch(() => setStatisticsError(true))
   }
 
   useEffect(() => { loadReports(); loadStatistics() }, [])
