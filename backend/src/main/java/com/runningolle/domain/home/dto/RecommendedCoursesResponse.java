@@ -1,5 +1,6 @@
 package com.runningolle.domain.home.dto;
 
+import com.runningolle.domain.course.dto.RouteCoordinateResponse;
 import com.runningolle.domain.course.enums.Difficulty;
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,7 +21,8 @@ public record RecommendedCoursesResponse(
             double baseScore,
             Double ragScore,
             double finalScore,
-            String recommendationReason
+            String recommendationReason,
+            List<RouteCoordinateResponse> previewRouteCoordinates
     ) {
     }
 }
