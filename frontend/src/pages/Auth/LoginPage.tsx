@@ -1,7 +1,23 @@
+import { useEffect } from 'react'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
 export function LoginPage() {
   const oauthError = new URLSearchParams(window.location.search).get('oauth_error')
+
+  useEffect(() => {
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    const previousThemeColor = themeColor?.content
+
+    themeColor?.setAttribute('content', '#5f9fc5')
+
+    return () => {
+      if (themeColor && previousThemeColor) {
+        themeColor.content = previousThemeColor
+      }
+    }
+  }, [])
+
   const startKakaoLogin = () => {
     window.location.href = `${API_BASE_URL}/oauth2/authorization/kakao`
   }

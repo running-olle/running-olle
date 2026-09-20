@@ -18,13 +18,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 #root { width: 100%; }
 #root > main { width: min(100%, var(--app-max-width)); min-height: 100dvh; margin: 0 auto; background: var(--color-surface); box-shadow: var(--shadow-1); }
 
-.login-page { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 24px 26px 28px; color: #fff; background: #111 url('/images/login-hero.png') center/cover no-repeat !important; }
-.login-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(2,18,25,.6) 0%, rgba(0,0,0,.03) 42%, rgba(0,0,0,.72) 78%, rgba(0,0,0,.9) 100%); }
-.login-copy, .login-action { position: relative; z-index: 1; }
+.login-page { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: calc(24px + var(--safe-top)) max(26px, var(--safe-right)) calc(28px + var(--safe-bottom)) max(26px, var(--safe-left)); color: #fff; background: #5f9fc5 url('/images/login-hero-jeju.jpg') center/cover no-repeat !important; }
+.login-overlay { position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, rgba(4,40,55,.34) 0%, rgba(4,38,47,.04) 44%, rgba(7,20,25,.4) 67%, rgba(4,12,16,.88) 100%), linear-gradient(90deg, rgba(2,37,48,.3) 0%, transparent 68%); }
+.login-copy, .login-action { position: relative; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 20px; letter-spacing: -.5px; }
 .brand-mark { display: block; width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,.22)); }
-.login-copy h1 { margin: 26px 0 8px; font-size: clamp(29px, 8vw, 36px); line-height: 1.25; letter-spacing: -1.6px; }
-.login-copy p { margin: 0; color: rgba(255,255,255,.67); font-size: 14px; }
+.login-copy h1 { margin: 26px 0 8px; font-size: clamp(29px, 8vw, 36px); line-height: 1.25; letter-spacing: -1.6px; text-shadow: 0 2px 12px rgba(0,31,43,.3); }
+.login-copy p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; text-shadow: 0 1px 8px rgba(0,31,43,.35); }
 .login-action h2 { margin: 0 0 5px; font-size: 21px; }
 .login-action > p { margin: 0 0 20px; color: rgba(255,255,255,.72); font-size: 13px; }
 .kakao-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border-radius: 17px; background: #fee500; color: #201b12; font-weight: 800; font-size: 16px; box-shadow: 0 8px 22px rgba(0,0,0,.22); }
