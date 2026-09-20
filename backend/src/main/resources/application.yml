@@ -84,6 +84,11 @@ tourism:
     bootstrap-enabled: ${TOURISM_SYNC_BOOTSTRAP_ENABLED:true}
     scheduler-enabled: ${TOURISM_SYNC_SCHEDULER_ENABLED:true}
     cron: "${TOURISM_SYNC_CRON:0 0 4 ? * MON}"
+    detail-scheduler-enabled: ${TOURISM_DETAIL_SYNC_SCHEDULER_ENABLED:true}
+    detail-cron: "${TOURISM_DETAIL_SYNC_CRON:0 30 4 * * *}"
+    detail-batch-size: ${TOURISM_DETAIL_SYNC_BATCH_SIZE:300}
+    detail-max-retries: ${TOURISM_DETAIL_SYNC_MAX_RETRIES:5}
+    detail-retry-delay-hours: ${TOURISM_DETAIL_SYNC_RETRY_DELAY_HOURS:24}
     zone: ${TOURISM_SYNC_ZONE:Asia/Seoul}
   event-sync:
     area-code: ${TOURISM_EVENT_SYNC_AREA_CODE:39}

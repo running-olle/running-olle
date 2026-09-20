@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runningolle.domain.tourism.client.TourApiClient;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaItem;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaPage;
-import com.runningolle.domain.tourism.client.TourApiClient.TourDetail;
 import com.runningolle.domain.tourism.config.TourismSyncProperties;
 import com.runningolle.domain.tourism.dto.TourismSyncResponse;
 import com.runningolle.domain.tourism.entity.TourismPlace;
@@ -101,18 +100,16 @@ public class TourismPlaceSyncService {
             return;
         }
 
-        Optional<TourDetail> detail = fetchDetail(item, stats);
-
         try {
-            TourismPlaceSnapshot snapshot = toSnapshot(item, detail.orElse(null), syncedAt);
             Optional<TourismPlace> savedPlace = tourismPlaceRepository.findByContentId(item.contentId());
+            TourismPlaceSnapshot snapshot = toInventorySnapshot(item, savedPlace.orElse(null), syncedAt);
 
             if (savedPlace.isPresent()) {
-                savedPlace.get().sync(snapshot);
+                savedPlace.get().syncInventory(snapshot);
                 tourismPlaceRepository.save(savedPlace.get());
                 stats.updatedCount++;
             } else {
-                tourismPlaceRepository.save(TourismPlace.create(snapshot));
+                tourismPlaceRepository.save(TourismPlace.createFromInventory(snapshot));
                 stats.createdCount++;
             }
         } catch (RuntimeException exception) {
@@ -126,21 +123,6 @@ public class TourismPlaceSyncService {
         }
     }
 
-    private Optional<TourDetail> fetchDetail(TourAreaItem item, SyncStats stats) {
-        try {
-            return tourApiClient.getDetail(item.contentId(), item.contentTypeId());
-        } catch (RuntimeException exception) {
-            stats.failedCount++;
-            log.warn(
-                    "Failed to enrich TourAPI place detail. contentId={}, title={}",
-                    item.contentId(),
-                    item.title(),
-                    exception
-            );
-            return Optional.empty();
-        }
-    }
-
     private static boolean isSyncable(TourAreaItem item) {
         return StringUtils.hasText(item.contentId())
                 && StringUtils.hasText(item.contentTypeId())
@@ -149,39 +131,42 @@ public class TourismPlaceSyncService {
                 && item.lng() != null;
     }
 
-    private TourismPlaceSnapshot toSnapshot(TourAreaItem item, TourDetail detail, LocalDateTime syncedAt) {
-        double lat = detail == null || detail.lat() == null ? item.lat() : detail.lat();
-        double lng = detail == null || detail.lng() == null ? item.lng() : detail.lng();
-
+    private TourismPlaceSnapshot toInventorySnapshot(
+            TourAreaItem item,
+            TourismPlace existingPlace,
+            LocalDateTime syncedAt
+    ) {
         return new TourismPlaceSnapshot(
                 item.contentId(),
-                firstNonBlank(detail == null ? null : detail.contentTypeId(), item.contentTypeId()),
-                firstNonBlank(detail == null ? null : detail.title(), item.title()),
-                firstNonBlank(detail == null ? null : detail.address(), item.address()),
-                firstNonBlank(detail == null ? null : detail.detailAddress(), item.detailAddress()),
+                item.contentTypeId(),
+                item.title(),
+                item.address(),
+                item.detailAddress(),
                 item.tel(),
-                firstNonBlank(detail == null ? null : detail.category1(), item.category1()),
-                firstNonBlank(detail == null ? null : detail.category2(), item.category2()),
-                firstNonBlank(detail == null ? null : detail.category3(), item.category3()),
-                firstNonBlank(detail == null ? null : detail.areaCode(), item.areaCode()),
-                firstNonBlank(detail == null ? null : detail.sigunguCode(), item.sigunguCode()),
-                point(lng, lat),
-                firstNonBlank(detail == null ? null : detail.firstImageUrl(), item.firstImageUrl()),
+                item.category1(),
+                item.category2(),
+                item.category3(),
+                item.areaCode(),
+                item.sigunguCode(),
+                point(item.lng(), item.lat()),
+                item.firstImageUrl(),
                 item.thumbnailImageUrl(),
-                detail == null ? null : detail.overview(),
-                detail == null ? null : detail.useTime(),
+                existingPlace == null ? null : existingPlace.getOverview(),
+                existingPlace == null ? null : existingPlace.getUseTime(),
                 item.createdTime(),
                 item.modifiedTime(),
-                rawData(item, detail),
+                inventoryRawData(item, existingPlace),
                 syncedAt
         );
     }
 
-    private JsonNode rawData(TourAreaItem item, TourDetail detail) {
+    private JsonNode inventoryRawData(TourAreaItem item, TourismPlace existingPlace) {
         Map<String, Object> raw = new LinkedHashMap<>();
         raw.put("areaBasedList2", item.raw());
-        if (detail != null) {
-            raw.put("detail", detail.raw());
+        if (existingPlace != null
+                && existingPlace.getRawData() != null
+                && existingPlace.getRawData().has("detail")) {
+            raw.put("detail", existingPlace.getRawData().get("detail"));
         }
         return objectMapper.valueToTree(raw);
     }
@@ -190,10 +175,6 @@ public class TourismPlaceSyncService {
         Point point = GEOMETRY_FACTORY.createPoint(new Coordinate(lng, lat));
         point.setSRID(4326);
         return point;
-    }
-
-    private static String firstNonBlank(String primary, String fallback) {
-        return StringUtils.hasText(primary) ? primary : fallback;
     }
 
     private static class SyncStats {

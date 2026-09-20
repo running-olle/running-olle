@@ -1,11 +1,9 @@
 package com.runningolle.domain.tourism.service;
 
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.runningolle.domain.tourism.config.TourismSyncProperties;
-import com.runningolle.domain.tourism.repository.TourismPlaceRepository;
 import com.runningolle.global.config.properties.ExternalApiProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,9 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class TourismPlaceBootstrapServiceTest {
-
-    @Mock
-    private TourismPlaceRepository tourismPlaceRepository;
 
     @Mock
     private TourismPlaceSyncService tourismPlaceSyncService;
@@ -32,7 +27,6 @@ class TourismPlaceBootstrapServiceTest {
         externalApiProperties = new ExternalApiProperties();
         externalApiProperties.setTourApiKey("tour-api-key");
         tourismPlaceBootstrapService = new TourismPlaceBootstrapService(
-                tourismPlaceRepository,
                 tourismPlaceSyncService,
                 tourismSyncProperties,
                 externalApiProperties
@@ -40,32 +34,18 @@ class TourismPlaceBootstrapServiceTest {
     }
 
     @Test
-    void backfillsTourismPlacesWhenCacheIsEmpty() {
-        given(tourismPlaceRepository.countByIsDeletedFalseAndContentTypeIdIn(tourismSyncProperties.getContentTypeIds()))
-                .willReturn(0L);
-
-        tourismPlaceBootstrapService.backfillJejuTourismPlacesIfEmpty();
+    void refreshesLightweightInventoryOnEveryStartup() {
+        tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
         verify(tourismPlaceSyncService).syncJejuTourismPlaces();
-    }
-
-    @Test
-    void skipsBackfillWhenCacheAlreadyExists() {
-        given(tourismPlaceRepository.countByIsDeletedFalseAndContentTypeIdIn(tourismSyncProperties.getContentTypeIds()))
-                .willReturn(1L);
-
-        tourismPlaceBootstrapService.backfillJejuTourismPlacesIfEmpty();
-
-        verify(tourismPlaceSyncService, never()).syncJejuTourismPlaces();
     }
 
     @Test
     void skipsBackfillWhenBootstrapIsDisabled() {
         tourismSyncProperties.setBootstrapEnabled(false);
 
-        tourismPlaceBootstrapService.backfillJejuTourismPlacesIfEmpty();
+        tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
-        verify(tourismPlaceRepository, never()).countByIsDeletedFalseAndContentTypeIdIn(tourismSyncProperties.getContentTypeIds());
         verify(tourismPlaceSyncService, never()).syncJejuTourismPlaces();
     }
 
@@ -73,9 +53,8 @@ class TourismPlaceBootstrapServiceTest {
     void skipsBackfillWhenTourApiKeyIsEmpty() {
         externalApiProperties.setTourApiKey("");
 
-        tourismPlaceBootstrapService.backfillJejuTourismPlacesIfEmpty();
+        tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
-        verify(tourismPlaceRepository, never()).countByIsDeletedFalseAndContentTypeIdIn(tourismSyncProperties.getContentTypeIds());
         verify(tourismPlaceSyncService, never()).syncJejuTourismPlaces();
     }
 }

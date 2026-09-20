@@ -19,6 +19,31 @@ public interface TourismPlaceRepository extends JpaRepository<TourismPlace, UUID
             FROM tourism_places
             WHERE is_deleted = false
               AND content_type_id IN ('12', '14', '28')
+              AND (
+                    detail_sync_status IS NULL
+                    OR detail_sync_status = 'PENDING'
+                    OR detail_sync_status = 'FAILED'
+                  )
+              AND COALESCE(detail_retry_count, 0) < :maxRetries
+              AND (detail_next_retry_at IS NULL OR detail_next_retry_at <= :now)
+            ORDER BY
+              CASE WHEN detail_sync_status = 'FAILED' THEN 1 ELSE 0 END,
+              COALESCE(detail_retry_count, 0),
+              synced_at,
+              content_id
+            LIMIT :batchSize
+            """, nativeQuery = true)
+    List<TourismPlace> findDetailSyncCandidates(
+            @Param("now") java.time.LocalDateTime now,
+            @Param("maxRetries") int maxRetries,
+            @Param("batchSize") int batchSize
+    );
+
+    @Query(value = """
+            SELECT *
+            FROM tourism_places
+            WHERE is_deleted = false
+              AND content_type_id IN ('12', '14', '28')
               AND ST_DWithin(
                     CAST(location AS geography),
                     CAST(ST_SetSRID(ST_MakePoint(:lng, :lat), 4326) AS geography),
