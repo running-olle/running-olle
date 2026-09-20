@@ -10,9 +10,9 @@ export function LoginPage() {
     <main className="login-page">
       <div className="login-overlay" />
       <section className="login-copy">
-        <div className="brand"><span className="brand-mark">🏃</span><strong>러닝올레</strong></div>
-        <h1>제주를 달리며<br />여행하다 🌊</h1>
-        <p>런트립의 새로운 시작, 러닝올레</p>
+        <div className="brand"><img className="brand-mark" src="/images/running-olle-logo.png" alt="" /><strong>러닝올레</strong></div>
+        <h1>제주를 달리며<br />여행하다</h1>
+        <p>제주도로 러닝하러 올레?</p>
       </section>
       <section className="login-action">
         <h2>시작해볼까요?</h2>

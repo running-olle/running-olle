@@ -22,7 +22,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .login-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(2,18,25,.6) 0%, rgba(0,0,0,.03) 42%, rgba(0,0,0,.72) 78%, rgba(0,0,0,.9) 100%); }
 .login-copy, .login-action { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 20px; letter-spacing: -.5px; }
-.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #ff6418; font-size: 15px; }
+.brand-mark { display: block; width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,.22)); }
 .login-copy h1 { margin: 26px 0 8px; font-size: clamp(29px, 8vw, 36px); line-height: 1.25; letter-spacing: -1.6px; }
 .login-copy p { margin: 0; color: rgba(255,255,255,.67); font-size: 14px; }
 .login-action h2 { margin: 0 0 5px; font-size: 21px; }
