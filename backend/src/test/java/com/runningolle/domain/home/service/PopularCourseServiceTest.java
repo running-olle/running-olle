@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.runningolle.domain.course.enums.Difficulty;
+import com.runningolle.domain.course.repository.CourseRepository;
 import com.runningolle.domain.home.dto.PopularCoursesResponse;
 import com.runningolle.domain.running.repository.RunningRecordRepository;
 import java.math.BigDecimal;
@@ -27,6 +28,9 @@ class PopularCourseServiceTest {
     @Mock
     private RunningRecordRepository runningRecordRepository;
 
+    @Mock
+    private CourseRepository courseRepository;
+
     @Test
     void returnsAtMostFivePopularCoursesWithSequentialRanksForTheLastThirtyDays() {
         RunningRecordRepository.PopularCourseProjection first = popularCourse(
@@ -40,7 +44,7 @@ class PopularCourseServiceTest {
                 org.mockito.ArgumentMatchers.any(LocalDateTime.class),
                 org.mockito.ArgumentMatchers.eq(PageRequest.of(0, 5))
         )).willReturn(List.of(first, second));
-        PopularCourseService service = new PopularCourseService(runningRecordRepository);
+        PopularCourseService service = new PopularCourseService(runningRecordRepository, courseRepository);
         LocalDateTime before = LocalDateTime.now(ZoneOffset.UTC);
 
         PopularCoursesResponse response = service.getPopularCourses();
@@ -69,7 +73,7 @@ class PopularCourseServiceTest {
                 org.mockito.ArgumentMatchers.any(LocalDateTime.class),
                 org.mockito.ArgumentMatchers.eq(PageRequest.of(0, 5))
         )).willReturn(List.of());
-        PopularCourseService service = new PopularCourseService(runningRecordRepository);
+        PopularCourseService service = new PopularCourseService(runningRecordRepository, courseRepository);
 
         PopularCoursesResponse response = service.getPopularCourses();
 

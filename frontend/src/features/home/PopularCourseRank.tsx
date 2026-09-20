@@ -6,6 +6,7 @@ import { ListRow } from '../../components/ui/ListRow'
 import { MetaList } from '../../components/ui/MetaList'
 import { SectionHeader } from '../../components/ui/SectionHeader'
 import type { CourseImageTone } from '../../mocks/home'
+import { CourseRouteMap } from '../course/CourseRouteMap'
 import { CourseThumbnail } from './CourseThumbnail'
 import type { HomePopularCourse, HomeRecommendedCourseDifficulty } from './homeService'
 
@@ -60,11 +61,24 @@ export function PopularCourseRank({ courses, status }: PopularCourseRankProps) {
                 leading={(
                   <div className="flex items-center gap-3">
                     <strong className="w-5 text-center text-section-title font-extrabold tabular-nums text-brand-700">{course.rank}</strong>
-                    <CourseThumbnail
-                      tone={difficultyTone[course.difficulty]}
-                      imageUrl={course.thumbnailImageUrl}
-                      className="h-12 w-12"
-                    />
+                    <div className="relative h-16 w-20 overflow-hidden rounded-lg">
+                      {(course.previewRouteCoordinates?.length ?? 0) > 1 ? (
+                        <CourseRouteMap
+                          routeCoordinates={course.previewRouteCoordinates}
+                          waypoints={[]}
+                          showCurrentPositionMarker={false}
+                          plannedRouteStyle={{ strokeWeight: 3 }}
+                          fitPadding={8}
+                          className="pointer-events-none h-full w-full"
+                        />
+                      ) : (
+                        <CourseThumbnail
+                          tone={difficultyTone[course.difficulty]}
+                          imageUrl={course.thumbnailImageUrl}
+                          className="h-16 w-20"
+                        />
+                      )}
+                    </div>
                   </div>
                 )}
                 title={course.courseName}

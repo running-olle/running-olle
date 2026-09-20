@@ -1,9 +1,12 @@
 package com.runningolle.domain.home.service;
 
+import com.runningolle.domain.course.dto.RouteCoordinateResponse;
+import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.entity.CourseTheme;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
+import com.runningolle.domain.course.repository.CourseRepository;
 import com.runningolle.domain.home.config.HomeRecommendationProperties;
 import com.runningolle.domain.home.dto.RecommendedCoursesResponse;
 import com.runningolle.domain.home.repository.CourseRecommendationQueryRepository;
@@ -33,6 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +84,7 @@ public class CourseRecommendationService {
     private final UserUserTypeRepository userUserTypeRepository;
     private final UserThemeRepository userThemeRepository;
     private final CourseThemeRepository courseThemeRepository;
+    private final CourseRepository courseRepository;
     private final CourseRecommendationQueryRepository courseRecommendationQueryRepository;
     private final HomeRecommendationProperties homeRecommendationProperties;
     private final ObjectProvider<CourseRecommendationReranker> courseRecommendationRerankerProvider;
@@ -101,8 +106,12 @@ public class CourseRecommendationService {
         Map<UUID, String> fallbackReasons = fallbackReasonsByCourseId(preference, topBaseCandidatesForReranking);
         List<ScoredRecommendation> finalRecommendations =
                 applyOptionalReranking(preference, topBaseCandidatesForReranking);
+        Map<UUID, Course> coursesById = courseRepository.findAllById(
+                        finalRecommendations.stream().map(item -> item.candidate().courseId()).toList()
+                ).stream()
+                .collect(Collectors.toMap(Course::getId, Function.identity()));
 
-        return new RecommendedCoursesResponse(toResponseItems(finalRecommendations, fallbackReasons));
+        return new RecommendedCoursesResponse(toResponseItems(finalRecommendations, fallbackReasons, coursesById));
     }
 
     private UserPreference loadUserPreference(UUID userId) {
@@ -175,12 +184,17 @@ public class CourseRecommendationService {
 
     private List<RecommendedCoursesResponse.RecommendedCourseItem> toResponseItems(
             List<ScoredRecommendation> finalRecommendations,
-            Map<UUID, String> fallbackReasons
+            Map<UUID, String> fallbackReasons,
+            Map<UUID, Course> coursesById
     ) {
         return finalRecommendations.stream()
                 .sorted(finalRecommendationComparator())
                 .limit(RESPONSE_RECOMMENDATION_LIMIT)
-                .map(recommendation -> toResponseItem(recommendation, fallbackReasons.get(recommendation.candidate().courseId())))
+                .map(recommendation -> toResponseItem(
+                        recommendation,
+                        fallbackReasons.get(recommendation.candidate().courseId()),
+                        coursesById.get(recommendation.candidate().courseId())
+                ))
                 .toList();
     }
 
@@ -607,7 +621,8 @@ public class CourseRecommendationService {
 
     private RecommendedCoursesResponse.RecommendedCourseItem toResponseItem(
             ScoredRecommendation recommendation,
-            String fallbackReason
+            String fallbackReason,
+            Course course
     ) {
         return new RecommendedCoursesResponse.RecommendedCourseItem(
                 recommendation.candidate().courseId(),
@@ -622,7 +637,8 @@ public class CourseRecommendationService {
                 recommendation.finalScore(),
                 StringUtils.hasText(recommendation.recommendationReason())
                         ? recommendation.recommendationReason()
-                        : defaultReason(recommendation, fallbackReason)
+                        : defaultReason(recommendation, fallbackReason),
+                RouteCoordinateResponse.preview(course == null ? null : course.getRoute(), 80)
         );
     }
 

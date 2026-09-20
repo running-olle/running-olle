@@ -11,6 +11,7 @@ import com.runningolle.domain.course.entity.CourseTheme;
 import com.runningolle.domain.course.enums.CourseType;
 import com.runningolle.domain.course.enums.Difficulty;
 import com.runningolle.domain.course.repository.CourseThemeRepository;
+import com.runningolle.domain.course.repository.CourseRepository;
 import com.runningolle.domain.home.config.HomeRecommendationProperties;
 import com.runningolle.domain.home.dto.RecommendedCoursesResponse;
 import com.runningolle.domain.home.repository.CourseRecommendationQueryRepository;
@@ -61,6 +62,9 @@ class CourseRecommendationServiceTest {
     private CourseThemeRepository courseThemeRepository;
 
     @Mock
+    private CourseRepository courseRepository;
+
+    @Mock
     private CourseRecommendationQueryRepository courseRecommendationQueryRepository;
 
     @Mock
@@ -88,6 +92,7 @@ class CourseRecommendationServiceTest {
                 userUserTypeRepository,
                 userThemeRepository,
                 courseThemeRepository,
+                courseRepository,
                 courseRecommendationQueryRepository,
                 homeRecommendationProperties,
                 courseRecommendationRerankerProvider,
@@ -127,6 +132,8 @@ class CourseRecommendationServiceTest {
                         CourseTheme.of(course2, coast),
                         CourseTheme.of(course3, photo)
                 ));
+        given(courseRepository.findAllById(org.mockito.ArgumentMatchers.anyList()))
+                .willReturn(List.of(course1, course2, course3, course4));
 
         RecommendedCoursesResponse response = courseRecommendationService.getRecommendedCourses(userId, 33.45, 126.57);
 
@@ -139,6 +146,7 @@ class CourseRecommendationServiceTest {
         assertThat(response.recommendations().get(0).finalScore())
                 .isEqualTo(response.recommendations().get(0).baseScore());
         assertThat(response.recommendations().get(0).baseScore()).isGreaterThan(response.recommendations().get(1).baseScore());
+        assertThat(response.recommendations().get(0).previewRouteCoordinates()).hasSize(2);
         verify(courseRecommendationRerankerProvider, never()).getIfAvailable();
     }
 
