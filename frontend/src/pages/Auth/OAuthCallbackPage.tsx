@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const TOKEN_KEY = 'runningOlleAccessToken'
+const OAUTH_RECOVERY_KEY = 'runningOlleOAuthRecoveryAttempted'
 
 export function OAuthCallbackPage() {
   const navigate = useNavigate()
@@ -18,6 +19,7 @@ export function OAuthCallbackPage() {
     }
 
     localStorage.setItem(TOKEN_KEY, token)
+    sessionStorage.removeItem(OAUTH_RECOVERY_KEY)
     navigate(completed ? '/' : '/onboarding', { replace: true })
   }, [navigate])
 
