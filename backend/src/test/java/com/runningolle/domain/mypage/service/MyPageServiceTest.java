@@ -288,26 +288,19 @@ class MyPageServiceTest {
     }
 
     @Test
-    void overallStatisticsDoNotCountTheSameRunTwiceAcrossOverlappingReports() {
+    void overallStatisticsIncludeAllUserRecordsWithoutAnyReports() {
         User user = user(USER_ID);
-        Trip first = trip(UUID.randomUUID(), user, LocalDate.of(2026, 8, 28), LocalDate.of(2026, 8, 30));
-        Trip second = trip(UUID.randomUUID(), user, LocalDate.of(2026, 8, 29), LocalDate.of(2026, 9, 1));
         RunningRecord record = runningRecord(UUID.randomUUID(), user, course(UUID.randomUUID(), USER_ID));
         given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
-        given(tripRepository.findAllByUserIdOrderByStartDateDesc(USER_ID)).willReturn(List.of(second, first));
-        given(runningRecordRepository.findAllByUserIdAndStartedAtGreaterThanEqualAndStartedAtLessThanOrderByStartedAtDesc(
-                any(), any(), any()
-        )).willReturn(List.of(record));
-        given(visitRepository.findAllByRunningRecordUserIdAndRunningRecordStartedAtGreaterThanEqualAndRunningRecordStartedAtLessThanOrderByVisitedAtDesc(
-                any(), any(), any()
-        )).willReturn(List.of());
+        given(runningRecordRepository.findAllByUserIdOrderByStartedAtDesc(USER_ID)).willReturn(List.of(record));
+        given(visitRepository.findAllByRunningRecordUserIdOrderByVisitedAtDesc(USER_ID)).willReturn(List.of());
 
-        MyPageDtos.RunTripOverallStatistics statistics = myPageService.overallReportStatistics(USER_ID);
+        MyPageDtos.OverallStatistics statistics = myPageService.overallStatistics(USER_ID);
 
-        assertThat(statistics.reportCount()).isEqualTo(2);
         assertThat(statistics.runCount()).isEqualTo(1);
         assertThat(statistics.totalDistanceKm()).isEqualByComparingTo("3.20");
-        assertThat(statistics.averageDistancePerReport()).isEqualByComparingTo("3.20");
+        assertThat(statistics.averageDistancePerRun()).isEqualByComparingTo("3.20");
+        verify(tripRepository, never()).findAllByUserIdOrderByStartDateDesc(USER_ID);
     }
 
     private static RunningRecord runningRecord(UUID id, User user, Course course) {
