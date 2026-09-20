@@ -4,6 +4,7 @@ import com.runningolle.global.security.jwt.JwtAuthenticationFilter;
 import com.runningolle.global.security.oauth.CustomOAuth2UserService;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationSuccessHandler;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationFailureHandler;
+import com.runningolle.global.security.oauth.StateAwareOAuth2AuthorizationRequestRepository;
 import java.util.LinkedHashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -78,7 +79,10 @@ public class SecurityConfig {
                     auth.anyRequest().authenticated();
                 })
                 .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(authorization -> authorization.baseUri("/api/oauth2/authorization"))
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/api/oauth2/authorization")
+                                .authorizationRequestRepository(
+                                        new StateAwareOAuth2AuthorizationRequestRepository()))
                         .redirectionEndpoint(redirection -> redirection.baseUri("/api/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyList;
 
 import com.runningolle.domain.course.entity.Course;
 import com.runningolle.domain.course.entity.CourseWaypoint;
@@ -200,6 +201,55 @@ class MyPageServiceTest {
         order.verify(userUserTypeRepository).deleteAllByUserId(USER_ID);
         order.verify(userUserTypeRepository).flush();
         order.verify(userUserTypeRepository).save(any(UserUserType.class));
+    }
+
+    @Test
+    void updatesProfileImageWithoutRecreatingUnchangedThemes() {
+        User user = user(USER_ID);
+        user.updateProfile("기존닉네임", null, null, null, null);
+        Theme coast = Theme.create(ThemeCode.COAST);
+        ReflectionTestUtils.setField(coast, "id", UUID.randomUUID());
+        UserTheme currentTheme = UserTheme.of(user, coast);
+        String profileImageUrl = "/api/community/feed/images/files/profile.jpg";
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(userUserTypeRepository.findAllByUserId(USER_ID)).willReturn(List.of());
+        given(userThemeRepository.findAllByUserId(USER_ID)).willReturn(List.of(currentTheme));
+
+        MyPageDtos.Profile profile = myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
+                "기존닉네임", profileImageUrl, null, List.of(), null, null, List.of(coast.getId())
+        ));
+
+        assertThat(profile.profileImageUrl()).isEqualTo(profileImageUrl);
+        verify(userThemeRepository, never()).deleteAllByUserId(USER_ID);
+        verify(userThemeRepository, never()).flush();
+        verify(userThemeRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void flushesDeletedThemesBeforeSavingReplacement() {
+        User user = user(USER_ID);
+        user.updateProfile("기존닉네임", null, null, null, null);
+        Theme coast = Theme.create(ThemeCode.COAST);
+        Theme forest = Theme.create(ThemeCode.FOREST);
+        ReflectionTestUtils.setField(coast, "id", UUID.randomUUID());
+        ReflectionTestUtils.setField(forest, "id", UUID.randomUUID());
+        UserTheme currentTheme = UserTheme.of(user, coast);
+        UserTheme replacementTheme = UserTheme.of(user, forest);
+        given(userRepository.findById(USER_ID)).willReturn(Optional.of(user));
+        given(userUserTypeRepository.findAllByUserId(USER_ID)).willReturn(List.of());
+        given(userThemeRepository.findAllByUserId(USER_ID))
+                .willReturn(List.of(currentTheme), List.of(replacementTheme));
+        given(themeRepository.findAllById(List.of(forest.getId()))).willReturn(List.of(forest));
+
+        myPageService.updateProfile(USER_ID, new MyPageDtos.UpdateProfileRequest(
+                "기존닉네임", "/api/community/feed/images/files/profile.jpg", null,
+                List.of(), null, null, List.of(forest.getId())
+        ));
+
+        InOrder order = inOrder(userThemeRepository);
+        order.verify(userThemeRepository).deleteAllByUserId(USER_ID);
+        order.verify(userThemeRepository).flush();
+        order.verify(userThemeRepository).saveAll(anyList());
     }
 
     @Test
