@@ -1,4 +1,4 @@
-import { Card, Icon, Button } from '../../components/ui'
+import { Card, Icon, Button, ProfileAvatar } from '../../components/ui'
 import { useMemo } from 'react'
 import type { FeedPost } from './api'
 import { deletePostById, toggleLikeWithOptimistic } from './feedPostMutations'
@@ -50,12 +50,12 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
     <Card as="article" shadow="none" className="community-card">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div
+          <ProfileAvatar
+            name={post.nickname}
+            imageUrl={post.profileImageUrl}
             className="flex h-10 w-10 items-center justify-center rounded-full text-body-sm font-bold text-surface"
-            style={{ backgroundImage: buildAvatarGradient(post) }}
-          >
-            {post.nickname.slice(0, 1)}
-          </div>
+            fallbackStyle={{ backgroundImage: buildAvatarGradient(post) }}
+          />
           <div className="min-w-0">
             <div className="truncate text-body-sm font-bold text-ink">{post.nickname}</div>
             <div className="mt-0.5 text-caption text-ink-secondary">

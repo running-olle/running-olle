@@ -19,6 +19,7 @@ export type MeetupParticipant = {
   id: string
   nickname: string
   avatar: string
+  profileImageUrl?: string | null
   gradient: string
   role: 'organizer' | 'member' | 'applicant'
   status: 'pending' | 'accepted' | 'rejected'
@@ -42,6 +43,7 @@ export type Meetup = {
   organizerId: string
   organizerName: string
   organizerAvatar: string
+  organizerProfileImageUrl?: string | null
   organizerGradient: string
   theme: MeetupTheme
   themeLabel: string
@@ -71,6 +73,7 @@ export type ChatMessage = {
   senderId: string | null
   senderName: string
   senderAvatar: string
+  senderProfileImageUrl?: string | null
   senderGradient: string
   content: string
   sentAtLabel: string

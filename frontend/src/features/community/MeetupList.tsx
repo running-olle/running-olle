@@ -1,4 +1,4 @@
-import { Card, Chip, Badge, EmptyState, HorizontalScroller, Button } from '../../components/ui'
+import { Card, Chip, Badge, EmptyState, HorizontalScroller, Button, ProfileAvatar } from '../../components/ui'
 import type { Meetup, MeetupFilter } from './communityTypes'
 
 export function MeetupList({
@@ -123,13 +123,20 @@ export function MeetupList({
 
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center">
-                  {meetup.participantIds.slice(0, 4).map((participantId, index) => (
-                    <AvatarBubble
-                      key={participantId}
-                      index={index}
-                      label={participantId === meetup.organizerId ? meetup.organizerAvatar : 'R'}
-                    />
-                  ))}
+                  {meetup.participantIds.slice(0, 4).map((participantId, index) => {
+                    const participant = meetup.applicants.find((item) => item.id === participantId)
+                    const isOrganizer = participantId === meetup.organizerId
+
+                    return (
+                      <AvatarBubble
+                        key={participantId}
+                        index={index}
+                        name={isOrganizer ? meetup.organizerName : participant?.nickname ?? '러너'}
+                        imageUrl={isOrganizer ? meetup.organizerProfileImageUrl : participant?.profileImageUrl}
+                        gradient={isOrganizer ? meetup.organizerGradient : participant?.gradient}
+                      />
+                    )
+                  })}
                   <span className="ml-3 text-caption text-ink-secondary">+{Math.max(acceptedCount - 1, 0)}명 참여</span>
                 </div>
                 <Button variant="primary" size="sm"
@@ -152,14 +159,25 @@ export function MeetupList({
 
 
 
-function AvatarBubble({ index, label }: { index: number; label: string }) {
+function AvatarBubble({
+  index,
+  name,
+  imageUrl,
+  gradient,
+}: {
+  index: number
+  name: string
+  imageUrl?: string | null
+  gradient?: string
+}) {
   return (
-    <div
+    <ProfileAvatar
+      name={name}
+      imageUrl={imageUrl}
+      fallbackStyle={{ backgroundImage: gradient }}
       className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-brand-500 text-caption text-surface ${
         index === 0 ? '' : '-ml-1.5'
       }`}
-    >
-      {label}
-    </div>
+    />
   )
 }

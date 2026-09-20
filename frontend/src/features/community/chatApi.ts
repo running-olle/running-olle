@@ -74,6 +74,7 @@ function mapMessage(source: ChatRoomApiResponse['messages'][number]): ChatMessag
       senderId: source.senderId,
       senderName: source.senderName,
       senderAvatar: '',
+      senderProfileImageUrl: null,
       senderGradient: '',
       content: source.content,
       sentAtLabel: formatTime(source.createdAt),
@@ -87,6 +88,7 @@ function mapMessage(source: ChatRoomApiResponse['messages'][number]): ChatMessag
     senderId: source.senderId,
     senderName: source.senderName,
     senderAvatar: source.senderName.slice(0, 1).toUpperCase(),
+    senderProfileImageUrl: source.senderProfileImageUrl,
     senderGradient: source.mine
       ? 'linear-gradient(135deg,#3B82F6,#93C5FD)'
       : 'linear-gradient(135deg,#FF6F0F,#FF954E)',

@@ -7,6 +7,7 @@ public record FeedCommentResponse(
         UUID id,
         UUID userId,
         String nickname,
+        String profileImageUrl,
         String content,
         LocalDateTime createdAt,
         boolean mine

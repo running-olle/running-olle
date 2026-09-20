@@ -15,6 +15,7 @@ export type FeedComment = {
   id: string
   userId: string
   nickname: string
+  profileImageUrl: string | null
   content: string
   createdAt: string
   mine: boolean
@@ -25,6 +26,7 @@ export type FeedPost = {
   userId: string
   mine: boolean
   nickname: string
+  profileImageUrl: string | null
   region: string
   content: string
   visibility: FeedVisibility

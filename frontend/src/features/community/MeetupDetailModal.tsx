@@ -1,4 +1,4 @@
-import { Icon, Badge, Button } from '../../components/ui'
+import { Icon, Badge, Button, ProfileAvatar } from '../../components/ui'
 import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { KakaoPointMap } from '../map/KakaoPointMap'
 import type { Meetup, ParticipationStatus } from './communityTypes'
@@ -100,12 +100,12 @@ export function MeetupDetailModal({
             <div className="mt-3 text-section-title font-extrabold leading-relaxed text-ink">{meetup.title}</div>
 
             <div className="mt-3 flex items-center gap-2">
-              <div
+              <ProfileAvatar
+                name={meetup.organizerName}
+                imageUrl={meetup.organizerProfileImageUrl}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-label text-surface"
-                style={{ backgroundImage: meetup.organizerGradient }}
-              >
-                {meetup.organizerAvatar}
-              </div>
+                fallbackStyle={{ backgroundImage: meetup.organizerGradient }}
+              />
               <div className="text-label text-ink-secondary">
                 {meetup.organizerName} · {meetup.createdAtLabel}
               </div>
@@ -177,6 +177,7 @@ export function MeetupDetailModal({
               <MemberRow
                 name={meetup.organizerName}
                 avatar={meetup.organizerAvatar}
+                profileImageUrl={meetup.organizerProfileImageUrl}
                 gradient={meetup.organizerGradient}
                 meta="방장"
                 badge="호스트"
@@ -187,6 +188,7 @@ export function MeetupDetailModal({
                   key={member.id}
                   name={member.nickname}
                   avatar={member.avatar}
+                  profileImageUrl={member.profileImageUrl}
                   gradient={member.gradient}
                   meta={`누적 ${member.stats.totalDistanceKm}km · ${member.stats.averagePaceText}`}
                   badge="멤버"
@@ -353,6 +355,7 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 function MemberRow({
   name,
   avatar,
+  profileImageUrl,
   gradient,
   meta,
   badge,
@@ -360,6 +363,7 @@ function MemberRow({
 }: {
   name: string
   avatar: string
+  profileImageUrl?: string | null
   gradient: string
   meta: string
   badge: string
@@ -367,12 +371,12 @@ function MemberRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div
+      <ProfileAvatar
+        name={name || avatar}
+        imageUrl={profileImageUrl}
         className="flex h-10 w-10 items-center justify-center rounded-full text-body-sm text-surface"
-        style={{ backgroundImage: gradient }}
-      >
-        {avatar}
-      </div>
+        fallbackStyle={{ backgroundImage: gradient }}
+      />
       <div className="min-w-0 flex-1">
         <div className="text-body-sm font-bold text-ink">{name}</div>
         <div className="mt-1 text-caption text-ink-secondary">{meta}</div>

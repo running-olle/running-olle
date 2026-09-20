@@ -1,4 +1,4 @@
-import { Card, Icon, Button } from '../../components/ui'
+import { Card, Icon, Button, ProfileAvatar } from '../../components/ui'
 import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useState } from 'react'
 import { getFeedPost, type FeedPost } from './api'
@@ -153,9 +153,11 @@ export function FeedDetailModal({
           <Card as="article" shadow="none" className="community-card">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-body-sm font-bold text-surface">
-                  {post.nickname.slice(0, 1)}
-                </div>
+                <ProfileAvatar
+                  name={post.nickname}
+                  imageUrl={post.profileImageUrl}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-body-sm font-bold text-surface"
+                />
                 <div>
                   <div className="text-body-sm font-bold text-ink">{post.nickname}</div>
                   <div className="mt-1 text-caption text-ink-secondary">{formatFullDate(post.createdAt)}</div>
@@ -319,9 +321,11 @@ export function FeedDetailModal({
               ) : (
                 post.comments.map((item) => (
                   <article key={item.id} className="community-comment-item">
-                    <div className="community-comment-avatar" aria-hidden="true">
-                      {item.nickname.slice(0, 1)}
-                    </div>
+                    <ProfileAvatar
+                      name={item.nickname}
+                      imageUrl={item.profileImageUrl}
+                      className="community-comment-avatar"
+                    />
                     <div className="community-comment-content">
                       <div className="community-comment-meta">
                         <strong>{item.nickname}</strong>
