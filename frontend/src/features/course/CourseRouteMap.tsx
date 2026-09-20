@@ -31,6 +31,7 @@ type CourseRouteMapProps = {
   showCurrentPositionMarker?: boolean
   className?: string
   showZoomControls?: boolean
+  fitPadding?: number
 }
 
 const JEJU_CENTER = { lat: 33.3846, lng: 126.5535 }
@@ -47,6 +48,7 @@ export function CourseRouteMap({
   showCurrentPositionMarker = true,
   className = '',
   showZoomControls = false,
+  fitPadding = 32,
 }: CourseRouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<KakaoMap | null>(null)
@@ -167,8 +169,11 @@ export function CourseRouteMap({
     }
     const bounds = new window.kakao.maps.LatLngBounds()
     points.forEach((point) => bounds.extend(new window.kakao!.maps.LatLng(point.lat, point.lng)))
-    window.setTimeout(() => mapRef.current?.setBounds(bounds), 0)
-  }, [fitTarget, ready, recordedPath, routeCoordinates, waypoints])
+    window.setTimeout(() => {
+      mapRef.current?.relayout()
+      mapRef.current?.setBounds(bounds, fitPadding, fitPadding, fitPadding, fitPadding)
+    }, 0)
+  }, [fitPadding, fitTarget, ready, recordedPath, routeCoordinates, waypoints])
 
   function zoomBy(delta: number) {
     if (!mapRef.current) return

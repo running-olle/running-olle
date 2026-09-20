@@ -1,5 +1,6 @@
 import type { CourseImageTone } from '../../mocks/home'
 import type { HomeRecommendedCourse, HomeRecommendedCourseDifficulty } from './homeService'
+import type { CourseRouteCoordinate } from '../course/types'
 import { isThemeCode, normalizeThemeCode, themeLabels } from '../themes/themeCatalog'
 
 export type RecommendedCourseCardViewModel = {
@@ -12,6 +13,7 @@ export type RecommendedCourseCardViewModel = {
   imageTone: CourseImageTone
   distanceFromUserKm: number | null
   recommendationReason: string
+  previewRouteCoordinates: CourseRouteCoordinate[]
 }
 
 export function toRecommendedCourseCardViewModel(course: HomeRecommendedCourse): RecommendedCourseCardViewModel {
@@ -25,6 +27,7 @@ export function toRecommendedCourseCardViewModel(course: HomeRecommendedCourse):
     imageTone: imageTone(course.themes),
     distanceFromUserKm: course.distanceFromUserKm,
     recommendationReason: course.recommendationReason,
+    previewRouteCoordinates: course.previewRouteCoordinates ?? [],
   }
 }
 

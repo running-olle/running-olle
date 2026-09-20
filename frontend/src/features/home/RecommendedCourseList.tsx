@@ -6,6 +6,7 @@ import { Icon } from '../../components/ui/Icon'
 import { MetaList } from '../../components/ui/MetaList'
 import { SectionHeader } from '../../components/ui/SectionHeader'
 import { Skeleton } from '../../components/ui/Feedback'
+import { CourseRouteMap } from '../course/CourseRouteMap'
 import { CourseThumbnail } from './CourseThumbnail'
 import type { RecommendedCourseCardViewModel } from './homeViewModels'
 
@@ -64,7 +65,20 @@ export function RecommendedCourseList({
           <Link key={course.id} to={`/courses/${course.id}`} className="block w-64 shrink-0">
             <Card variant="media" padding="none" shadow="none" className="h-full overflow-hidden border border-border-subtle">
               <div className="relative">
-                <CourseThumbnail tone={course.imageTone} rounded={false} className="h-32" />
+                {course.previewRouteCoordinates.length > 1 ? (
+                  <div className="relative h-32 overflow-hidden">
+                    <CourseRouteMap
+                      routeCoordinates={course.previewRouteCoordinates}
+                      waypoints={[]}
+                      showCurrentPositionMarker={false}
+                      plannedRouteStyle={{ strokeWeight: 4 }}
+                      fitPadding={4}
+                      className="pointer-events-none h-full w-full"
+                    />
+                  </div>
+                ) : (
+                  <CourseThumbnail tone={course.imageTone} rounded={false} className="h-32" />
+                )}
                 <div className="absolute right-3 top-3">
                   <Badge variant="brand">{course.category}</Badge>
                 </div>
