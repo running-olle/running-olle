@@ -15,6 +15,7 @@ export function useRouteCalculation() {
     }
 
     let disposed = false
+    setDraftRoute(null)
     setRouteStatus('loading')
     const timer = window.setTimeout(() => {
       courseBuilderService.calculateDraftRoute(waypoints)
@@ -26,7 +27,7 @@ export function useRouteCalculation() {
         .catch(() => {
           if (disposed) return
           setDraftRoute(null)
-          setRouteStatus('error', '경로를 계산하지 못했어요. 경유지 위치를 다시 확인해 주세요.')
+          setRouteStatus('error', '도보로 연결할 수 없는 구간이에요. 배·차량 이동이 필요한 구간인지 경유지 위치를 확인해 주세요.')
         })
     }, 500)
 

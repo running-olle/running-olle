@@ -223,9 +223,12 @@
 .course-sheet-handle { width: 100%; min-height: 36px; height: 36px; margin: 0; }
 .course-sheet-handle::before { height: 4px; margin: 14px auto; background: var(--color-border-default); }
 .course-sheet-handle:focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: -2px; }
-.course-draft-bottom-sheet, .course-place-detail-sheet, .course-nearby-list-sheet { z-index: var(--z-sticky); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; color: var(--color-ink); background: var(--color-surface); box-shadow: var(--shadow-top); transition: max-height var(--motion-sheet) var(--ease-standard); }
+.course-draft-bottom-sheet, .course-place-detail-sheet, .course-nearby-list-sheet { z-index: var(--z-sticky); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; color: var(--color-ink); background: var(--color-surface); box-shadow: var(--shadow-top); }
 .course-draft-bottom-sheet[data-snap="peek"] { max-height: 236px; }
 .course-draft-bottom-sheet[data-snap="full"] { max-height: 68dvh; }
+.course-draft-bottom-sheet[data-snap="collapsed"] { max-height: 104px; }
+.course-place-detail-sheet[data-snap="collapsed"] { max-height: 190px; }
+.course-nearby-list-sheet[data-snap="collapsed"] { max-height: 116px; }
 .course-draft-heading { display: flex; min-height: 56px; align-items: center; justify-content: space-between; gap: var(--spacing-3); padding: 0 var(--spacing-5) var(--spacing-3); border-bottom: 1px solid var(--color-border-subtle); }
 .course-draft-heading > div { min-width: 0; }
 .course-draft-heading span:not(.ui-badge) { display: block; color: var(--color-brand-700); font-size: var(--text-caption); font-weight: 700; }
@@ -250,7 +253,8 @@
 .course-waypoint-item strong { color: var(--color-ink); font-size: var(--text-body-sm); }
 .course-waypoint-item small { color: var(--color-ink-tertiary); font-size: var(--text-caption); }
 .course-waypoint-item button { width: 44px; height: 44px; color: var(--color-ink-tertiary); background: transparent; }
-.course-reset-button { width: calc(100% - 2 * var(--spacing-5)); min-height: 44px; margin: var(--spacing-2) var(--spacing-5) max(var(--spacing-4), var(--safe-bottom)); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); color: var(--color-ink-secondary); background: var(--color-surface); }
+.course-waypoint-drag-handle:active { color: var(--color-brand-500); background: var(--color-brand-050); }
+.course-reset-button { width: calc(100% - 2 * var(--spacing-5)); min-height: 44px; margin: var(--spacing-2) var(--spacing-5) max(var(--spacing-4), var(--safe-bottom)); border: 1px solid var(--color-danger-subtle); border-radius: var(--radius-control); color: var(--color-danger); background: var(--color-surface); }
 .course-place-detail-header h2 { color: var(--color-ink); font-size: var(--text-section-title); }
 .course-place-detail-header p { color: var(--color-ink-secondary); font-size: var(--text-caption); }
 .course-place-detail-header > button { width: 44px; height: 44px; color: var(--color-ink-secondary); background: var(--color-surface-subtle); }
@@ -262,6 +266,12 @@
 .course-tour-fallback strong, .course-kakao-only-card strong { color: var(--color-ink); }
 .course-detail-info-list dt { color: var(--color-ink-tertiary); }
 .course-detail-info-list dd { color: var(--color-ink-secondary); }
+.course-hours h3 { color: var(--color-ink-tertiary); }
+.course-hours dl > div { background: var(--color-surface); }
+.course-hours dt { color: var(--color-brand-700); }
+.course-hours dd { color: var(--color-ink-secondary); }
+.course-kakao-card-heading span { color: var(--color-info); background: var(--color-info-subtle); }
+.course-kakao-card-note { border-top-color: var(--color-border-subtle); }
 .course-detail-notice { color: var(--color-warning); }
 .course-add-button { min-height: 52px; border-radius: var(--radius-control); background: var(--color-brand-500); box-shadow: none; font-size: var(--text-body-sm); font-weight: 700; }
 .course-add-button:disabled { color: var(--color-ink-disabled); background: var(--color-surface-subtle); }

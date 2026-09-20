@@ -10,7 +10,7 @@ import type { CourseWaypointDraft, DraftRoute, LatLng, NearbyCategoryGroupCode, 
 import { Badge, Button, Icon, IconButton, Toast } from '../../components/ui'
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error'
-type SheetSnap = 'peek' | 'full'
+type SheetSnap = 'collapsed' | 'peek' | 'full'
 
 type NearbyCategory = {
   code: NearbyCategoryGroupCode
@@ -21,6 +21,8 @@ type NearbyCategory = {
 type NearbyResultsByCategory = Record<NearbyCategoryGroupCode, PlaceSearchResult[]>
 
 const NEARBY_SEARCH_RADIUS_METERS = 1_500
+const MAP_PICK_SEARCH_RADIUS_METERS = 140
+const MAP_PICK_MAX_DISTANCE_METERS = 80
 
 const nearbyCategories: NearbyCategory[] = [
   { code: 'AT4', label: '관광지', icon: 'star' },
@@ -98,7 +100,9 @@ type SheetControls = {
   setSnap: (snap: SheetSnap) => void
   toggleSnap: () => void
   onPointerDown: (event: PointerEvent<HTMLElement>) => void
+  onPointerMove: (event: PointerEvent<HTMLElement>) => void
   onPointerUp: (event: PointerEvent<HTMLElement>) => void
+  onPointerCancel: (event: PointerEvent<HTMLElement>) => void
 }
 
 function categoryBadgeClass(categoryGroupCode: string | null) {
@@ -165,42 +169,95 @@ function findBestSearchAnchor(keyword: string, places: PlaceSearchResult[]) {
   return places[0] ?? null
 }
 
+type TourSchedule = {
+  period: string
+  details: string[]
+}
+
+function tourSchedules(value: string): TourSchedule[] {
+  const schedules = [...value.matchAll(/\[([^\]]+)]\s*-?\s*([\s\S]*?)(?=\s*\[[^\]]+]|$)/g)]
+    .map((match) => ({
+      period: match[1].trim(),
+      details: match[2]
+        .replace(/^\s*-\s*/, '')
+        .split(/\s+-\s+/)
+        .map((detail) => detail.trim())
+        .filter(Boolean),
+    }))
+    .filter((schedule) => schedule.details.length > 0)
+
+  if (schedules.length > 0) return schedules
+
+  return [{
+    period: '운영 안내',
+    details: value.split(/\s+-\s+/).map((detail) => detail.trim()).filter(Boolean),
+  }]
+}
+
 function useSheetControls(initialSnap: SheetSnap): SheetControls {
   const [snap, setSnap] = useState<SheetSnap>(initialSnap)
   const dragStartYRef = useRef<number | null>(null)
+  const dragDeltaYRef = useRef(0)
   const didDragRef = useRef(false)
+
+  const clearDragStyle = useCallback((target: HTMLElement) => {
+    const sheet = target.closest<HTMLElement>('[data-snap]')
+    sheet?.style.removeProperty('--sheet-drag-y')
+    sheet?.removeAttribute('data-dragging')
+  }, [])
 
   const toggleSnap = useCallback(() => {
     if (didDragRef.current) {
       didDragRef.current = false
       return
     }
-    setSnap((currentSnap) => currentSnap === 'full' ? 'peek' : 'full')
+    setSnap((currentSnap) => {
+      if (currentSnap === 'collapsed') return 'peek'
+      return currentSnap === 'full' ? 'peek' : 'full'
+    })
   }, [])
 
   const onPointerDown = useCallback((event: PointerEvent<HTMLElement>) => {
     dragStartYRef.current = event.clientY
+    dragDeltaYRef.current = 0
     event.currentTarget.setPointerCapture(event.pointerId)
+  }, [])
+
+  const onPointerMove = useCallback((event: PointerEvent<HTMLElement>) => {
+    if (dragStartYRef.current === null) return
+    const dragDeltaY = event.clientY - dragStartYRef.current
+    dragDeltaYRef.current = dragDeltaY
+    const sheet = event.currentTarget.closest<HTMLElement>('[data-snap]')
+    sheet?.setAttribute('data-dragging', 'true')
+    sheet?.style.setProperty('--sheet-drag-y', `${Math.max(-72, Math.min(140, dragDeltaY))}px`)
   }, [])
 
   const onPointerUp = useCallback((event: PointerEvent<HTMLElement>) => {
     const dragStartY = dragStartYRef.current
     dragStartYRef.current = null
+    clearDragStyle(event.currentTarget)
     if (dragStartY === null) return
 
-    const dragDeltaY = event.clientY - dragStartY
+    const dragDeltaY = dragDeltaYRef.current
+    dragDeltaYRef.current = 0
     if (dragDeltaY < -24) {
       didDragRef.current = true
-      setSnap('full')
+      setSnap((currentSnap) => currentSnap === 'collapsed' ? 'peek' : 'full')
       return
     }
     if (dragDeltaY > 24) {
       didDragRef.current = true
-      setSnap('peek')
+      setSnap((currentSnap) => currentSnap === 'full' ? 'peek' : 'collapsed')
     }
-  }, [])
+  }, [clearDragStyle])
 
-  return { snap, setSnap, toggleSnap, onPointerDown, onPointerUp }
+  const onPointerCancel = useCallback((event: PointerEvent<HTMLElement>) => {
+    dragStartYRef.current = null
+    dragDeltaYRef.current = 0
+    clearDragStyle(event.currentTarget)
+  }, [clearDragStyle])
+
+  return { snap, setSnap, toggleSnap, onPointerDown, onPointerMove, onPointerUp, onPointerCancel }
 }
 
 export function CourseBuilderPage() {
@@ -215,12 +272,14 @@ export function CourseBuilderPage() {
   const setSelectedPlaceDetail = useCourseDraftStore((state) => state.setSelectedPlaceDetail)
   const addWaypoint = useCourseDraftStore((state) => state.addWaypoint)
   const removeWaypoint = useCourseDraftStore((state) => state.removeWaypoint)
+  const moveWaypoint = useCourseDraftStore((state) => state.moveWaypoint)
   const resetDraft = useCourseDraftStore((state) => state.resetDraft)
   const [currentPosition, setCurrentPosition] = useState<LatLng | null>(null)
   const [keyword, setKeyword] = useState('')
   const [searchResults, setSearchResults] = useState<PlaceSearchResult[]>([])
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle')
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [searchResultTitle, setSearchResultTitle] = useState<string | null>(null)
   const [committedSearchAnchor, setCommittedSearchAnchor] = useState<PlaceSearchResult | null>(null)
   const [nearbyResults, setNearbyResults] = useState<NearbyResultsByCategory>(() => emptyNearbyResults())
   const [nearbyStatus, setNearbyStatus] = useState<SearchStatus>('idle')
@@ -232,6 +291,7 @@ export function CourseBuilderPage() {
   const [saveNotice, setSaveNotice] = useState('')
   const searchRequestIdRef = useRef(0)
   const nearbyRequestIdRef = useRef(0)
+  const mapPickRequestIdRef = useRef(0)
   const detailSheetControls = useSheetControls('peek')
   const draftSheetControls = useSheetControls('peek')
   const nearbyListSheetControls = useSheetControls('peek')
@@ -287,6 +347,7 @@ export function CourseBuilderPage() {
     searchRequestIdRef.current = requestId
     setSearchStatus('loading')
     setSearchError(null)
+    setSearchResultTitle(null)
     try {
       const places = await courseBuilderService.searchPlaces(trimmedKeyword, searchCenter.lat, searchCenter.lng, 5_000)
       if (searchRequestIdRef.current !== requestId) return []
@@ -353,6 +414,7 @@ export function CourseBuilderPage() {
     setDetailSheetSnap(options.sheetSnap ?? 'peek')
     setSearchStatus('idle')
     setSearchResults([])
+    setSearchResultTitle(null)
     courseBuilderService.getPlaceDetail(place)
       .then((detail) => {
         setSelectedPlaceDetail(detail)
@@ -387,6 +449,7 @@ export function CourseBuilderPage() {
       setSearchResults([])
       setSearchStatus('idle')
       setSearchError(null)
+      setSearchResultTitle(null)
       return
     }
 
@@ -404,6 +467,20 @@ export function CourseBuilderPage() {
     resetNearbySearch()
   }, [resetNearbySearch, setSelectedPlace, setSelectedPlaceDetail])
 
+  const commitSearchAnchor = useCallback((anchor: PlaceSearchResult, syncKeyword = false) => {
+    if (syncKeyword) {
+      setKeyword(anchor.name)
+    }
+    setCommittedSearchAnchor(anchor)
+    setSearchStatus('idle')
+    setSearchResults([])
+    setSearchResultTitle(null)
+    setActiveNearbyCategory(null)
+    setIsNearbyPanelOpen(false)
+    handleSelectPlace(anchor, { sheetSnap: 'peek', keepNearbySearch: true })
+    void loadNearbyResults(anchor)
+  }, [handleSelectPlace, loadNearbyResults])
+
   const handleSearch = useCallback(async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
     const trimmedKeyword = keyword.trim()
@@ -413,14 +490,8 @@ export function CourseBuilderPage() {
     const anchor = findBestSearchAnchor(trimmedKeyword, places)
     if (!anchor) return
 
-    setCommittedSearchAnchor(anchor)
-    setSearchStatus('idle')
-    setSearchResults([])
-    setActiveNearbyCategory(null)
-    setIsNearbyPanelOpen(false)
-    handleSelectPlace(anchor, { sheetSnap: 'peek', keepNearbySearch: true })
-    void loadNearbyResults(anchor)
-  }, [executeSearch, handleSelectPlace, keyword, loadNearbyResults])
+    commitSearchAnchor(anchor)
+  }, [commitSearchAnchor, executeSearch, keyword])
 
   const handleAddWaypoint = useCallback(() => {
     if (!selectedPlace || !selectedPlaceDetail) return
@@ -440,21 +511,66 @@ export function CourseBuilderPage() {
     setSearchStatus('idle')
     setSearchResults([])
     setSearchError(null)
+    setSearchResultTitle(null)
     setSelectedPlace(null)
     setSelectedPlaceDetail(null)
     resetNearbySearch()
   }, [resetNearbySearch, setSelectedPlace, setSelectedPlaceDetail])
 
-  const handleMapPress = useCallback(() => {
+  const handleMapPress = useCallback(async (position: LatLng | null) => {
     setSearchStatus('idle')
     setSearchResults([])
     setSearchError(null)
+    setSearchResultTitle(null)
     setActiveNearbyCategory(null)
     setIsNearbyPanelOpen(false)
     if (selectedPlace) {
       setDetailSheetSnap('peek')
     }
-  }, [selectedPlace, setDetailSheetSnap])
+
+    if (!position) return
+
+    const requestId = mapPickRequestIdRef.current + 1
+    mapPickRequestIdRef.current = requestId
+    const results = await Promise.all(nearbyCategories.map(async (category) => {
+      try {
+        return await courseBuilderService.searchNearbyPlaces(
+          position.lat,
+          position.lng,
+          MAP_PICK_SEARCH_RADIUS_METERS,
+          category.code,
+        )
+      } catch {
+        return []
+      }
+    }))
+
+    if (mapPickRequestIdRef.current !== requestId) return
+
+    const nearbyTapCandidates = deduplicatePlaces(results.flat())
+      .map((place) => ({
+        place,
+        distance: distanceMeters(position, { lat: place.lat, lng: place.lng }),
+      }))
+      .filter(({ distance }) => distance <= MAP_PICK_MAX_DISTANCE_METERS)
+      .sort((left, right) => left.distance - right.distance)
+      .slice(0, 5)
+      .map(({ place }) => place)
+
+    if (nearbyTapCandidates.length === 1) {
+      handleSelectPlace(nearbyTapCandidates[0], {
+        sheetSnap: 'peek',
+        keepNearbySearch: Boolean(committedSearchAnchor),
+      })
+      return
+    }
+
+    if (nearbyTapCandidates.length > 1) {
+      setSearchResults(nearbyTapCandidates)
+      setSearchStatus('success')
+      setSearchResultTitle('누른 위치와 가까운 장소예요')
+    }
+  }, [committedSearchAnchor, handleSelectPlace, selectedPlace, setDetailSheetSnap])
 
   const handleSelectedPlaceMarkerClick = useCallback(() => {
     setDetailSheetSnap('full')
@@ -479,16 +595,12 @@ export function CourseBuilderPage() {
   ])
 
   const handleNearbyPanelToggle = useCallback(() => {
-    if (isNearbyPanelOpen) {
-      setActiveNearbyCategory(null)
-      setNearbyListSheetSnap('peek')
-    }
     setIsNearbyPanelOpen((value) => !value)
     setSearchStatus('idle')
     setSearchResults([])
     setSearchError(null)
     setDetailSheetSnap('peek')
-  }, [isNearbyPanelOpen, setDetailSheetSnap, setNearbyListSheetSnap])
+  }, [setDetailSheetSnap])
 
   const handleCandidatePlaceClick = useCallback((place: PlaceSearchResult) => {
     handleSelectPlace(place, { sheetSnap: 'peek', keepNearbySearch: true })
@@ -612,7 +724,8 @@ export function CourseBuilderPage() {
           places={searchResults}
           status={searchStatus}
           error={searchError}
-          onSelect={handleSelectPlace}
+          title={searchResultTitle ?? undefined}
+          onSelect={(place) => commitSearchAnchor(place, true)}
         />
       </section>
 
@@ -624,10 +737,10 @@ export function CourseBuilderPage() {
             lat: selectedPlaceDetail.lat,
             lng: selectedPlaceDetail.lng,
           })}
-          isAdded={waypoints.some((waypoint) => (
-            waypoint.kakaoPlaceId === selectedPlace.kakaoPlaceId
-            || waypoint.kakaoPlaceId === selectedPlaceDetail.kakaoPlaceId
-            || Boolean(selectedPlaceDetail.tourContentId && waypoint.tourContentId === selectedPlaceDetail.tourContentId)
+          isAdded={Boolean(waypoints.at(-1) && (
+            waypoints.at(-1)?.kakaoPlaceId === selectedPlace.kakaoPlaceId
+            || waypoints.at(-1)?.kakaoPlaceId === selectedPlaceDetail.kakaoPlaceId
+            || Boolean(selectedPlaceDetail.tourContentId && waypoints.at(-1)?.tourContentId === selectedPlaceDetail.tourContentId)
           ))}
           detailStatus={detailStatus}
           isOverviewExpanded={isOverviewExpanded}
@@ -659,6 +772,7 @@ export function CourseBuilderPage() {
           routeError={routeError}
           sheetControls={draftSheetControls}
           onRemove={removeWaypoint}
+          onMove={moveWaypoint}
           onReset={resetDraft}
         />
       )}
@@ -844,6 +958,7 @@ function WaypointDetailSheet({
   const isTourApiMatched = isTourism && detail.tourApiMatched
   const overview = cleanDisplayText(detail.overview)
   const useTime = cleanDisplayText(detail.useTime)
+  const schedules = useMemo(() => useTime ? tourSchedules(useTime) : [], [useTime])
   const kakaoPlaceUrl = detail.kakaoPlaceUrl ?? kakaoSearchUrl(detail.name)
   const shouldClampOverview = Boolean(overview && overview.length > 96)
 
@@ -856,9 +971,11 @@ function WaypointDetailSheet({
         type="button"
         className="course-sheet-handle"
         aria-label={sheetControls.snap === 'full' ? '상세 정보 접기' : '상세 정보 펼치기'}
-        onClick={sheetControls.toggleSnap}
-        onPointerDown={sheetControls.onPointerDown}
-        onPointerUp={sheetControls.onPointerUp}
+      onClick={sheetControls.toggleSnap}
+      onPointerDown={sheetControls.onPointerDown}
+      onPointerMove={sheetControls.onPointerMove}
+      onPointerUp={sheetControls.onPointerUp}
+      onPointerCancel={sheetControls.onPointerCancel}
       />
       <div className="course-place-detail-header">
         <div>
@@ -884,12 +1001,19 @@ function WaypointDetailSheet({
           <div className="course-tour-card">
             {detail.firstImageUrl && <img src={detail.firstImageUrl} alt="" />}
             {useTime && (
-              <dl className="course-detail-info-list">
-                <div>
-                  <dt>이용 시간</dt>
-                  <dd>{useTime}</dd>
-                </div>
-              </dl>
+              <section className="course-hours" aria-label="이용 시간">
+                <h3>이용 시간</h3>
+                <dl>
+                  {schedules.map((schedule) => (
+                    <div key={`${schedule.period}-${schedule.details.join('-')}`}>
+                      <dt>{schedule.period}</dt>
+                      <dd>
+                        {schedule.details.map((item, index) => <span key={`${item}-${index}`}>{item}</span>)}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
             )}
             {overview && (
               <div>
@@ -908,17 +1032,12 @@ function WaypointDetailSheet({
           </div>
         )}
 
-        {isTourism && !detail.tourApiMatched && (
-          <div className="course-tour-fallback">
-            <strong>상세 정보를 준비 중인 장소예요</strong>
-            <p>한국관광공사 데이터와 아직 매칭되지 않았어요.</p>
-            <a href={kakaoPlaceUrl} target="_blank" rel="noreferrer">카카오맵에서 보기</a>
-          </div>
-        )}
-
-        {!isTourism && (
+        {!isTourApiMatched && (
           <div className="course-kakao-only-card">
-            <strong>{detail.categoryName || place.categoryName || '카카오 장소 정보'}</strong>
+            <div className="course-kakao-card-heading">
+              <strong>카카오맵 장소 정보</strong>
+              <span>기본 정보</span>
+            </div>
             <dl className="course-detail-info-list">
               <div>
                 <dt>주소</dt>
@@ -930,7 +1049,18 @@ function WaypointDetailSheet({
                   <dd>{detail.phone}</dd>
                 </div>
               )}
+              {(detail.categoryName || place.categoryName) && (
+                <div>
+                  <dt>분류</dt>
+                  <dd>{detail.categoryName || place.categoryName}</dd>
+                </div>
+              )}
             </dl>
+            {isTourism && (
+              <p className="course-kakao-card-note">
+                한국관광공사 정보가 연결되면 사진과 이용 시간 등 상세 정보가 추가돼요.
+              </p>
+            )}
             <a href={kakaoPlaceUrl} target="_blank" rel="noreferrer">카카오맵에서 보기</a>
           </div>
         )}
@@ -939,7 +1069,7 @@ function WaypointDetailSheet({
       </div>
 
       <Button variant="primary" size="lg" fullWidth className="course-add-button" disabled={isAdded} onClick={onAdd}>
-        {isAdded ? '이미 추가된 장소' : '+ 코스에 추가하기'}
+        {isAdded ? '바로 이전 경유지와 같아요' : '+ 코스에 추가하기'}
       </Button>
     </section>
   )
@@ -972,9 +1102,11 @@ function NearbyPlaceListBottomSheet({
         type="button"
         className="course-sheet-handle"
         aria-label={sheetControls.snap === 'full' ? '주변 장소 목록 접기' : '주변 장소 목록 펼치기'}
-        onClick={sheetControls.toggleSnap}
-        onPointerDown={sheetControls.onPointerDown}
-        onPointerUp={sheetControls.onPointerUp}
+      onClick={sheetControls.toggleSnap}
+      onPointerDown={sheetControls.onPointerDown}
+      onPointerMove={sheetControls.onPointerMove}
+      onPointerUp={sheetControls.onPointerUp}
+      onPointerCancel={sheetControls.onPointerCancel}
       />
       <div className="course-nearby-list-header">
         <div>
@@ -1017,6 +1149,7 @@ type CourseDraftBottomSheetProps = {
   routeError: string | null
   sheetControls: SheetControls
   onRemove: (orderIndex: number) => void
+  onMove: (fromIndex: number, toIndex: number) => void
   onReset: () => void
 }
 
@@ -1027,6 +1160,7 @@ function CourseDraftBottomSheet({
   routeError,
   sheetControls,
   onRemove,
+  onMove,
   onReset,
 }: CourseDraftBottomSheetProps) {
   const distanceKm = draftRoute ? formatDistanceKm(draftRoute.distanceKm) : '0'
@@ -1042,9 +1176,11 @@ function CourseDraftBottomSheet({
         type="button"
         className="course-sheet-handle"
         aria-label={sheetControls.snap === 'full' ? '코스 초안 접기' : '코스 초안 펼치기'}
-        onClick={sheetControls.toggleSnap}
-        onPointerDown={sheetControls.onPointerDown}
-        onPointerUp={sheetControls.onPointerUp}
+      onClick={sheetControls.toggleSnap}
+      onPointerDown={sheetControls.onPointerDown}
+      onPointerMove={sheetControls.onPointerMove}
+      onPointerUp={sheetControls.onPointerUp}
+      onPointerCancel={sheetControls.onPointerCancel}
       />
       <div className="course-draft-heading">
         <div>
@@ -1077,17 +1213,29 @@ function CourseDraftBottomSheet({
           </div>
         )}
         {waypoints.map((waypoint, index) => (
-          <div key={`${waypoint.kakaoPlaceId}-${waypoint.orderIndex}`} className="course-waypoint-item">
+          <div
+            key={waypoint.draftId}
+            className="course-waypoint-item"
+            data-waypoint-index={index}
+          >
             <span>{index + 1}</span>
             <div>
               <strong>{waypoint.name}</strong>
               {waypoint.categoryName && <small>{waypoint.categoryName}</small>}
             </div>
-            <IconButton
-              icon={<Icon name="close" size={18} />}
-              label={`${waypoint.name} 삭제`}
-              onClick={() => onRemove(waypoint.orderIndex)}
-            />
+            <div className="course-waypoint-actions">
+              <WaypointDragHandle
+                index={index}
+                name={waypoint.name}
+                count={waypoints.length}
+                onMove={onMove}
+              />
+              <IconButton
+                icon={<Icon name="close" size={18} />}
+                label={`${waypoint.name} 삭제`}
+                onClick={() => onRemove(waypoint.orderIndex)}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -1095,6 +1243,117 @@ function CourseDraftBottomSheet({
         <Button variant="secondary" size="sm" fullWidth className="course-reset-button" onClick={onReset}>경유지 모두 지우기</Button>
       )}
     </section>
+  )
+}
+
+function WaypointDragHandle({
+  index,
+  name,
+  count,
+  onMove,
+}: {
+  index: number
+  name: string
+  count: number
+  onMove: (fromIndex: number, toIndex: number) => void
+}) {
+  const originIndexRef = useRef<number | null>(null)
+  const targetIndexRef = useRef<number | null>(null)
+  const dragStartYRef = useRef<number | null>(null)
+  const sourceRowRef = useRef<HTMLElement | null>(null)
+  const targetRowRef = useRef<HTMLElement | null>(null)
+
+  const clearDragPreview = () => {
+    sourceRowRef.current?.removeAttribute('data-dragging-waypoint')
+    sourceRowRef.current?.style.removeProperty('--waypoint-drag-y')
+    targetRowRef.current?.removeAttribute('data-drop-target')
+    sourceRowRef.current = null
+    targetRowRef.current = null
+  }
+
+  const moveFromPointer = (event: PointerEvent<HTMLButtonElement>) => {
+    if (originIndexRef.current === null) return
+    if (dragStartYRef.current !== null) {
+      const dragDeltaY = event.clientY - dragStartYRef.current
+      sourceRowRef.current?.style.setProperty('--waypoint-drag-y', `${dragDeltaY}px`)
+    }
+    const target = document.elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>('[data-waypoint-index]')
+    const targetIndex = Number(target?.dataset.waypointIndex)
+    if (!Number.isInteger(targetIndex)) return
+
+    if (targetIndexRef.current !== targetIndex) {
+      targetRowRef.current?.removeAttribute('data-drop-target')
+      target?.setAttribute('data-drop-target', 'true')
+      targetRowRef.current = target ?? null
+      targetIndexRef.current = targetIndex
+    }
+
+    const list = event.currentTarget.closest('.course-waypoint-list')
+    if (list) {
+      const bounds = list.getBoundingClientRect()
+      if (event.clientY < bounds.top + 44) list.scrollBy({ top: -18, behavior: 'auto' })
+      if (event.clientY > bounds.bottom - 44) list.scrollBy({ top: 18, behavior: 'auto' })
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className="course-waypoint-drag-handle"
+      aria-label={`${name} 순서 변경. 위아래로 드래그하거나 방향키를 사용하세요.`}
+      onPointerDown={(event) => {
+        originIndexRef.current = index
+        targetIndexRef.current = index
+        dragStartYRef.current = event.clientY
+        sourceRowRef.current = event.currentTarget.closest<HTMLElement>('[data-waypoint-index]')
+        targetRowRef.current = sourceRowRef.current
+        sourceRowRef.current?.setAttribute('data-dragging-waypoint', 'true')
+        sourceRowRef.current?.setAttribute('data-drop-target', 'true')
+        event.currentTarget.setPointerCapture(event.pointerId)
+      }}
+      onPointerMove={moveFromPointer}
+      onPointerUp={(event) => {
+        moveFromPointer(event)
+        const originIndex = originIndexRef.current
+        const targetIndex = targetIndexRef.current
+        clearDragPreview()
+        originIndexRef.current = null
+        targetIndexRef.current = null
+        dragStartYRef.current = null
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
+        if (originIndex !== null && targetIndex !== null && originIndex !== targetIndex) {
+          onMove(originIndex, targetIndex)
+        }
+      }}
+      onPointerCancel={() => {
+        clearDragPreview()
+        originIndexRef.current = null
+        targetIndexRef.current = null
+        dragStartYRef.current = null
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowUp' && index > 0) {
+          event.preventDefault()
+          onMove(index, index - 1)
+        }
+        if (event.key === 'ArrowDown' && index < count - 1) {
+          event.preventDefault()
+          onMove(index, index + 1)
+        }
+      }}
+    >
+      <svg viewBox="0 0 16 20" aria-hidden="true">
+        <circle cx="5" cy="4" r="1.25" />
+        <circle cx="11" cy="4" r="1.25" />
+        <circle cx="5" cy="10" r="1.25" />
+        <circle cx="11" cy="10" r="1.25" />
+        <circle cx="5" cy="16" r="1.25" />
+        <circle cx="11" cy="16" r="1.25" />
+      </svg>
+    </button>
   )
 }
 

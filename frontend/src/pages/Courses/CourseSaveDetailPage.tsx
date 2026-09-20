@@ -209,7 +209,7 @@ export function CourseSaveDetailPage() {
         <SectionHeader title="경유지" className="course-save-section-heading" />
         <ol className="course-save-waypoints">
           {waypoints.map((waypoint, index) => (
-            <li key={`${waypoint.kakaoPlaceId}-${waypoint.orderIndex}`}>
+            <li key={waypoint.draftId}>
               <span>{index + 1}</span>
               <div>
                 <strong>{waypoint.name}</strong>
