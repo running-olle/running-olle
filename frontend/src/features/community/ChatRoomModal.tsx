@@ -120,10 +120,14 @@ export function ChatRoomModal({
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-label text-surface"
                   fallbackStyle={{ backgroundImage: item.senderGradient }}
                 />
-                <div className={`community-message ${item.mine ? 'text-right' : ''}`}>
+                <div
+                  className={`community-message flex flex-col ${
+                    item.mine ? 'items-end text-right' : 'items-start'
+                  }`}
+                >
                   {!item.mine ? <div className="mb-1 text-caption text-ink-secondary">{item.senderName}</div> : null}
                   <div
-                    className={`whitespace-pre-wrap px-4 py-3 text-label leading-6 ${
+                    className={`w-fit max-w-full break-words whitespace-pre-wrap px-4 py-3 text-left text-label leading-6 ${
                       item.mine
                         ? 'rounded-md bg-brand-500 text-surface'
                         : 'rounded-md bg-surface-muted text-ink'
