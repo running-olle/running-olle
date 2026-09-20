@@ -1,4 +1,4 @@
-import { Card, EmptyState, SectionHeader } from '../../components/ui'
+import { Card, EmptyState, Icon, SectionHeader } from '../../components/ui'
 import type { ChatRoom } from './communityTypes'
 
 export function ChatList({
@@ -43,12 +43,12 @@ function ChatRow({ chat, onOpen }: { chat: ChatRoom; onOpen: (chat: ChatRoom) =>
     >
       <div className="relative">
         <div
-          className={`flex items-center justify-center ${
-            chat.type === 'group' ? 'h-12 w-12 rounded-control' : 'h-12 w-12 rounded-full'
-          } text-section-title text-surface`}
-          style={{ backgroundImage: chat.gradient }}
+          className={`flex h-12 w-12 items-center justify-center rounded-control text-surface ${
+            chat.type === 'group' ? 'community-chat-icon-group' : 'community-chat-icon-inquiry'
+          }`}
+          aria-hidden="true"
         >
-          {chat.icon}
+          <Icon name="lightning" size={24} fill="currentColor" />
         </div>
         {chat.activeDot ? (
           <div className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-white bg-success" />

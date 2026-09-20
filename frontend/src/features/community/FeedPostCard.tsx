@@ -92,14 +92,6 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
             post.course?.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
           }`}
         >
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
-            style={{
-              background: post.course?.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
-            }}
-          >
-            {post.course?.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
-          </div>
           <div className="min-w-0">
             <div className="truncate text-label font-bold text-ink">{post.course?.name ?? '러닝 기록'}</div>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-caption text-ink-secondary">
@@ -120,14 +112,6 @@ export function FeedPostCard({ post, onChange, onEdit, onOpenDetail, onOpenCours
             post.course.courseType === 'SPOT_COURSE' ? 'bg-surface-subtle' : 'bg-surface-subtle'
           }`}
         >
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control text-card-title text-surface"
-            style={{
-              background: post.course.courseType === 'SPOT_COURSE' ? 'var(--color-success)' : 'var(--color-brand-500)',
-            }}
-          >
-            {post.course.courseType === 'SPOT_COURSE' ? 'S' : 'R'}
-          </div>
           <div className="min-w-0">
             <div className="truncate text-label font-bold text-ink">{post.course.name}</div>
             <div className="mt-1 text-caption font-bold text-ink-secondary">

@@ -22,7 +22,10 @@ export function ChatRoomModal({
   onShare: (chatRoom: ChatRoom) => void
 }) {
   const [message, setMessage] = useState('')
+  const [messageMenuId, setMessageMenuId] = useState<string | null>(null)
   const realtimeHandlerRef = useRef(onRealtimeRoom)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     realtimeHandlerRef.current = onRealtimeRoom
@@ -31,6 +34,56 @@ export function ChatRoomModal({
   useEffect(() => {
     return connectChatRoomRealtime(chatRoom.id, (room) => realtimeHandlerRef.current(room))
   }, [chatRoom.id])
+
+  useEffect(() => {
+    const closeMenu = () => setMessageMenuId(null)
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('[data-message-menu]')) return
+      closeMenu()
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu()
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  useEffect(() => {
+    setMessageMenuId(null)
+  }, [chatRoom.id])
+
+  useEffect(() => () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+  }, [])
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    longPressStartRef.current = null
+  }
+
+  const startLongPress = (event: React.PointerEvent, messageId: string) => {
+    if (event.pointerType === 'mouse') return
+    clearLongPress()
+    longPressStartRef.current = { x: event.clientX, y: event.clientY }
+    longPressTimerRef.current = setTimeout(() => {
+      setMessageMenuId(messageId)
+      longPressTimerRef.current = null
+    }, 550)
+  }
+
+  const handleLongPressMove = (event: React.PointerEvent) => {
+    const start = longPressStartRef.current
+    if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) < 10) return
+    clearLongPress()
+  }
 
   const send = () => {
     if (!message.trim()) {
@@ -77,12 +130,12 @@ export function ChatRoomModal({
               <Icon name="arrowLeft" />
             </Button>
             <div
-              className={`flex items-center justify-center ${
-                chatRoom.type === 'group' ? 'h-9 w-9 rounded-control' : 'h-9 w-9 rounded-full'
-              } text-card-title text-surface`}
-              style={{ backgroundImage: chatRoom.gradient }}
+              className={`flex h-9 w-9 items-center justify-center rounded-control text-surface ${
+                chatRoom.type === 'group' ? 'community-chat-icon-group' : 'community-chat-icon-inquiry'
+              }`}
+              aria-hidden="true"
             >
-              {chatRoom.icon}
+              <Icon name="lightning" size={20} fill="currentColor" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-card-title font-bold text-ink">{chatRoom.title}</div>
@@ -126,26 +179,59 @@ export function ChatRoomModal({
                   }`}
                 >
                   {!item.mine ? <div className="mb-1 text-caption text-ink-secondary">{item.senderName}</div> : null}
-                  <div
-                    className={`w-fit max-w-full break-words whitespace-pre-wrap px-4 py-3 text-left text-label leading-6 ${
-                      item.mine
-                        ? 'rounded-md bg-brand-500 text-surface'
-                        : 'rounded-md bg-surface-muted text-ink'
-                    }`}
-                  >
-                    {item.content}
-                  </div>
-                  <div className={`mt-1 flex items-center gap-2 text-caption text-ink-secondary ${item.mine ? 'justify-end' : ''}`}>
-                    <span>{item.sentAtLabel}</span>
-                    {item.mine ? (
-                      <Button variant="danger" size="sm"
-                        type="button"
-                        onClick={() => onDeleteMessage(chatRoom.id, item.id)}
-                        className="text-caption font-semibold text-ink-secondary"
+                  <div className={`community-message-line ${item.mine ? 'is-mine' : ''}`}>
+                    <div
+                      className="community-message-bubble-wrap"
+                      data-message-menu
+                      onContextMenu={item.mine ? (event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setMessageMenuId(item.id)
+                      } : undefined}
+                      onPointerDown={item.mine ? (event) => startLongPress(event, item.id) : undefined}
+                      onPointerMove={item.mine ? handleLongPressMove : undefined}
+                      onPointerUp={item.mine ? clearLongPress : undefined}
+                      onPointerCancel={item.mine ? clearLongPress : undefined}
+                      onClick={item.mine && messageMenuId === item.id ? (event) => event.stopPropagation() : undefined}
+                    >
+                      <div
+                        className={`w-fit max-w-full break-words whitespace-pre-wrap px-4 py-3 text-left text-label leading-6 ${
+                          item.mine
+                            ? 'rounded-md bg-brand-500 text-surface'
+                            : 'rounded-md bg-surface-muted text-ink'
+                        }`}
+                        tabIndex={item.mine ? 0 : undefined}
+                        aria-haspopup={item.mine ? 'menu' : undefined}
+                        aria-expanded={item.mine ? messageMenuId === item.id : undefined}
+                        aria-label={item.mine ? `${item.content}. 메시지 메뉴` : undefined}
+                        title={item.mine ? '우클릭하거나 길게 눌러 삭제' : undefined}
+                        onKeyDown={item.mine ? (event) => {
+                          if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                            event.preventDefault()
+                            setMessageMenuId(item.id)
+                          }
+                        } : undefined}
                       >
-                        삭제
-                      </Button>
-                    ) : null}
+                        {item.content}
+                      </div>
+                      {item.mine && messageMenuId === item.id ? (
+                        <div className="community-message-menu" role="menu" onClick={(event) => event.stopPropagation()}>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setMessageMenuId(null)
+                              onDeleteMessage(chatRoom.id, item.id)
+                            }}
+                          >
+                            삭제
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="community-message-time">{item.sentAtLabel}</span>
                   </div>
                 </div>
               </div>
