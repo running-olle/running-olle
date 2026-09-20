@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.runningolle.domain.tourism.client.TourApiClient;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaItem;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaPage;
-import com.runningolle.domain.tourism.client.TourApiClient.TourDetail;
 import com.runningolle.domain.tourism.config.TourismSyncProperties;
 import com.runningolle.domain.tourism.entity.TourismPlace;
 import com.runningolle.domain.tourism.entity.TourismPlace.TourismPlaceSnapshot;
@@ -58,29 +57,10 @@ class TourismPlaceSyncServiceTest {
     }
 
     @Test
-    void createsTourismPlaceWithDetailData() {
+    void createsPendingTourismPlaceFromInventoryWithoutDetailCalls() {
         TourAreaItem item = tourAreaItem("1", "한라산", 33.361667, 126.529167);
-        TourDetail detail = new TourDetail(
-                "1",
-                "12",
-                "한라산 상세",
-                "제주특별자치도 제주시",
-                "1100로",
-                "39",
-                "4",
-                "A01",
-                "A0101",
-                "A01010100",
-                33.362,
-                126.53,
-                "제주의 대표 산",
-                "https://example.com/halla.jpg",
-                "09:00 - 18:00",
-                Map.of("detailCommon2", Map.of("contentid", "1"))
-        );
         given(tourApiClient.getAreaBasedList("39", "12", 1, 100))
                 .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
-        given(tourApiClient.getDetail("1", "12")).willReturn(Optional.of(detail));
         given(tourismPlaceRepository.findByContentId("1")).willReturn(Optional.empty());
 
         var response = tourismPlaceSyncService.syncJejuTourismPlaces();
@@ -95,14 +75,13 @@ class TourismPlaceSyncServiceTest {
         verify(tourismPlaceRepository).save(placeCaptor.capture());
         TourismPlace savedPlace = placeCaptor.getValue();
         assertThat(savedPlace.getContentId()).isEqualTo("1");
-        assertThat(savedPlace.getTitle()).isEqualTo("한라산 상세");
-        assertThat(savedPlace.getOverview()).isEqualTo("제주의 대표 산");
-        assertThat(savedPlace.getUseTime()).isEqualTo("09:00 - 18:00");
-        assertThat(savedPlace.getFirstImageUrl()).isEqualTo("https://example.com/halla.jpg");
-        assertThat(savedPlace.getLocation().getY()).isEqualTo(33.362);
-        assertThat(savedPlace.getLocation().getX()).isEqualTo(126.53);
+        assertThat(savedPlace.getTitle()).isEqualTo("한라산");
+        assertThat(savedPlace.getOverview()).isNull();
+        assertThat(savedPlace.getUseTime()).isNull();
+        assertThat(savedPlace.getDetailSyncStatus().name()).isEqualTo("PENDING");
         assertThat(savedPlace.getRawData().has("areaBasedList2")).isTrue();
-        assertThat(savedPlace.getRawData().has("detail")).isTrue();
+        assertThat(savedPlace.getRawData().has("detail")).isFalse();
+        verify(tourApiClient, never()).getDetail(any(), any());
     }
 
     @Test
@@ -126,7 +105,6 @@ class TourismPlaceSyncServiceTest {
         TourismPlace existingPlace = TourismPlace.create(snapshot("3", "성산일출봉 옛 이름"));
         given(tourApiClient.getAreaBasedList("39", "12", 1, 100))
                 .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
-        given(tourApiClient.getDetail("3", "12")).willReturn(Optional.empty());
         given(tourismPlaceRepository.findByContentId("3")).willReturn(Optional.of(existingPlace));
 
         var response = tourismPlaceSyncService.syncJejuTourismPlaces();
@@ -135,6 +113,7 @@ class TourismPlaceSyncServiceTest {
         assertThat(response.updatedCount()).isEqualTo(1);
         assertThat(existingPlace.getTitle()).isEqualTo("성산일출봉");
         verify(tourismPlaceRepository).save(existingPlace);
+        verify(tourApiClient, never()).getDetail(any(), any());
     }
 
     private static TourAreaItem tourAreaItem(String contentId, String title, Double lat, Double lng) {

@@ -1,6 +1,7 @@
 package com.runningolle.domain.tourism.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.runningolle.domain.tourism.enums.TourismDetailSyncStatus;
 import com.runningolle.global.entity.BaseTimeEntity;
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
@@ -11,9 +12,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,7 +37,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
         },
         indexes = {
                 @Index(name = "idx_tourism_places_content_type_id", columnList = "content_type_id"),
-                @Index(name = "idx_tourism_places_title", columnList = "title")
+                @Index(name = "idx_tourism_places_title", columnList = "title"),
+                @Index(
+                        name = "idx_tourism_places_detail_sync",
+                        columnList = "detail_sync_status, detail_next_retry_at"
+                )
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -114,10 +122,39 @@ public class TourismPlace extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "detail_sync_status", length = 20)
+    private TourismDetailSyncStatus detailSyncStatus;
+
+    @Column(name = "detail_synced_at")
+    private LocalDateTime detailSyncedAt;
+
+    @Column(name = "detail_retry_count")
+    private Integer detailRetryCount;
+
+    @Column(name = "detail_next_retry_at")
+    private LocalDateTime detailNextRetryAt;
+
+    @Column(name = "detail_last_error", columnDefinition = "text")
+    private String detailLastError;
+
     public static TourismPlace create(TourismPlaceSnapshot snapshot) {
         TourismPlace tourismPlace = new TourismPlace();
         tourismPlace.contentId = snapshot.contentId();
         tourismPlace.sync(snapshot);
+        tourismPlace.detailSyncStatus = hasDetail(snapshot)
+                ? TourismDetailSyncStatus.COMPLETE
+                : TourismDetailSyncStatus.PENDING;
+        tourismPlace.detailRetryCount = 0;
+        return tourismPlace;
+    }
+
+    public static TourismPlace createFromInventory(TourismPlaceSnapshot snapshot) {
+        TourismPlace tourismPlace = new TourismPlace();
+        tourismPlace.contentId = snapshot.contentId();
+        tourismPlace.syncInventory(snapshot);
+        tourismPlace.detailSyncStatus = TourismDetailSyncStatus.PENDING;
+        tourismPlace.detailRetryCount = 0;
         return tourismPlace;
     }
 
@@ -133,8 +170,8 @@ public class TourismPlace extends BaseTimeEntity {
         areaCode = snapshot.areaCode();
         sigunguCode = snapshot.sigunguCode();
         location = snapshot.location();
-        firstImageUrl = snapshot.firstImageUrl();
-        thumbnailImageUrl = snapshot.thumbnailImageUrl();
+        firstImageUrl = firstNonBlank(snapshot.firstImageUrl(), firstImageUrl);
+        thumbnailImageUrl = firstNonBlank(snapshot.thumbnailImageUrl(), thumbnailImageUrl);
         overview = snapshot.overview();
         useTime = snapshot.useTime();
         tourCreatedTime = snapshot.tourCreatedTime();
@@ -143,6 +180,86 @@ public class TourismPlace extends BaseTimeEntity {
         syncedAt = snapshot.syncedAt();
         isDeleted = false;
         deletedAt = null;
+    }
+
+    public void syncInventory(TourismPlaceSnapshot snapshot) {
+        boolean modified = !Objects.equals(tourModifiedTime, snapshot.tourModifiedTime());
+        boolean detailRefreshRequired = modified || (detailSyncStatus == null && !hasStoredDetail());
+
+        contentTypeId = snapshot.contentTypeId();
+        title = snapshot.title();
+        address = snapshot.address();
+        detailAddress = snapshot.detailAddress();
+        tel = snapshot.tel();
+        category1 = snapshot.category1();
+        category2 = snapshot.category2();
+        category3 = snapshot.category3();
+        areaCode = snapshot.areaCode();
+        sigunguCode = snapshot.sigunguCode();
+        location = snapshot.location();
+        firstImageUrl = firstNonBlank(snapshot.firstImageUrl(), firstImageUrl);
+        thumbnailImageUrl = firstNonBlank(snapshot.thumbnailImageUrl(), thumbnailImageUrl);
+        tourCreatedTime = snapshot.tourCreatedTime();
+        tourModifiedTime = snapshot.tourModifiedTime();
+        rawData = snapshot.rawData();
+        syncedAt = snapshot.syncedAt();
+        isDeleted = false;
+        deletedAt = null;
+
+        if (detailSyncStatus == null) {
+            detailSyncStatus = hasStoredDetail()
+                    ? TourismDetailSyncStatus.COMPLETE
+                    : TourismDetailSyncStatus.PENDING;
+        }
+        if (detailRefreshRequired) {
+            detailSyncStatus = TourismDetailSyncStatus.PENDING;
+            detailRetryCount = 0;
+            detailNextRetryAt = null;
+            detailLastError = null;
+        }
+        if (detailRetryCount == null) {
+            detailRetryCount = 0;
+        }
+    }
+
+    public void completeDetailSync(TourismPlaceDetailSnapshot detail, LocalDateTime completedAt) {
+        title = firstNonBlank(detail.title(), title);
+        address = firstNonBlank(detail.address(), address);
+        detailAddress = firstNonBlank(detail.detailAddress(), detailAddress);
+        category1 = firstNonBlank(detail.category1(), category1);
+        category2 = firstNonBlank(detail.category2(), category2);
+        category3 = firstNonBlank(detail.category3(), category3);
+        areaCode = firstNonBlank(detail.areaCode(), areaCode);
+        sigunguCode = firstNonBlank(detail.sigunguCode(), sigunguCode);
+        location = detail.location() == null ? location : detail.location();
+        firstImageUrl = firstNonBlank(detail.firstImageUrl(), firstImageUrl);
+        overview = firstNonBlank(detail.overview(), overview);
+        useTime = firstNonBlank(detail.useTime(), useTime);
+        rawData = detail.rawData() == null ? rawData : detail.rawData();
+        detailSyncStatus = TourismDetailSyncStatus.COMPLETE;
+        detailSyncedAt = completedAt;
+        detailRetryCount = 0;
+        detailNextRetryAt = null;
+        detailLastError = null;
+    }
+
+    public void failDetailSync(String error, LocalDateTime nextRetryAt) {
+        detailSyncStatus = TourismDetailSyncStatus.FAILED;
+        detailRetryCount = detailRetryCount == null ? 1 : detailRetryCount + 1;
+        detailNextRetryAt = nextRetryAt;
+        detailLastError = error == null ? null : error.substring(0, Math.min(error.length(), 2_000));
+    }
+
+    private boolean hasStoredDetail() {
+        return overview != null || useTime != null || detailSyncedAt != null;
+    }
+
+    private static boolean hasDetail(TourismPlaceSnapshot snapshot) {
+        return snapshot.overview() != null || snapshot.useTime() != null;
+    }
+
+    private static String firstNonBlank(String primary, String fallback) {
+        return primary == null || primary.isBlank() ? fallback : primary;
     }
 
     public record TourismPlaceSnapshot(
@@ -166,6 +283,23 @@ public class TourismPlace extends BaseTimeEntity {
             String tourModifiedTime,
             JsonNode rawData,
             LocalDateTime syncedAt
+    ) {
+    }
+
+    public record TourismPlaceDetailSnapshot(
+            String title,
+            String address,
+            String detailAddress,
+            String category1,
+            String category2,
+            String category3,
+            String areaCode,
+            String sigunguCode,
+            Point location,
+            String firstImageUrl,
+            String overview,
+            String useTime,
+            JsonNode rawData
     ) {
     }
 }
