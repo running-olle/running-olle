@@ -76,18 +76,21 @@ public class TourApiClient {
         validateApiKey();
 
         try {
+            Map<String, Object> queryParams = new LinkedHashMap<>();
+            queryParams.put("serviceKey", serviceKey());
+            queryParams.put("MobileOS", properties.getTourMobileOs());
+            queryParams.put("MobileApp", properties.getTourMobileApp());
+            queryParams.put("_type", JSON_TYPE);
+            queryParams.put("numOfRows", Math.max(1, numOfRows));
+            queryParams.put("pageNo", Math.max(1, pageNo));
+            queryParams.put("arrange", "C");
+            if (StringUtils.hasText(areaCode)) {
+                queryParams.put("areaCode", areaCode.trim());
+            }
+            queryParams.put("contentTypeId", contentTypeId);
+
             Map<String, Object> response = restClient.get()
-                    .uri(tourApiUri("/areaBasedList2", Map.ofEntries(
-                            Map.entry("serviceKey", serviceKey()),
-                            Map.entry("MobileOS", properties.getTourMobileOs()),
-                            Map.entry("MobileApp", properties.getTourMobileApp()),
-                            Map.entry("_type", JSON_TYPE),
-                            Map.entry("numOfRows", Math.max(1, numOfRows)),
-                            Map.entry("pageNo", Math.max(1, pageNo)),
-                            Map.entry("arrange", "C"),
-                            Map.entry("areaCode", areaCode),
-                            Map.entry("contentTypeId", contentTypeId)
-                    )))
+                    .uri(tourApiUri("/areaBasedList2", queryParams))
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, ExternalApiRestClientSupport.errorHandler(PROVIDER))
                     .body(new ParameterizedTypeReference<>() {

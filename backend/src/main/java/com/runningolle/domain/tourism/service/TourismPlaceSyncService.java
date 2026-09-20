@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,10 @@ import org.springframework.util.StringUtils;
 public class TourismPlaceSyncService {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
+    private static final double JEJU_MIN_LAT = 33.0;
+    private static final double JEJU_MAX_LAT = 34.0;
+    private static final double JEJU_MIN_LNG = 126.0;
+    private static final double JEJU_MAX_LNG = 127.1;
 
     private final TourApiClient tourApiClient;
     private final TourismPlaceRepository tourismPlaceRepository;
@@ -71,7 +76,7 @@ public class TourismPlaceSyncService {
 
         while (true) {
             TourAreaPage page = tourApiClient.getAreaBasedList(
-                    tourismSyncProperties.getAreaCode(),
+                    null,
                     contentTypeId,
                     pageNo,
                     pageSize
@@ -82,7 +87,9 @@ public class TourismPlaceSyncService {
             }
 
             for (TourAreaItem item : page.items()) {
-                syncItem(item, stats, syncedAt);
+                if (isJejuItem(item)) {
+                    syncItem(item, stats, syncedAt);
+                }
             }
 
             if (page.pageNo() * page.numOfRows() >= page.totalCount()) {
@@ -129,6 +136,21 @@ public class TourismPlaceSyncService {
                 && StringUtils.hasText(item.title())
                 && item.lat() != null
                 && item.lng() != null;
+    }
+
+    private boolean isJejuItem(TourAreaItem item) {
+        if (Objects.equals(tourismSyncProperties.getAreaCode(), item.areaCode())) {
+            return true;
+        }
+        if (StringUtils.hasText(item.address()) && item.address().contains("제주")) {
+            return true;
+        }
+        return item.lat() != null
+                && item.lng() != null
+                && item.lat() >= JEJU_MIN_LAT
+                && item.lat() <= JEJU_MAX_LAT
+                && item.lng() >= JEJU_MIN_LNG
+                && item.lng() <= JEJU_MAX_LNG;
     }
 
     private TourismPlaceSnapshot toInventorySnapshot(

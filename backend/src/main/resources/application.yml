@@ -86,7 +86,7 @@ tourism:
   sync:
     area-code: ${TOURISM_SYNC_AREA_CODE:39}
     content-type-ids: ${TOURISM_SYNC_CONTENT_TYPE_IDS:12,14,28}
-    page-size: ${TOURISM_SYNC_PAGE_SIZE:100}
+    page-size: ${TOURISM_SYNC_PAGE_SIZE:1000}
     bootstrap-enabled: ${TOURISM_SYNC_BOOTSTRAP_ENABLED:true}
     scheduler-enabled: ${TOURISM_SYNC_SCHEDULER_ENABLED:true}
     cron: "${TOURISM_SYNC_CRON:0 0 4 ? * MON}"
