@@ -1,4 +1,4 @@
-import { Icon, Button } from '../../components/ui'
+import { Icon, Button, ProfileAvatar } from '../../components/ui'
 import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useRef, useState } from 'react'
 import { connectChatRoomRealtime } from './chatRealtime'
@@ -114,12 +114,12 @@ export function ChatRoomModal({
               </div>
             ) : (
               <div key={item.id} className={`mb-4 flex gap-2 ${item.mine ? 'flex-row-reverse' : ''}`}>
-                <div
+                <ProfileAvatar
+                  name={item.senderName}
+                  imageUrl={item.senderProfileImageUrl}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-label text-surface"
-                  style={{ backgroundImage: item.senderGradient }}
-                >
-                  {item.senderAvatar}
-                </div>
+                  fallbackStyle={{ backgroundImage: item.senderGradient }}
+                />
                 <div className={`community-message ${item.mine ? 'text-right' : ''}`}>
                   {!item.mine ? <div className="mb-1 text-caption text-ink-secondary">{item.senderName}</div> : null}
                   <div

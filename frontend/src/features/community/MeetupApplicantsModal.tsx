@@ -1,4 +1,4 @@
-import { Icon, Button } from '../../components/ui'
+import { Icon, Button, ProfileAvatar } from '../../components/ui'
 import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import type { Meetup } from './communityTypes'
 
@@ -49,12 +49,12 @@ export function MeetupApplicantsModal({
           {pendingApplicants.map((applicant) => (
             <div key={applicant.id} className="mb-3 rounded-md bg-surface p-4">
               <div className="flex items-center gap-3">
-                <div
+                <ProfileAvatar
+                  name={applicant.nickname}
+                  imageUrl={applicant.profileImageUrl}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-body-sm text-surface"
-                  style={{ backgroundImage: applicant.gradient }}
-                >
-                  {applicant.avatar}
-                </div>
+                  fallbackStyle={{ backgroundImage: applicant.gradient }}
+                />
                 <div className="flex-1">
                   <div className="text-body-sm font-bold text-ink">{applicant.nickname}</div>
                   <div className="mt-1 text-caption text-ink-secondary">참여 요청 대기</div>
@@ -91,12 +91,12 @@ export function MeetupApplicantsModal({
             ) : (
               acceptedApplicants.map((member) => (
                 <div key={member.id} className="flex items-center gap-3 py-2">
-                  <div
+                  <ProfileAvatar
+                    name={member.nickname}
+                    imageUrl={member.profileImageUrl}
                     className="flex h-10 w-10 items-center justify-center rounded-full text-body-sm text-surface"
-                    style={{ backgroundImage: member.gradient }}
-                  >
-                    {member.avatar}
-                  </div>
+                    fallbackStyle={{ backgroundImage: member.gradient }}
+                  />
                   <div className="flex-1">
                     <div className="text-body-sm font-bold text-ink">{member.nickname}</div>
                     <div className="mt-1 text-caption text-ink-secondary">참여 확정</div>

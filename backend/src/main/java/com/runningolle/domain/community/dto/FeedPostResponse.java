@@ -11,6 +11,7 @@ public record FeedPostResponse(
         UUID userId,
         boolean mine,
         String nickname,
+        String profileImageUrl,
         String region,
         String content,
         Visibility visibility,

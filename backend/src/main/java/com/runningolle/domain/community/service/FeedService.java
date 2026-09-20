@@ -241,6 +241,7 @@ public class FeedService {
                 feedPost.getUser().getId(),
                 feedPost.getUser().getId().equals(userId),
                 feedPost.getUser().getNickname(),
+                feedPost.getUser().getProfileImageUrl(),
                 feedPost.getRegion(),
                 feedPost.getContent(),
                 feedPost.getVisibility(),
@@ -261,6 +262,7 @@ public class FeedService {
                 comment.getId(),
                 comment.getUser().getId(),
                 comment.getUser().getNickname(),
+                comment.getUser().getProfileImageUrl(),
                 comment.getContent(),
                 comment.getCreatedAt(),
                 comment.getUser().getId().equals(userId)

@@ -1,4 +1,4 @@
-import { Card, Icon, Button } from '../../components/ui'
+import { Card, Icon, Button, ProfileAvatar } from '../../components/ui'
 import { FullScreenPage } from '../../components/layout/FullScreenPage'
 import { useEffect, useState } from 'react'
 import { getFeedPost, type FeedPost } from './api'
@@ -153,9 +153,11 @@ export function FeedDetailModal({
           <Card as="article" shadow="none" className="community-card">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-body-sm font-bold text-surface">
-                  {post.nickname.slice(0, 1)}
-                </div>
+                <ProfileAvatar
+                  name={post.nickname}
+                  imageUrl={post.profileImageUrl}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-body-sm font-bold text-surface"
+                />
                 <div>
                   <div className="text-body-sm font-bold text-ink">{post.nickname}</div>
                   <div className="mt-1 text-caption text-ink-secondary">{formatFullDate(post.createdAt)}</div>
@@ -301,9 +303,16 @@ export function FeedDetailModal({
                 post.comments.map((item) => (
                   <div key={item.id} className="rounded-control bg-surface-subtle px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <ProfileAvatar
+                          name={item.nickname}
+                          imageUrl={item.profileImageUrl}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-caption font-bold text-surface"
+                        />
+                        <div>
                         <div className="text-caption font-bold text-ink">{item.nickname}</div>
                         <div className="mt-0.5 text-caption text-ink-secondary">{formatRelativeTime(item.createdAt)}</div>
+                        </div>
                       </div>
                       {item.mine ? (
                         <Button variant="danger" size="sm"
