@@ -1,5 +1,6 @@
 package com.runningolle.domain.tourism.service;
 
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -17,6 +18,9 @@ class TourismPlaceBootstrapServiceTest {
     @Mock
     private TourismPlaceSyncService tourismPlaceSyncService;
 
+    @Mock
+    private TourismPlaceDetailSyncService tourismPlaceDetailSyncService;
+
     private TourismSyncProperties tourismSyncProperties;
     private ExternalApiProperties externalApiProperties;
     private TourismPlaceBootstrapService tourismPlaceBootstrapService;
@@ -28,6 +32,7 @@ class TourismPlaceBootstrapServiceTest {
         externalApiProperties.setTourApiKey("tour-api-key");
         tourismPlaceBootstrapService = new TourismPlaceBootstrapService(
                 tourismPlaceSyncService,
+                tourismPlaceDetailSyncService,
                 tourismSyncProperties,
                 externalApiProperties
         );
@@ -35,9 +40,23 @@ class TourismPlaceBootstrapServiceTest {
 
     @Test
     void refreshesLightweightInventoryOnEveryStartup() {
+        tourismSyncProperties.setDetailSchedulerEnabled(true);
+
         tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
         verify(tourismPlaceSyncService).syncJejuTourismPlaces();
+        verify(tourismPlaceDetailSyncService).syncPendingDetails();
+    }
+
+    @Test
+    void stillEnrichesPendingDetailsWhenInventorySyncFails() {
+        tourismSyncProperties.setDetailSchedulerEnabled(true);
+        given(tourismPlaceSyncService.syncJejuTourismPlaces())
+                .willThrow(new RuntimeException("inventory unavailable"));
+
+        tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
+
+        verify(tourismPlaceDetailSyncService).syncPendingDetails();
     }
 
     @Test
@@ -47,6 +66,7 @@ class TourismPlaceBootstrapServiceTest {
         tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
         verify(tourismPlaceSyncService, never()).syncJejuTourismPlaces();
+        verify(tourismPlaceDetailSyncService, never()).syncPendingDetails();
     }
 
     @Test
@@ -56,5 +76,6 @@ class TourismPlaceBootstrapServiceTest {
         tourismPlaceBootstrapService.syncJejuTourismPlaceInventoryOnStartup();
 
         verify(tourismPlaceSyncService, never()).syncJejuTourismPlaces();
+        verify(tourismPlaceDetailSyncService, never()).syncPendingDetails();
     }
 }

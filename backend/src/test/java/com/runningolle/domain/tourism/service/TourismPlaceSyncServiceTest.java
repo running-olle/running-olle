@@ -12,6 +12,7 @@ import com.runningolle.domain.tourism.client.TourApiClient.TourAreaItem;
 import com.runningolle.domain.tourism.client.TourApiClient.TourAreaPage;
 import com.runningolle.domain.tourism.config.TourismSyncProperties;
 import com.runningolle.domain.tourism.entity.TourismPlace;
+import com.runningolle.domain.tourism.entity.TourismPlace.TourismPlaceDetailSnapshot;
 import com.runningolle.domain.tourism.entity.TourismPlace.TourismPlaceSnapshot;
 import com.runningolle.domain.tourism.repository.TourismPlaceRepository;
 import java.time.LocalDateTime;
@@ -114,6 +115,28 @@ class TourismPlaceSyncServiceTest {
         assertThat(existingPlace.getTitle()).isEqualTo("성산일출봉");
         verify(tourismPlaceRepository).save(existingPlace);
         verify(tourApiClient, never()).getDetail(any(), any());
+    }
+
+    @Test
+    void requeuesLegacyCompletePlaceThatHasNoDetailPayload() {
+        TourAreaItem item = tourAreaItem("4", "빈 상세 관광지", 33.361667, 126.529167);
+        TourismPlace existingPlace = TourismPlace.createFromInventory(snapshot("4", "빈 상세 관광지"));
+        existingPlace.completeDetailSync(
+                new TourismPlaceDetailSnapshot(
+                        null, null, null, null, null, null, null, null,
+                        null, null, null, null, existingPlace.getRawData()
+                ),
+                LocalDateTime.now()
+        );
+        given(tourApiClient.getAreaBasedList(null, "12", 1, 100))
+                .willReturn(new TourAreaPage(List.of(item), 1, 100, 1));
+        given(tourismPlaceRepository.findByContentId("4")).willReturn(Optional.of(existingPlace));
+
+        tourismPlaceSyncService.syncJejuTourismPlaces();
+
+        assertThat(existingPlace.getDetailSyncStatus().name()).isEqualTo("PENDING");
+        assertThat(existingPlace.getDetailRetryCount()).isZero();
+        verify(tourismPlaceRepository).save(existingPlace);
     }
 
     @Test

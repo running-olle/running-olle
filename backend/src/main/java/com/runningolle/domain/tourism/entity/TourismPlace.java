@@ -41,7 +41,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
                 @Index(
                         name = "idx_tourism_places_detail_sync",
                         columnList = "detail_sync_status, detail_next_retry_at"
-                )
+                ),
+                @Index(name = "idx_tourism_places_detail_attempted", columnList = "detail_last_attempted_at")
         }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -138,6 +139,9 @@ public class TourismPlace extends BaseTimeEntity {
     @Column(name = "detail_last_error", columnDefinition = "text")
     private String detailLastError;
 
+    @Column(name = "detail_last_attempted_at")
+    private LocalDateTime detailLastAttemptedAt;
+
     public static TourismPlace create(TourismPlaceSnapshot snapshot) {
         TourismPlace tourismPlace = new TourismPlace();
         tourismPlace.contentId = snapshot.contentId();
@@ -184,7 +188,13 @@ public class TourismPlace extends BaseTimeEntity {
 
     public void syncInventory(TourismPlaceSnapshot snapshot) {
         boolean modified = !Objects.equals(tourModifiedTime, snapshot.tourModifiedTime());
-        boolean detailRefreshRequired = modified || (detailSyncStatus == null && !hasStoredDetail());
+        boolean invalidCompletedDetail = detailSyncStatus == TourismDetailSyncStatus.COMPLETE
+                && overview == null
+                && useTime == null
+                && (rawData == null || !rawData.has("detail"));
+        boolean detailRefreshRequired = modified
+                || (detailSyncStatus == null && !hasStoredDetail())
+                || invalidCompletedDetail;
 
         contentTypeId = snapshot.contentTypeId();
         title = snapshot.title();
@@ -237,14 +247,16 @@ public class TourismPlace extends BaseTimeEntity {
         useTime = firstNonBlank(detail.useTime(), useTime);
         rawData = detail.rawData() == null ? rawData : detail.rawData();
         detailSyncStatus = TourismDetailSyncStatus.COMPLETE;
+        detailLastAttemptedAt = completedAt;
         detailSyncedAt = completedAt;
         detailRetryCount = 0;
         detailNextRetryAt = null;
         detailLastError = null;
     }
 
-    public void failDetailSync(String error, LocalDateTime nextRetryAt) {
+    public void failDetailSync(String error, LocalDateTime attemptedAt, LocalDateTime nextRetryAt) {
         detailSyncStatus = TourismDetailSyncStatus.FAILED;
+        detailLastAttemptedAt = attemptedAt;
         detailRetryCount = detailRetryCount == null ? 1 : detailRetryCount + 1;
         detailNextRetryAt = nextRetryAt;
         detailLastError = error == null ? null : error.substring(0, Math.min(error.length(), 2_000));
