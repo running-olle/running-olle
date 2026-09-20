@@ -382,8 +382,17 @@ public class MyPageService {
                 s.getMeetupInvite(), s.getCommentLike(), s.getTierChange(), s.getEventChallenge());
     }
     private void syncUserThemes(User user, List<UUID> themeIds) {
-        userThemeRepository.deleteAllByUserId(user.getId());
         List<UUID> distinctThemeIds = distinctIds(themeIds);
+
+        Set<UUID> currentThemeIds = userThemeRepository.findAllByUserId(user.getId()).stream()
+                .map(userTheme -> userTheme.getTheme().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        if (currentThemeIds.equals(new LinkedHashSet<>(distinctThemeIds))) {
+            return;
+        }
+
+        userThemeRepository.deleteAllByUserId(user.getId());
+        userThemeRepository.flush();
         if (distinctThemeIds.isEmpty()) {
             return;
         }
