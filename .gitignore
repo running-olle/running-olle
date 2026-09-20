@@ -37,3 +37,6 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+테스트시연플로우.md
+backend/sql/demo-service-activity-seed.sql
