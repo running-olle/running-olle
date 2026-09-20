@@ -70,6 +70,7 @@ type KakaoCustomOverlayOptions = {
   content: string | HTMLElement
   zIndex?: number
   yAnchor?: number
+  clickable?: boolean
 }
 
 type KakaoCircleOptions = {
@@ -96,7 +97,11 @@ export type KakaoMapsNamespace = {
     Geocoder: new () => KakaoGeocoder
   }
   event: {
-    addListener(target: object, type: string, handler: () => void): void
+    addListener(
+      target: object,
+      type: string,
+      handler: (event?: { latLng?: KakaoLatLng }) => void,
+    ): void
   }
 }
 

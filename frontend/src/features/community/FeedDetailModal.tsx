@@ -272,60 +272,80 @@ export function FeedDetailModal({
             </div>
           </Card>
 
-          <section className="mt-3 rounded-md bg-surface px-5 py-4 shadow-none">
-            <div className="text-body-sm font-bold text-ink">댓글 {post.commentCount}</div>
-
-            <div className="mt-4 flex gap-2">
-              <textarea aria-label="댓글을 입력해 주세요."
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                onKeyDown={handleCommentKeyDown}
-                placeholder="댓글을 입력해 주세요."
-                rows={1}
-                className="ui-textarea min-h-11 flex-1 resize-none rounded-lg border border-border-default bg-surface px-4 py-3 text-label leading-5 text-ink outline-none"
-              />
-              <Button variant="primary" size="sm"
-                type="button"
-                onClick={handleCommentSubmit}
-                disabled={pending || !comment.trim()}
-                className="h-11 rounded-full bg-brand-500 px-4 text-label font-bold text-surface disabled:opacity-40"
-              >
-                등록
-              </Button>
+          <section className="community-comments" aria-labelledby="community-comments-title">
+            <div className="community-comments-heading">
+              <h2 id="community-comments-title">댓글</h2>
+              <span aria-label={`${post.commentCount}개`}>{post.commentCount}</span>
             </div>
 
-            <div className="mt-3 space-y-3">
+            <form
+              className="community-comment-composer"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void handleCommentSubmit()
+              }}
+            >
+              <div className="community-comment-field">
+                <textarea
+                  aria-label="댓글을 입력해 주세요."
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  onKeyDown={handleCommentKeyDown}
+                  placeholder="댓글을 입력해 주세요."
+                  rows={2}
+                  maxLength={500}
+                  className="ui-textarea"
+                />
+                <div className="community-comment-field-footer">
+                  <span aria-live="polite">{comment.length}/500</span>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    type="submit"
+                    loading={pending}
+                    disabled={!comment.trim()}
+                    className="community-comment-submit"
+                  >
+                    등록
+                  </Button>
+                </div>
+              </div>
+            </form>
+
+            <div className="community-comment-list">
               {post.comments.length === 0 ? (
-                <div className="rounded-control bg-surface-subtle px-4 py-4 text-caption text-ink-tertiary">
-                  아직 댓글이 없습니다.
+                <div className="community-comment-empty">
+                  <strong>아직 댓글이 없어요</strong>
+                  <span>첫 댓글을 남겨 대화를 시작해 보세요.</span>
                 </div>
               ) : (
                 post.comments.map((item) => (
-                  <div key={item.id} className="rounded-control bg-surface-subtle px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <ProfileAvatar
-                          name={item.nickname}
-                          imageUrl={item.profileImageUrl}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-caption font-bold text-surface"
-                        />
-                        <div>
-                        <div className="text-caption font-bold text-ink">{item.nickname}</div>
-                        <div className="mt-0.5 text-caption text-ink-secondary">{formatRelativeTime(item.createdAt)}</div>
-                        </div>
+                  <article key={item.id} className="community-comment-item">
+                    <ProfileAvatar
+                      name={item.nickname}
+                      imageUrl={item.profileImageUrl}
+                      className="community-comment-avatar"
+                    />
+                    <div className="community-comment-content">
+                      <div className="community-comment-meta">
+                        <strong>{item.nickname}</strong>
+                        <span>{formatRelativeTime(item.createdAt)}</span>
                       </div>
-                      {item.mine ? (
-                        <Button variant="danger" size="sm"
-                          type="button"
-                          onClick={() => handleDeleteComment(item.id)}
-                          className="text-caption font-bold text-ink-secondary"
-                        >
-                          삭제
-                        </Button>
-                      ) : null}
+                      <p>{item.content}</p>
                     </div>
-                    <div className="mt-1 whitespace-pre-wrap text-caption leading-5 text-ink-secondary">{item.content}</div>
-                  </div>
+                    {item.mine ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={() => handleDeleteComment(item.id)}
+                        className="community-comment-delete"
+                        aria-label={`${item.nickname}님의 댓글 삭제`}
+                      >
+                        삭제
+                      </Button>
+                    ) : null}
+                  </article>
                 ))
               )}
             </div>
