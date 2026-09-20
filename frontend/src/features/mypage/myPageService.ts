@@ -1,6 +1,6 @@
 import { axiosInstance } from '../../api/axiosInstance'
 import { themeCatalogService } from '../themes/themeCatalog'
-import type { Bookmark, Dashboard, NotificationSettings, Profile, ProfileUpdate, RunRecord, RunRecordDetail, RunTripOverallStatistics, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, SaveRunTripReport, Visit } from './types'
+import type { Bookmark, Dashboard, NotificationSettings, OverallStatistics, Profile, ProfileUpdate, RunRecord, RunRecordDetail, RunTripReportDetail, RunTripReportStatistics, RunTripReportSummary, SaveRunTripReport, Visit } from './types'
 export const myPageService = {
   themes: themeCatalogService.list,
   dashboard: () => axiosInstance.get<Dashboard>('/mypage').then(({ data }) => data),
@@ -11,7 +11,7 @@ export const myPageService = {
   removeBookmark: (id: string) => axiosInstance.delete(`/mypage/bookmarks/${id}`),
   reports: () => axiosInstance.get<RunTripReportSummary[]>('/mypage/reports').then(({ data }) => data),
   report: (id: string) => axiosInstance.get<RunTripReportDetail>(`/mypage/reports/${id}`).then(({ data }) => data),
-  reportStatistics: () => axiosInstance.get<RunTripOverallStatistics>('/mypage/reports/statistics').then(({ data }) => data),
+  statistics: () => axiosInstance.get<OverallStatistics>('/mypage/statistics').then(({ data }) => data),
   reportPreview: (startDate: string, endDate: string) => axiosInstance.get<RunTripReportStatistics>('/mypage/reports/preview', { params: { startDate, endDate } }).then(({ data }) => data),
   createReport: (body: SaveRunTripReport) => axiosInstance.post<RunTripReportDetail>('/mypage/reports', body).then(({ data }) => data),
   updateReport: (id: string, body: SaveRunTripReport) => axiosInstance.put<RunTripReportDetail>(`/mypage/reports/${id}`, body).then(({ data }) => data),

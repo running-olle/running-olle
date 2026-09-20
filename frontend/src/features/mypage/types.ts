@@ -13,6 +13,6 @@ export type RunTripReportSummary = { id: string; name: string; startDate: string
 export type RunTripReportStatistics = { runCount: number; uniqueCourseCount: number; totalDistanceKm: number; totalDurationSeconds: number; averagePace: number | null; uniqueVisitedPlaceCount: number }
 export type RunTripReportBreakdown = { runningCourseRuns: number; spotCourseRuns: number; freeRuns: number }
 export type RunTripReportDetail = RunTripReportSummary & { statistics: RunTripReportStatistics; breakdown: RunTripReportBreakdown; runs: RunRecord[]; visits: Visit[] }
-export type RunTripOverallStatistics = RunTripReportStatistics & { reportCount: number; averageDistancePerReport: number }
+export type OverallStatistics = RunTripReportStatistics & { averageDistancePerRun: number }
 export type SaveRunTripReport = Pick<RunTripReportSummary, 'name' | 'startDate' | 'endDate' | 'thumbnailImageUrl'>
 export type NotificationSettings = { recommendedCourse: boolean; weather: boolean; savedCourseUpdate: boolean; meetupInvite: boolean; commentLike: boolean; tierChange: boolean; eventChallenge: boolean }

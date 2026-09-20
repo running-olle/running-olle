@@ -33,10 +33,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -214,31 +212,19 @@ public class MyPageService {
     }
 
     @Transactional(readOnly = true)
-    public MyPageDtos.RunTripOverallStatistics overallReportStatistics(UUID userId) {
+    public MyPageDtos.OverallStatistics overallStatistics(UUID userId) {
         activeUser(userId);
-        List<Trip> reports = tripRepository.findAllByUserIdOrderByStartDateDesc(userId);
-        Map<UUID, RunningRecord> uniqueRuns = new LinkedHashMap<>();
-        Set<UUID> uniquePlaces = new LinkedHashSet<>();
-        BigDecimal summedReportDistance = BigDecimal.ZERO;
-
-        for (Trip report : reports) {
-            List<RunningRecord> reportRuns = runsFor(userId, report.getStartDate(), report.getEndDate());
-            reportRuns.forEach(run -> uniqueRuns.putIfAbsent(run.getId(), run));
-            summedReportDistance = summedReportDistance.add(totalDistance(reportRuns));
-            visitsFor(userId, report.getStartDate(), report.getEndDate()).stream()
-                    .map(visit -> visit.getCourseWaypoint().getId())
-                    .forEach(uniquePlaces::add);
-        }
-
-        List<RunningRecord> runs = new ArrayList<>(uniqueRuns.values());
+        List<RunningRecord> runs = runningRecordRepository.findAllByUserIdOrderByStartedAtDesc(userId);
+        List<RunningWaypointVisit> visits = visitRepository.findAllByRunningRecordUserIdOrderByVisitedAtDesc(userId);
         BigDecimal distance = totalDistance(runs);
         long duration = totalDuration(runs);
-        BigDecimal averageDistance = reports.isEmpty()
+        long uniquePlaces = visits.stream().map(visit -> visit.getCourseWaypoint().getId()).distinct().count();
+        BigDecimal averageDistance = runs.isEmpty()
                 ? BigDecimal.ZERO
-                : summedReportDistance.divide(BigDecimal.valueOf(reports.size()), 2, RoundingMode.HALF_UP);
-        return new MyPageDtos.RunTripOverallStatistics(
-                reports.size(), runs.size(), uniqueCourseCount(runs), distance, duration,
-                averagePace(distance, duration), uniquePlaces.size(), averageDistance
+                : distance.divide(BigDecimal.valueOf(runs.size()), 2, RoundingMode.HALF_UP);
+        return new MyPageDtos.OverallStatistics(
+                runs.size(), uniqueCourseCount(runs), distance, duration,
+                averagePace(distance, duration), uniquePlaces, averageDistance
         );
     }
 

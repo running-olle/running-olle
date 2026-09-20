@@ -49,9 +49,9 @@ public class MyPageController {
         return service.reportPreview(userId(authentication), startDate, endDate);
     }
 
-    @GetMapping("/reports/statistics")
-    public MyPageDtos.RunTripOverallStatistics reportStatistics(Authentication authentication) {
-        return service.overallReportStatistics(userId(authentication));
+    @GetMapping("/statistics")
+    public MyPageDtos.OverallStatistics statistics(Authentication authentication) {
+        return service.overallStatistics(userId(authentication));
     }
 
     @PostMapping("/reports")
