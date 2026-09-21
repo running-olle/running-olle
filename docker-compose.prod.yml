@@ -11,6 +11,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       FRONTEND_URL: ${FRONTEND_URL}
       SESSION_COOKIE_SECURE: "true"
+      AUTH_COOKIE_SECURE: "true"
       APP_STORAGE_TYPE: ${APP_STORAGE_TYPE:-s3}
       APP_STORAGE_LOCAL_DIR: /app/uploads
       AWS_REGION: ${AWS_REGION:-ap-northeast-2}

@@ -6,6 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -75,6 +76,31 @@ public class JwtTokenProvider {
             return bearerToken.substring(TOKEN_PREFIX.length());
         }
 
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (AuthCookieService.COOKIE_NAME.equals(cookie.getName())
+                        && StringUtils.hasText(cookie.getValue())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public String resolveTokenFromCookieHeader(String cookieHeader) {
+        if (!StringUtils.hasText(cookieHeader)) {
+            return null;
+        }
+
+        for (String part : cookieHeader.split(";")) {
+            String[] pair = part.trim().split("=", 2);
+            if (pair.length == 2 && AuthCookieService.COOKIE_NAME.equals(pair[0])
+                    && StringUtils.hasText(pair[1])) {
+                return pair[1];
+            }
+        }
         return null;
     }
 

@@ -1,6 +1,7 @@
 package com.runningolle.global.security.oauth;
 
 import com.runningolle.global.security.jwt.JwtTokenProvider;
+import com.runningolle.global.security.jwt.AuthCookieService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthCookieService authCookieService;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -36,8 +38,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 "onboardingCompleted", onboardingCompleted
         ));
 
-        response.sendRedirect(frontendUrl + "/oauth/callback#access_token=" + accessToken
-                + "&onboarding_completed=" + onboardingCompleted);
+        authCookieService.add(response, accessToken);
+        response.sendRedirect(frontendUrl + "/oauth/callback");
 
         clearAuthenticationAttributes(request);
     }

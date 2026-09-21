@@ -27,11 +27,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .login-copy p { margin: 0; color: rgba(255,255,255,.82); font-size: 14px; text-shadow: 0 1px 8px rgba(0,31,43,.35); }
 .login-action h2 { margin: 0 0 5px; font-size: 21px; }
 .login-action > p { margin: 0 0 20px; color: rgba(255,255,255,.72); font-size: 13px; }
-.kakao-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 58px; border-radius: 17px; background: #fee500; color: #201b12; font-weight: 800; font-size: 16px; box-shadow: 0 8px 22px rgba(0,0,0,.22); }
-.kakao-button:active { transform: translateY(1px); }
-.kakao-icon { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 6px; color: #fee500; background: #3c1e1e; font-size: 13px; }
+.kakao-button { display: block; width: 100%; padding: 0; overflow: hidden; border-radius: 12px; background: #fee500; box-shadow: 0 8px 22px rgba(0,0,0,.22); }
+.kakao-button img { display: block; width: 100%; height: auto; }
+.kakao-button:disabled { cursor: wait; opacity: .72; }
+.kakao-button:active:not(:disabled) { transform: translateY(1px); }
 .login-action small { display: block; margin-top: 17px; text-align: center; color: rgba(255,255,255,.43); font-size: 10px; }
 .login-error { margin: 12px 0 -7px !important; padding: 9px 11px; border-radius: 9px; background: rgba(148,20,15,.75); color: #fff !important; text-align: center; font-size: 11px !important; }
+.login-error small { margin-top: 5px; color: rgba(255,255,255,.72); font-size: 10px; }
 
 .center-page, .main-page { display: grid; place-content: center; gap: var(--spacing-3); text-align: center; }
 .center-page p { color: var(--color-ink-secondary); }
