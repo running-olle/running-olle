@@ -17,12 +17,7 @@ type ChatRealtimeListRoomUpdateEnvelope = {
 }
 
 export function connectChatRoomRealtime(roomId: string, onRoom: (room: ChatRoom) => void) {
-  const token = localStorage.getItem('runningOlleAccessToken')
-  if (!token) {
-    return () => {}
-  }
-
-  const websocketUrl = buildWebSocketUrl(roomId, token)
+  const websocketUrl = buildWebSocketUrl(roomId)
   const socket = new WebSocket(websocketUrl)
 
   socket.onmessage = (event) => {
@@ -48,12 +43,7 @@ export function connectChatListRealtime(
   onRooms: (rooms: ChatRoom[]) => void,
   onRoomUpdate: (room: ChatRoom) => void,
 ) {
-  const token = localStorage.getItem('runningOlleAccessToken')
-  if (!token) {
-    return () => {}
-  }
-
-  const websocketUrl = buildWebSocketBaseUrl(token)
+  const websocketUrl = buildWebSocketBaseUrl()
   const socket = new WebSocket(websocketUrl)
 
   socket.onmessage = (event) => {
@@ -78,19 +68,17 @@ export function connectChatListRealtime(
   }
 }
 
-function buildWebSocketUrl(roomId: string, token: string) {
+function buildWebSocketUrl(roomId: string) {
   const url = new URL(resolveApiBaseUrl(), window.location.origin)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = `/ws/community/chats/${roomId}`
-  url.searchParams.set('token', token)
   return url.toString()
 }
 
-function buildWebSocketBaseUrl(token: string) {
+function buildWebSocketBaseUrl() {
   const url = new URL(resolveApiBaseUrl(), window.location.origin)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = '/ws/community/chat-list'
-  url.searchParams.set('token', token)
   return url.toString()
 }
 

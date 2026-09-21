@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { axiosInstance } from '../../api/axiosInstance'
 
-const TOKEN_KEY = 'runningOlleAccessToken'
-const OAUTH_RECOVERY_KEY = 'runningOlleOAuthRecoveryAttempted'
+const LEGACY_TOKEN_KEY = 'runningOlleAccessToken'
+const OAUTH_LOGIN_LOCK_KEY = 'runningOlleOAuthLoginStartedAt'
+const OAUTH_RATE_LIMIT_UNTIL_KEY = 'runningOlleOAuthRateLimitUntil'
+
+type CurrentUserResponse = {
+  onboardingCompleted: boolean
+}
 
 export function OAuthCallbackPage() {
   const navigate = useNavigate()
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.slice(1))
-    const token = params.get('access_token')
-    const completed = params.get('onboarding_completed') === 'true'
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
+    localStorage.removeItem(OAUTH_LOGIN_LOCK_KEY)
+    localStorage.removeItem(OAUTH_RATE_LIMIT_UNTIL_KEY)
 
-    if (!token) {
-      setError('카카오 로그인 정보를 확인할 수 없습니다.')
-      return
-    }
-
-    localStorage.setItem(TOKEN_KEY, token)
-    sessionStorage.removeItem(OAUTH_RECOVERY_KEY)
-    navigate(completed ? '/' : '/onboarding', { replace: true })
+    axiosInstance.get<CurrentUserResponse>('/users/me')
+      .then(({ data }) => navigate(data.onboardingCompleted ? '/' : '/onboarding', { replace: true }))
+      .catch(() => setError('카카오 로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.'))
   }, [navigate])
 
   return <main className="center-page"><div className="spinner" /><p>{error || '카카오 로그인 중입니다…'}</p></main>

@@ -13,7 +13,6 @@ export function NotificationCenter() {
   const [error, setError] = useState('')
 
   const load = (showLoading = false) => {
-    if (!localStorage.getItem('runningOlleAccessToken')) return Promise.resolve()
     if (showLoading) setLoading(true)
     return notificationApi.list().then((data) => {
       setItems(data.notifications); setUnreadCount(data.unreadCount); setError('')

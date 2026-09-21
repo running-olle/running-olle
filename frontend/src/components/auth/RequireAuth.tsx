@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { axiosInstance } from '../../api/axiosInstance'
 
-const TOKEN_KEY = 'runningOlleAccessToken'
+const LEGACY_TOKEN_KEY = 'runningOlleAccessToken'
 
 type OnboardingRequirement = 'required' | 'incomplete' | 'none'
 
@@ -17,19 +17,12 @@ type Session = {
 }
 
 export function RequireAuth({ onboarding = 'none' }: { onboarding?: OnboardingRequirement }) {
-  const token = localStorage.getItem(TOKEN_KEY)
-  const [session, setSession] = useState<Session | null>(
-    token ? null : { authenticated: false, onboardingCompleted: false, validatedFor: onboarding },
-  )
+  const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
-    if (!token) {
-      setSession({ authenticated: false, onboardingCompleted: false, validatedFor: onboarding })
-      return
-    }
-
     let active = true
     setSession(null)
+    localStorage.removeItem(LEGACY_TOKEN_KEY)
 
     axiosInstance.get<CurrentUserResponse>('/users/me')
       .then(({ data }) => {
@@ -42,7 +35,6 @@ export function RequireAuth({ onboarding = 'none' }: { onboarding?: OnboardingRe
         }
       })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY)
         if (active) {
           setSession({ authenticated: false, onboardingCompleted: false, validatedFor: onboarding })
         }
@@ -51,7 +43,7 @@ export function RequireAuth({ onboarding = 'none' }: { onboarding?: OnboardingRe
     return () => {
       active = false
     }
-  }, [onboarding, token])
+  }, [onboarding])
 
   if (session === null || session.validatedFor !== onboarding) {
     return <main className="center-page"><div className="spinner" /><p>로그인 정보를 확인하고 있습니다…</p></main>

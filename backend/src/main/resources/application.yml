@@ -78,6 +78,7 @@ management:
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  auth-cookie-secure: ${AUTH_COOKIE_SECURE:false}
   storage:
     type: ${APP_STORAGE_TYPE:local}
     local-dir: ${APP_STORAGE_LOCAL_DIR:uploads}

@@ -15,6 +15,7 @@ import com.runningolle.global.security.jwt.JwtTokenProvider;
 import com.runningolle.global.security.oauth.CustomOAuth2UserService;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationFailureHandler;
 import com.runningolle.global.security.oauth.OAuth2AuthenticationSuccessHandler;
+import com.runningolle.global.security.oauth.StateAwareOAuth2AuthorizationRequestRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,9 @@ class CourseRecommendationSyncControllerTest {
 
     @MockBean
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
+    @MockBean
+    private StateAwareOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Test
     @WithMockUser(roles = "ADMIN")

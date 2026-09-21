@@ -36,6 +36,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    private final StateAwareOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -71,7 +72,7 @@ public class SecurityConfig {
                     ).permitAll();
                     
                     auth.requestMatchers(HttpMethod.GET, "/api/public/**").permitAll();
-                    auth.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
+                    auth.requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll();
                     if (tourismManualSyncEnabled) {
                         auth.requestMatchers(HttpMethod.POST, "/api/admin/tourism/sync/jeju").permitAll();
                     }
@@ -81,8 +82,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(authorization -> authorization
                                 .baseUri("/api/oauth2/authorization")
-                                .authorizationRequestRepository(
-                                        new StateAwareOAuth2AuthorizationRequestRepository()))
+                                .authorizationRequestRepository(authorizationRequestRepository))
                         .redirectionEndpoint(redirection -> redirection.baseUri("/api/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)

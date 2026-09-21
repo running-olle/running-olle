@@ -292,8 +292,18 @@ export function OnboardingPage() {
     reader.readAsDataURL(file);
   };
 
-  const goBack = () =>
-    step === 1 ? navigate("/login") : setStep((value) => value - 1);
+  const goBack = async () => {
+    if (step !== 1) {
+      setStep((value) => value - 1);
+      return;
+    }
+
+    try {
+      await axiosInstance.post("/auth/logout");
+    } finally {
+      window.location.replace("/login");
+    }
+  };
 
   const next = async () => {
     setError("");
