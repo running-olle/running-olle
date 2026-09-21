@@ -5,6 +5,11 @@ const OAUTH_RECOVERY_KEY = 'runningOlleOAuthRecoveryAttempted'
 
 const errorMessages: Record<string, string> = {
   authorization_request_not_found: '로그인 연결이 만료되었습니다. 카카오 로그인을 다시 시도해 주세요.',
+  authorization_code_invalid: '카카오 로그인 정보가 만료되었습니다. 새로 로그인을 시작해 주세요.',
+  oauth_rate_limited: '로그인 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.',
+  oauth_provider_unavailable: '카카오 로그인 서버에 일시적으로 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+  oauth_token_exchange_failed: '카카오 인증 처리에 실패했습니다. 새로 로그인을 시작해 주세요.',
+  oauth_configuration_error: '카카오 로그인 설정을 확인해야 합니다. 관리자에게 문의해 주세요.',
   oauth_login_failed: '카카오 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.',
   access_denied: '카카오 로그인이 취소되었습니다.',
 }
